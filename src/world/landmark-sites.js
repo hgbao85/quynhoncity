@@ -5,7 +5,9 @@
 
 export const LANDMARKS = [
   {
-    id: 'thapdoi', name: 'Tháp Đôi (Tháp Hưng Thạnh)', x: -1073, z: -2615, yaw: 0.025,
+    // hai tháp đứng cạnh nhau theo hướng bắc – nam, cửa chính quay về phía đông (+x):
+    // yaw = 90° nên trục local +z (mặt trước) là hướng đông, local +x là hướng bắc
+    id: 'thapdoi', name: 'Tháp Đôi (Tháp Hưng Thạnh)', x: -1073, z: -2615, yaw: Math.PI / 2 + 0.025,
     // khuôn viên di tích: thảm cỏ, lối đi; xoá nhà và cây tự sinh trong vùng này
     zone: [[-1105, -2650], [-1035, -2650], [-1035, -2585], [-1105, -2585]],
   },

@@ -92,7 +92,7 @@ Lệnh này chạy lần lượt:
 - Vỉa hè có dù đỏ, bàn ghế sắt đỏ và hàng dừa cao. Ban đêm quán sáng đèn vàng ấm.
 
 **Công trình nổi bật** (dựng tay theo ảnh vệ tinh, Street View và số liệu báo chí, `src/world/landmarks.js`)
-- **Tháp Đôi (Tháp Hưng Thạnh):** hai tháp Chăm gạch đỏ, tháp Bắc ~25 m lớn hơn, tháp Nam ~23 m, cùng quay cửa về phía nam; thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng đã mất chóp, chân đá; khuôn viên thảm cỏ.
+- **Tháp Đôi (Tháp Hưng Thạnh):** hai tháp Chăm gạch đỏ đứng cạnh nhau theo hướng bắc – nam; tháp Bắc lớn hơn (~21 m), cửa chính có bậc thềm quay về phía đông; tháp Nam thấp và bè (~16 m) với khối mái cụt. Tỉ lệ chỉnh theo ảnh chụp; thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng thu nhỏ dần đã mất chóp, chân đá; khuôn viên thảm cỏ.
 - **Nhà thờ Chính tòa (Nhà thờ Nhọn):** kiểu Gothic sơn trắng, dài ~60 m, tháp chuông giữa mặt tiền cao 42,7 m với chóp nhọn màu cam đỏ, đồng hồ, cánh ngang phía sau; sân trước, cổng và hàng rào trụ đá quay ra đường Trần Hưng Đạo.
 - **Chợ Lớn:** nhà lồng chợ hai tầng mái tôn, biển tên, vòng quanh là sạp hàng mái bạt nhiều màu.
 - **Ga Quy Nhơn:** nhà ga hai tầng sơn vàng, khối giữa có đầu hồi, đồng hồ và biển "GA QUY NHƠN", sân ga và đường ray phía sau.

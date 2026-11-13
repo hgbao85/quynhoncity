@@ -60,9 +60,10 @@ function brickTexture() {
 }
 
 // Một tháp Chăm: chân đá, thân vuông có trụ áp tường + cửa giả, ba tầng mái thu nhỏ (đã mất chóp)
-function chamTower(w, d, h, brick, stone, grass, doorFront = true) {
+// tiers: số tầng mái; shrink: mỗi tầng hẹp lại bao nhiêu (ảnh thật: tầng mái gần bằng thân, bè và nặng)
+function chamTower(w, d, h, brick, stone, grass, doorFront = true, tiers = 3, shrink = 0.88) {
   const g = new THREE.Group();
-  const base = 1.6, bodyH = h * 0.5;
+  const base = 1.2, bodyH = h * 0.52;
   g.add(box(w + 2.2, base, d + 2.2, stone));
   // thân
   const body = box(w, bodyH, d, brick, 0, base);
@@ -95,18 +96,29 @@ function chamTower(w, d, h, brick, stone, grass, doorFront = true) {
   arch(-w / 2 - 0.2, 0, -Math.PI / 2, false);
   if (doorFront) for (let s = 0; s < 4; s++) g.add(box(2.4, base - s * 0.4, 1.2, stone, 0, 0, d / 2 + 1.4 + s * 0.9));
   // các tầng mái: thu nhỏ dần, mỗi tầng có gờ và tượng góc nhỏ; tầng trên cùng bị vỡ, cỏ mọc
-  let y = base + bodyH + 0.5, sw = w * 0.92, sd = d * 0.92;
-  const tierH = (h - y) / 3.2;
-  for (let t = 0; t < 3; t++) {
-    const lastTier = t === 2;
-    g.add(box(sw, tierH * (lastTier ? 0.7 : 1), sd, brick, 0, y));
-    g.add(box(sw + 0.5, 0.35, sd + 0.5, stone, 0, y + tierH * (lastTier ? 0.7 : 1) - 0.2));
-    for (const [cx, cz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const orn = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.3, 4), lastTier ? brick : stone);
-      orn.position.set((cx * sw) / 2, y + tierH + 0.4, (cz * sd) / 2); orn.castShadow = true;
-      if (!lastTier) g.add(orn);
+  let y = base + bodyH + 0.5, sw = w * 0.96, sd = d * 0.96;
+  const tierH = (h - y) / (tiers - 0.3);
+  // mỗi tầng là một khối vát (đáy rộng, đỉnh hẹp lại) để mái bè và thu nhỏ đều như ảnh,
+  // gờ đá mảnh và tượng góc nhỏ ở chân tầng
+  const frustum = (w0, d0, k, hh, yy, mat) => {
+    const geo = new THREE.CylinderGeometry(k * Math.SQRT1_2, Math.SQRT1_2, hh, 4, 1);
+    geo.rotateY(Math.PI / 4);
+    const m = new THREE.Mesh(geo, mat);
+    m.scale.set(w0, 1, d0); m.position.y = yy + hh / 2; m.castShadow = m.receiveShadow = true;
+    return m;
+  };
+  for (let t = 0; t < tiers; t++) {
+    const lastTier = t === tiers - 1, th = tierH * (lastTier ? 0.75 : 1);
+    g.add(frustum(sw, sd, shrink, th, y, brick));
+    g.add(box(sw + 0.4, 0.3, sd + 0.4, stone, 0, y));
+    if (!lastTier) {
+      for (const [cx, cz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const orn = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 4), stone);
+        orn.position.set((cx * sw) / 2, y + 0.85, (cz * sd) / 2); orn.castShadow = true;
+        g.add(orn);
+      }
     }
-    y += tierH * (lastTier ? 0.7 : 1); sw *= 0.78; sd *= 0.78;
+    y += th; sw *= shrink; sd *= shrink;
   }
   // mảng cỏ mọc trên đỉnh vỡ
   const tuft = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), grass);
@@ -127,10 +139,15 @@ function thapDoi() {
   g.add(box(64, 0.08, 60, lawn, 0, 0, 0));
   g.add(box(30, 0.1, 18, path, 0, 0, 14));
   // tháp Bắc (lớn, phía sau theo trục bắc – nam), tháp Nam (nhỏ hơn)
-  const north = chamTower(11.5, 9.8, 25, brick, stone, grassTop); north.position.set(0, 0, -6); g.add(north);
-  const south = chamTower(8.8, 7.4, 23, brick, stone, grassTop); south.position.set(-1, 0, 6.2); g.add(south);
-  // hàng rào cây cắt tỉa quanh chân tháp
-  for (const [w, d, x, z] of [[26, 1, 0, -14], [1, 26, -13, -1], [1, 26, 13, -1]]) g.add(box(w, 0.7, d, hedge, x, 0, z));
+  // Tỉ lệ theo ảnh chụp (Wikimedia): tháp Bắc rộng ≈ 0,5 chiều cao, tháp Nam là khối thấp bè
+  // còn một tầng mái lớn bị cụt. Kích thước chân lấy từ footprint ảnh vệ tinh.
+  // Hệ local ở đây: +z = đông (mặt có cửa), +x = bắc. Theo footprint ảnh vệ tinh, tâm hai tháp
+  // cách nhau ~12 m theo hướng bắc – nam; tháp Bắc chân ~10 × 11 m, tháp Nam ~7,5 × 8,5 m.
+  const north = chamTower(10, 10.5, 21, brick, stone, grassTop, true, 3, 0.88); north.position.set(6, 0, 0); g.add(north);
+  // tháp Nam: thân thấp hơn, phần mái còn lại là một khối lớn bè, đỉnh cụt bằng
+  const south = chamTower(7.5, 8.5, 16, brick, stone, grassTop, false, 2, 0.92); south.position.set(-6.2, 0, 0.6); g.add(south);
+  // hàng rào cây cắt tỉa thấp quanh chân tháp (mở ra phía đông)
+  for (const [w, d, x, z] of [[1, 24, -14, 0], [28, 1, 0, -12], [28, 1, 0, 12]]) g.add(box(w, 0.6, d, hedge, x, 0, z));
   return g;
 }
 
