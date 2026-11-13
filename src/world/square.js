@@ -43,7 +43,7 @@ export function createSquare(scene, L) {
   const W = (x, z) => [(x - X0) * px, (z - Z0) * px];
   const c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d');
-  x.fillStyle = '#cbc8c2'; x.fillRect(0, 0, S, S);
+  x.fillStyle = '#c9c0b9'; x.fillRect(0, 0, S, S); // đá lát xám ánh hồng (theo Street View)
   for (let i = 0; i < 70000; i++) {
     x.fillStyle = Math.random() < 0.5 ? 'rgba(90,90,90,0.12)' : 'rgba(255,255,255,0.18)';
     x.fillRect(Math.random() * S, Math.random() * S, 2, 2);
@@ -108,10 +108,10 @@ export function createSquare(scene, L) {
       spots.push([C[0] + d[0] * s + n[0] * v, C[1] + d[1] * s + n[1] * v]);
     }
   }
-  const grass = new THREE.InstancedMesh(new THREE.BoxGeometry(4, 0.14, 4),
+  const grass = new THREE.InstancedMesh(new THREE.BoxGeometry(4, 0.05, 4), // ô cỏ gần như bằng mặt sân
     new THREE.MeshStandardMaterial({ color: '#5f9a45', roughness: 1 }), spots.length);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(d[1], d[0]));
-  spots.forEach(([a, b], i) => grass.setMatrixAt(i, m4.compose(new THREE.Vector3(a, 0.16, b), q, new THREE.Vector3(1, 1, 1))));
+  spots.forEach(([a, b], i) => grass.setMatrixAt(i, m4.compose(new THREE.Vector3(a, 0.12, b), q, new THREE.Vector3(1, 1, 1))));
   grass.receiveShadow = true;
   g.add(grass);
 
@@ -135,9 +135,10 @@ export function createSquare(scene, L) {
   // ---- cột đèn pha cao đặt trên vòng đá ----
   const headMat = new THREE.MeshStandardMaterial({ color: '#fff6e0', emissive: '#fff1c8', emissiveIntensity: 0 });
   const mastMat = new THREE.MeshStandardMaterial({ color: '#8b9096', roughness: 0.4, metalness: 0.7 });
-  for (const deg of [-60, -20, 20, 60]) {
+  // bốn cột trên vòng đá và một cột cao giữa sân
+  for (const [deg, rr] of [[-60, R1 + 6], [-20, R1 + 6], [20, R1 + 6], [60, R1 + 6], [8, 46]]) {
     const a = nAng + (deg * Math.PI) / 180;
-    const mx = C[0] + Math.cos(a) * (R1 + 6), mz = C[1] + Math.sin(a) * (R1 + 6);
+    const mx = C[0] + Math.cos(a) * rr, mz = C[1] + Math.sin(a) * rr;
     if (!L.isPaved(mx, mz)) continue;
     const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.38, 22, 10), mastMat);
     mast.position.set(mx, 11, mz); mast.castShadow = true; g.add(mast);

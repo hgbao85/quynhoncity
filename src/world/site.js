@@ -18,7 +18,8 @@ export const toLocal = (x, z) => [x * C - z * S, x * S + z * C];
 export const STATUE_H = 10.8;
 export const PLINTH = { w: 8.2, d: 6.4, h: 4.7 };
 export const BASE = { w: 13, d: 10.5, h: 0.45 }; // bậc đá quanh chân bệ
-export const PLAZA = { y: 0.3, step: 0.7 };
+// Sân nâng cao 0,75 m so với vỉa hè, mép quanh sân là 4 bậc thềm rộng 1,2 m (theo ảnh Street View)
+export const PLAZA = { y: 0.75, step: 1.2, steps: 4 };
 // Phù điêu: cung tròn tâm (0, ARC.cz), bán kính ARC.r, dài 76 m → mặt tường cách tượng 19 m
 export const ARC = { cz: 55, r: 74, len: 76, thick: 1.4 };
 
@@ -78,16 +79,18 @@ export function offsetPolygon(pts, d) {
 }
 function norm([x, y]) { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; }
 
-const STEP1 = offsetPolygon(PLAZA_LOCAL, PLAZA.step);
-const STEP2 = offsetPolygon(PLAZA_LOCAL, PLAZA.step * 2);
-const NEAR = offsetPolygon(PLAZA_LOCAL, 4);
-export const PLAZA_STEPS = [STEP2, STEP1];
+// Các bậc thềm từ ngoài vào trong: { poly, top }
+export const PLAZA_STEPS = Array.from({ length: PLAZA.steps }, (_, i) => {
+  const k = PLAZA.steps - i; // bậc ngoài cùng trước
+  return { poly: offsetPolygon(PLAZA_LOCAL, PLAZA.step * k), top: (PLAZA.y * (i + 1)) / (PLAZA.steps + 1) };
+});
+const NEAR = offsetPolygon(PLAZA_LOCAL, PLAZA.step * PLAZA.steps + 3);
 
+// Độ cao mặt đất tại điểm local; 0 nếu ngoài sân
 function level(lx, lz) {
-  if (lx < -50 || lx > 50 || lz < -25 || lz > 55) return 0;
-  if (pointInPoly(lx, lz, PLAZA_LOCAL)) return 3;
-  if (pointInPoly(lx, lz, STEP1)) return 2;
-  if (pointInPoly(lx, lz, STEP2)) return 1;
+  if (lx < -55 || lx > 55 || lz < -25 || lz > 60) return 0;
+  if (pointInPoly(lx, lz, PLAZA_LOCAL)) return PLAZA.y;
+  for (let i = PLAZA_STEPS.length - 1; i >= 0; i--) if (pointInPoly(lx, lz, PLAZA_STEPS[i].poly)) return PLAZA_STEPS[i].top;
   return 0;
 }
 
@@ -98,7 +101,7 @@ export function nearPlaza(x, z) { const [lx, lz] = toLocal(x, z); return pointIn
 export function groundHeight(x, z) {
   const [lx, lz] = toLocal(x, z);
   if (Math.abs(lx) < BASE.w / 2 && Math.abs(lz) < BASE.d / 2) return PLAZA.y + BASE.h;
-  return [0.05, 0.1, 0.2, PLAZA.y][level(lx, lz)];
+  return Math.max(0.05, level(lx, lz));
 }
 
 // Có bị chặn bởi bệ tượng hoặc phù điêu không (dùng cho va chạm chính xác hơn lưới 2 m)

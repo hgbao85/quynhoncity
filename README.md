@@ -42,18 +42,21 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - Phía sau là phù điêu đá xanh hình cánh cung dài 76 m, vòm giữa cao 14,5 m. Hình chạm khắc từ nam ra bắc: Sài Gòn, tháp Chăm, Bình Định, Huế, Nam Đàn.
 - Ban đêm có đèn chiếu tượng và đèn hắt phù điêu.
 - **Bố cục đo từ ảnh vệ tinh** (Esri World Imagery): phù điêu là cung tròn bán kính ~74 m, cách tượng 19 m; tượng quay hướng 62° (vuông góc đường An Dương Vương).
-- Sân lát **granite đỏ bóng**: mặt sau theo cung phù điêu, mặt trước là cạnh thẳng dọc vỉa hè, hai góc có bồn cây bụi, hai bậc cấp quanh mép. Trước sân là vỉa hè đá xám rộng ~14 m.
+- Sân lát **granite đỏ bóng**, nâng cao 0,75 m với 4 bậc thềm rộng quanh mép (theo Street View): mặt sau theo cung phù điêu, mặt trước là cạnh thẳng dọc vỉa hè, hai góc có bồn cây bụi. Trước sân là vỉa hè đá xám rộng ~14 m.
+- Phù điêu: vòm giữa cao 14,5 m, hai bên cao 9–10,5 m, hai đầu là khối cuộn tròn lớn.
 - Chân phù điêu có dải cỏ viền và hàng **cau cảnh trồng chậu** (theo ảnh chụp). Phía sau phù điêu là rừng cây dày.
 - Hai bồn **hoa sen** trước bệ (bông nở, nụ, lá khum) như ngày khánh thành, và lẵng hoa đỏ dâng trước bệ.
 
 **Quảng trường Nguyễn Tất Thành** (bên kia đường An Dương Vương, đo từ ảnh vệ tinh)
 - Sân lát đá xám hình **nửa tròn**: tâm nằm ngay mép đường An Dương Vương, có bệ gạch đỏ và cột cờ cao 26 m.
 - Vòng đá sẫm bán kính ~76 m viền răng cưa; 9 tia đá sẫm toả ra phía biển, mỗi tia cách nhau 20°.
-- Lưới ô cỏ vuông 4 m (bước 7,5 m) nằm trong vòng, sát phía đường; bốn cột đèn pha.
+- Lưới ô cỏ vuông 4 m (bước 7,5 m) gần như bằng mặt sân, nằm trong vòng, sát phía đường; năm cột đèn pha (một cột giữa sân).
 - Phía đông bắc và phía nam là rừng cây dày. Ban đêm mặt sân sáng như được đèn pha chiếu.
 
 **Bãi biển và đường Xuân Diệu**
 - Từ phố ra biển: đường → dải công viên trồng dày **phi lao xen dừa** → **lối đi dạo lát đá** có viền gạch đỏ, đèn trang trí hai bóng, ghế đá → bãi cát có các cụm **dù lá** và ghế nằm → **mép sóng** có bọt trắng vỗ vào bờ và cát ướt (shader).
+- Ven biển chủ yếu là dừa trên thảm cỏ, xen phi lao và bụi cây thấp (theo Street View).
+- Nhà mặt phố có **mái hiên bạt sọc** và **biển hiệu** ở tầng trệt (cà phê, tạp hóa, phở…), vỉa hè đường lớn có cây bóng mát.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
 **Nhiệm vụ "Khám phá Quảng trường"**
@@ -61,6 +64,8 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - Tìm 3 chi tiết (điểm sáng xanh).
 - Chụp ảnh lưu niệm gần tượng.
 - Hoàn thành cả ba thì nhận 1 mảnh ghép. Tiến độ lưu trong trình duyệt.
+
+**Núi bao quanh** (phông nền xa, vị trí ước lượng): dãy Bà Hỏa – Vũng Chua phía tây, Ghềnh Ráng phía nam nhô ra biển, bán đảo Phương Mai phía bắc, một hòn đảo nhỏ ngoài khơi. Núi tự phủ sương theo khoảng cách.
 
 **Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút tua nhanh +3 giờ.
 
@@ -112,6 +117,7 @@ npm run optimize-statue
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
 | `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/mountains.js` | Núi phông nền quanh thành phố |
 | `src/world/beach.js` | Mép sóng, cát ướt, lối đi dạo ven biển, đèn, ghế đá, dù lá |
 | `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |

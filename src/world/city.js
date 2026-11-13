@@ -155,7 +155,7 @@ export function buildCity(data, footprints = []) {
   const ground = new Builder();
   addFlat(ground, land, 0, new THREE.Color('#9c9486'));
   // quảng trường: nền là thảm cỏ, sân tròn lát đá được dựng riêng trong square.js
-  const areaCol = { park: '#6fa45c', beach: '#d9be84', plaza: '#76a861', water: '#4f8fb5' };
+  const areaCol = { park: '#6fa45c', beach: '#d6b274', plaza: '#76a861', water: '#4f8fb5' };
   const areaY = { beach: 0.02, park: 0.03, plaza: 0.035, water: 0.01 };
   for (const a of data.areas) {
     if (!near(a.pts)) continue;
@@ -234,6 +234,45 @@ export function buildCity(data, footprints = []) {
   const coastPts = data.coastline.flat();
   const distCoast = (x, z) => coastPts.reduce((m, p) => Math.min(m, Math.hypot(p[0] - x, p[1] - z)), Infinity);
   let realCount = 0, lots = 0;
+  // mái hiên bạt sọc và biển hiệu ở tầng trệt các nhà quay ra đường (theo Street View)
+  const shop = new Builder();
+  const shopWhite = new THREE.Color('#ffffff');
+  const addShopfront = (pts) => {
+    if (R() < 0.25) return; // không phải nhà nào cũng mở cửa hàng
+    for (let i = 0; i < pts.length; i++) {
+      let p = pts[i], q = pts[(i + 1) % pts.length];
+      const dx = q[0] - p[0], dz = q[1] - p[1], len = Math.hypot(dx, dz);
+      if (len < 2.5) continue;
+      let nx = -dz / len, nz = dx / len;
+      const mx = (p[0] + q[0]) / 2, mz = (p[1] + q[1]) / 2;
+      if (pointInPoly(mx + nx * 0.1, mz + nz * 0.1, pts)) { nx = -nx; nz = -nz; }
+      if (grid.get(mx + nx * 4, mz + nz * 4) !== ROAD && grid.get(mx + nx * 7, mz + nz * 7) !== ROAD) continue;
+      // co vào hai đầu cho các mái hiên liền kề không dính nhau
+      const ux = dx / len, uz = dz / len, inset = 0.12;
+      p = [p[0] + ux * inset, p[1] + uz * inset]; q = [q[0] - ux * inset, q[1] - uz * inset];
+      const aw = Math.floor(R() * 4), sg = Math.floor(R() * 8);
+      const [u0, v0, u1, v1] = [aw * 0.25, 0.75, aw * 0.25 + 0.25, 1]; // ô mái hiên trong atlas (hàng trên)
+      const out = 1.5 + R() * 0.6, y0 = 3.1, y1 = 2.55;
+      const A = [p[0] + nx * 0.02, y0, p[1] + nz * 0.02], B = [q[0] + nx * 0.02, y0, q[1] + nz * 0.02];
+      const C = [q[0] + nx * out, y1, q[1] + nz * out], D = [p[0] + nx * out, y1, p[1] + nz * out];
+      const nAw = [nx * 0.35, 0.94, nz * 0.35];
+      shop.tri(A, B, C, nAw, shopWhite, [u0, v1], [u1, v1], [u1, v0]);
+      shop.tri(A, C, D, nAw, shopWhite, [u0, v1], [u1, v0], [u0, v0]);
+      // diềm rủ ở mép mái hiên
+      const E = [C[0], y1 - 0.25, C[2]], F = [D[0], y1 - 0.25, D[2]];
+      shop.tri(D, C, E, [nx, 0, nz], shopWhite, [u0, v0 + 0.02], [u1, v0 + 0.02], [u1, v0]);
+      shop.tri(D, E, F, [nx, 0, nz], shopWhite, [u0, v0 + 0.02], [u1, v0], [u0, v0]);
+      // biển hiệu phía trên mái hiên
+      const col = sg % 4, row = 1 + Math.floor(sg / 4); // hàng 1–2 trong atlas
+      const su0 = col * 0.25, su1 = su0 + 0.25, sv1 = 1 - row * 0.25, sv0 = sv1 - 0.25;
+      const ys0 = 3.35, ys1 = 4.35;
+      const P = [p[0] + nx * 0.06, ys0, p[1] + nz * 0.06], Q = [q[0] + nx * 0.06, ys0, q[1] + nz * 0.06];
+      const Q2 = [Q[0], ys1, Q[2]], P2 = [P[0], ys1, P[2]];
+      shop.tri(P, Q, Q2, [nx, 0, nz], shopWhite, [su0, sv0], [su1, sv0], [su1, sv1]);
+      shop.tri(P, Q2, P2, [nx, 0, nz], shopWhite, [su0, sv0], [su1, sv1], [su0, sv1]);
+      return; // mỗi căn một mặt tiền
+    }
+  };
   const putHouse = (pts, floors, col) => {
     const h = floors * 3.4 + 0.5;
     addBuilding(bld, pts, h, col);
@@ -286,6 +325,7 @@ export function buildCity(data, footprints = []) {
       if (piece.length >= 3 && polyArea(piece) > 6) {
         const floors = R() < 0.08 ? 6 + Math.floor(R() * 3) : 2 + Math.floor(R() * 4);
         const h = putHouse(piece, floors, pick());
+        addShopfront(piece);
         // tum cầu thang trên mái (rất hay gặp ở nhà ống Việt Nam)
         if (R() < 0.55 && obb.short > 9) {
           const vx = -uz, vz = ux; // hướng theo chiều sâu lô
@@ -303,12 +343,17 @@ export function buildCity(data, footprints = []) {
     vertexColors: true, map: tex.map, emissiveMap: tex.emissive, emissive: 0xffffff, emissiveIntensity: 0,
     roughness: 0.82,
   });
+  const atlas = shopAtlas();
+  const shopMat = new THREE.MeshStandardMaterial({ map: atlas, emissiveMap: atlas, emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.7, side: THREE.DoubleSide });
+  const shopMesh = new THREE.Mesh(shop.geometry(), shopMat);
+  shopMesh.castShadow = true;
+  group.add(shopMesh);
   const bMesh = new THREE.Mesh(bld.geometry(), buildingMat);
   bMesh.castShadow = bMesh.receiveShadow = true;
   group.add(bMesh);
 
   // 6) Đèn đường
-  const lampSpots = [];
+  const lampSpots = [], streetTrees = [];
   for (const r of data.roads) {
     if (!MAJOR.has(r.type) || !near(r.pts)) continue;
     const hw = roadWidth(r.type) / 2;
@@ -321,6 +366,11 @@ export function buildCity(data, footprints = []) {
       for (let s = (30 - acc) % 30; s < L; s += 30) {
         const x = p[0] + ux * s - uz * (hw + 0.8), z = p[1] + uz * s + ux * (hw + 0.8);
         if (Math.abs(x) < LIMIT && Math.abs(z) < LIMIT && grid.get(x, z) !== SEA) lampSpots.push([x, z, Math.atan2(ux, uz)]);
+        // cây bóng mát trên vỉa hè hai bên, xen giữa các cột đèn
+        for (const side of [1, -1]) {
+          const tx = p[0] + ux * (s + 15) - uz * (hw + 2.4) * side, tz = p[1] + uz * (s + 15) + ux * (hw + 2.4) * side;
+          if (Math.abs(tx) < LIMIT && Math.abs(tz) < LIMIT && R() < 0.7 && grid.get(tx, tz) === FREE && !nearPlaza(tx, tz)) streetTrees.push([tx, tz, R()]);
+        }
       }
       acc = (acc + L) % 30;
     }
@@ -353,7 +403,8 @@ export function buildCity(data, footprints = []) {
   }
   // Trồng dày trong các công viên gần trung tâm (rừng cây quanh tượng đài, quảng trường).
   // Dải công viên sát biển trồng phi lao xen dừa như ngoài đời.
-  const pines = [];
+  const pines = [], bushes = [];
+  trees.push(...streetTrees);
   for (const a of data.areas) {
     if (a.kind !== 'park' && a.kind !== 'plaza') continue;
     const xs = a.pts.map((p) => p[0]), zs = a.pts.map((p) => p[1]);
@@ -366,7 +417,11 @@ export function buildCity(data, footprints = []) {
       if (data.areas.some((b) => b.kind === 'beach' && pointInPoly(px, pz, b.pts))) continue;
       const seaside = distCoast(px, pz) < 140;
       const r = R();
-      if (seaside) { if (r < 0.88) (r < 0.45 ? pines : palms).push([px, pz, R()]); }
+      if (seaside) {
+        // ven biển Xuân Diệu chủ yếu là dừa trên cỏ, xen ít phi lao và bụi cây thấp
+        if (r < 0.85) (r < 0.22 ? pines : palms).push([px, pz, R()]);
+        if (R() < 0.45) bushes.push([px + (R() - 0.5) * 5, pz + (R() - 0.5) * 5, R()]);
+      }
       else if (R() < 0.8) (r < 0.25 ? palms : trees).push([px, pz, R()]);
     }
   }
@@ -412,9 +467,18 @@ export function buildCity(data, footprints = []) {
   });
   iPine.castShadow = iPineStem.castShadow = true;
   group.add(iPine, iPineStem);
+  // bụi cây thấp
+  const iBush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.9, 0).scale(1.3, 0.75, 1.1).translate(0, 0.5, 0),
+    new THREE.MeshStandardMaterial({ color: '#3f7a32', roughness: 1, flatShading: true }), bushes.length);
+  bushes.forEach(([x, z, r], i) => {
+    const s = 0.7 + r * 0.9;
+    m.compose(new THREE.Vector3(x, 0, z), qn.setFromAxisAngle(new THREE.Vector3(0, 1, 0), r * 6), new THREE.Vector3(s, s, s));
+    iBush.setMatrixAt(i, m);
+  });
+  group.add(iBush);
 
   console.info(`[city] OSM ${data.buildings.length} nhà, footprint thật ${realCount} → ${generated} căn, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây, ${pines.length} phi lao`);
-  return { group, grid, land, buildingMat, lampMat, lampSpots, square };
+  return { group, grid, land, buildingMat, lampMat, lampSpots, square, shopMat };
 }
 
 function polyArea(pts) {
@@ -469,4 +533,32 @@ function addQuadUp(b, A, B, C, D, col) {
   const up = (P, Q, S) => (Q[2] - P[2]) * (S[0] - P[0]) - (Q[0] - P[0]) * (S[2] - P[2]) > 0;
   if (up(A, B, C)) { b.tri(A, B, C, UP, col); b.tri(A, C, D, UP, col); }
   else { b.tri(A, C, B, UP, col); b.tri(A, D, C, UP, col); }
+}
+
+// Atlas 4×4 ô: hàng trên là 4 kiểu bạt sọc, hai hàng giữa là 8 biển hiệu cửa hàng
+function shopAtlas() {
+  const W = 1024, H = 512, cw = W / 4, ch = H / 4;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const stripes = [['#2e8b57', '#f4f4ee'], ['#c0392b', '#f4f4ee'], ['#2c6fb5', '#f4f4ee'], ['#e67e22', '#f7dc6f']];
+  stripes.forEach(([a, b], i) => {
+    for (let k = 0; k < 12; k++) { x.fillStyle = k % 2 ? b : a; x.fillRect(i * cw + (k * cw) / 12, 0, cw / 12 + 1, ch); }
+    x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(i * cw, ch - 10, cw, 10);
+  });
+  const signs = [
+    ['CÀ PHÊ', '#1e5631', '#fff'], ['TẠP HÓA', '#b03a2e', '#ffe066'], ['PHỞ BÒ', '#f1c40f', '#c0392b'], ['NHÀ NGHỈ', '#1f4e79', '#fff'],
+    ['SỬA XE', '#555', '#ffd23f'], ['BÁNH MÌ', '#d35400', '#fff'], ['NHÀ THUỐC', '#0b8457', '#fff'], ['HẢI SẢN', '#0e6ba8', '#fff'],
+  ];
+  signs.forEach(([t, bg, fg], i) => {
+    const sx = (i % 4) * cw, sy = (1 + Math.floor(i / 4)) * ch;
+    x.fillStyle = bg; x.fillRect(sx + 2, sy + 2, cw - 4, ch - 4);
+    x.strokeStyle = fg; x.lineWidth = 3; x.strokeRect(sx + 8, sy + 8, cw - 16, ch - 16);
+    x.fillStyle = fg; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = 'bold 40px "Be Vietnam Pro", system-ui, sans-serif';
+    x.fillText(t, sx + cw / 2, sy + ch / 2 + 2);
+  });
+  x.fillStyle = '#ddd'; x.fillRect(0, 3 * ch, W, ch);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
 }

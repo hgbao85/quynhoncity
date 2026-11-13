@@ -30,16 +30,15 @@ export function createMonument(scene) {
     g.add(m);
     return m;
   };
-  slab(PLAZA_STEPS[0], 0.1, redStep);
-  slab(PLAZA_STEPS[1], 0.2, redStep);
+  for (const st of PLAZA_STEPS) slab(st.poly, st.top, redStep);
   const plaza = slab(PLAZA_LOCAL, PLAZA.y, redGranite);
   // vỉa hè lát đá xám sáng trước sân, giáp đường An Dương Vương
   const walkMat = new THREE.MeshStandardMaterial({ map: graniteTexture('#cfcac2', '#a9a39a'), roughness: 0.7 });
   walkMat.map.repeat.set(1 / 4.8, 1 / 4.8);
   slab(FRONT_WALK.map(([x, z]) => toLocal(x, z)), 0.07, walkMat);
   // hai bồn cây bụi ở hai góc sân
-  const shrub = new THREE.MeshStandardMaterial({ color: '#3d7a32', roughness: 1 });
-  for (const bed of BEDS_WORLD) slab(bed.map(([x, z]) => toLocal(x, z)), 0.9, shrub);
+  const shrub = new THREE.MeshStandardMaterial({ color: '#2f6b2a', roughness: 1 });
+  for (const bed of BEDS_WORLD) slab(bed.map(([x, z]) => toLocal(x, z)), 0.55, shrub);
 
   // ---- bậc đá và bệ tượng (bê tông cốt thép bọc đồng, cao 4,7 m) ----
   const y0 = PLAZA.y;
@@ -218,14 +217,17 @@ function buildFather(G, m) {
 // ngay sau tượng, hai bên thấp dần thành từng mảng, đầu tường cuộn sóng.
 function reliefTop(u) {
   const a = Math.abs(u);
-  if (a < 0.13) return 9.8 + 4.7 * Math.sqrt(1 - (a / 0.13) ** 2);
-  if (a < 0.42) return 9.8 - (a - 0.13) * 5 - (a > 0.3 ? 0.9 : 0);
-  if (a < 0.72) return 7.4 - (a - 0.42) * 5 + 0.35 * Math.sin((a - 0.42) * 30);
-  return Math.max(1.8, 5.6 - (a - 0.72) * 12 + 0.5 * Math.sin((a - 0.72) * 22));
+  // theo ảnh Street View: vòm giữa cao 14,5 m sau lưng tượng; hai bên cao đều 9–10,5 m,
+  // mép trên gấp khúc nhẹ; hai đầu là khối cuộn tròn lớn rồi vát tròn xuống ~6 m
+  if (a < 0.13) return 10.6 + 3.9 * Math.sqrt(1 - (a / 0.13) ** 2);
+  if (a < 0.4) return 10.6 - (a - 0.13) * 3.5 + 0.25 * Math.sin((a - 0.13) * 40);
+  if (a < 0.78) return 9.7 - (a - 0.4) * 2 + 0.3 * Math.sin((a - 0.4) * 26);
+  if (a < 0.92) return 8.9 + 1.4 * Math.sin(((a - 0.78) / 0.14) * Math.PI); // khối cuộn đầu tường
+  return 7 + 1.9 * Math.sqrt(Math.max(0, 1 - ((a - 0.92) / 0.08) ** 2));
 }
 
 function reliefGeometry() {
-  const N = 220, T = ARC.thick / 2;
+  const N = 220, T = ARC.thick / 2, B = -PLAZA.y; // chân tường kéo xuống tới mặt đất phía sau sân
   const p = [], n = [], uv = [];
   const quad = (A, B, C, D, nrm, uvs) => {
     for (const [P, t] of [[A, uvs[0]], [B, uvs[1]], [C, uvs[2]], [A, uvs[0]], [C, uvs[2]], [D, uvs[3]]]) {
@@ -242,10 +244,10 @@ function reliefGeometry() {
     const nf = [-mx / nl, 0, -(mz - ARC.cz) / nl]; // pháp tuyến mặt trước, hướng về tâm cung
     const t0 = (u0 + 1) / 2, t1 = (u1 + 1) / 2;
     // mặt trước (có chạm khắc)
-    quad([fx0, 0, fz0], [fx1, 0, fz1], [fx1, h1, fz1], [fx0, h0, fz0], nf,
+    quad([fx0, B, fz0], [fx1, B, fz1], [fx1, h1, fz1], [fx0, h0, fz0], nf,
       [[t0, 0], [t1, 0], [t1, h1 / 14.5], [t0, h0 / 14.5]]);
     // mặt sau
-    quad([bx1, 0, bz1], [bx0, 0, bz0], [bx0, h0, bz0], [bx1, h1, bz1], nf.map((v, k) => (k === 1 ? 0 : -v)),
+    quad([bx1, B, bz1], [bx0, B, bz0], [bx0, h0, bz0], [bx1, h1, bz1], nf.map((v, k) => (k === 1 ? 0 : -v)),
       [[0.02, 0.02], [0.02, 0.02], [0.02, 0.03], [0.02, 0.03]]);
     // mép trên
     quad([fx0, h0, fz0], [fx1, h1, fz1], [bx1, h1, bz1], [bx0, h0, bz0], [0, 1, 0],
@@ -256,9 +258,9 @@ function reliefGeometry() {
     const h = reliefTop(u), [fx, fz] = arcPoint(u, -T), [bx, bz] = arcPoint(u, T);
     const [tx, tz] = arcPoint(u * 1.01, 0), [ox, oz] = arcPoint(u, 0);
     const d = [tx - ox, 0, tz - oz], l = Math.hypot(d[0], d[2]);
-    const A = [fx, 0, fz], B = [bx, 0, bz], C = [bx, h, bz], D = [fx, h, fz];
-    if (u > 0) quad(A, B, C, D, [d[0] / l, 0, d[2] / l], [[0.02, 0.02], [0.02, 0.02], [0.02, 0.02], [0.02, 0.02]]);
-    else quad(B, A, D, C, [d[0] / l, 0, d[2] / l], [[0.02, 0.02], [0.02, 0.02], [0.02, 0.02], [0.02, 0.02]]);
+    const A = [fx, B, fz], Bq = [bx, B, bz], C = [bx, h, bz], D = [fx, h, fz];
+    if (u > 0) quad(A, Bq, C, D, [d[0] / l, 0, d[2] / l], [[0.02, 0.02], [0.02, 0.02], [0.02, 0.02], [0.02, 0.02]]);
+    else quad(Bq, A, D, C, [d[0] / l, 0, d[2] / l], [[0.02, 0.02], [0.02, 0.02], [0.02, 0.02], [0.02, 0.02]]);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
