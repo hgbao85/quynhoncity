@@ -8,12 +8,14 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "fetch-osm": "node scripts/fetch-osm.mjs",
-    "fetch-buildings": "node scripts/fetch-buildings.mjs"
+    "fetch-buildings": "node scripts/fetch-buildings.mjs",
+    "optimize-statue": "gltf-transform optimize public/models/statue-raw.glb public/models/statue.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify-ratio 0.12 --simplify-error 0.001"
   },
   "dependencies": {
     "three": "^0.170.0"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "vite": "^6.0.0"
   }
 }

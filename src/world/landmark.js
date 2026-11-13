@@ -2,6 +2,7 @@
 // (xem site.js). Vẫn là mô hình giản lược bằng khối hình học, chưa phải bản quét 3D.
 import * as THREE from 'three';
 import { YAW, STATUE_H, PLINTH, BASE, PLAZA, ARC, arcPoint } from './site.js';
+import { loadStatueModel } from './statue-model.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -50,6 +51,8 @@ export function createMonument(scene) {
   statue.scale.setScalar(STATUE_H / 1.8);
   statue.position.y = top;
   g.add(statue);
+  // mô hình 3D thật (nếu có public/models/statue.glb) sẽ thay cho tượng khối
+  loadStatueModel(statue, bronze);
 
   // ---- phù điêu đá xanh hình cánh cung ----
   const relief = new THREE.Mesh(reliefGeometry(), new THREE.MeshStandardMaterial({
