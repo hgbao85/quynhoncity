@@ -124,7 +124,7 @@ async function start() {
   for (let r = 1; r < 120 && !city.grid.walkable(s.x, s.z); r += 1) {
     const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
   }
-  if (params.has('debug')) window.game = { player, city };
+  if (params.has('debug')) window.game = { player, city, camera };
   const crowd = createCrowd(scene, city.grid, isTouch ? 30 : 50);
   const quest = createQuest(scene, data, ui);
   const minimap = createMinimap($('minimap'), data, city.tiles);
