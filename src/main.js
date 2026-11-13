@@ -8,6 +8,7 @@ import { buildCity } from './world/city.js';
 import { createSky } from './world/sky.js';
 import { createSea } from './world/sea.js';
 import { createMonument } from './world/landmark.js';
+import { createSquare } from './world/square.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
 import { createQuest } from './quest.js';
@@ -87,6 +88,7 @@ async function start() {
   const city = buildCity(data, foot.b);
   scene.add(city.group);
   const monument = createMonument(scene);
+  const plazaSq = createSquare(scene, city.square);
   const sky = createSky(scene, renderer);
   const sea = createSea(scene);
   const player = createPlayer(scene, camera, city.grid, canvas);
@@ -135,6 +137,8 @@ async function start() {
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
     monument.userData.setNight(env.night);
+    plazaSq.setNight(env.night);
+    plazaSq.update(t);
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;

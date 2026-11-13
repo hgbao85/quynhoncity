@@ -40,6 +40,14 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - Người cha đứng phía bắc, mặc áo dài, đội khăn xếp, một tay đặt lên ngực con; người con mặc sơ mi, quần âu.
 - Phía sau là phù điêu đá xanh hình cánh cung dài 76 m, vòm giữa cao 14,5 m. Hình chạm khắc từ nam ra bắc: Sài Gòn, tháp Chăm, Bình Định, Huế, Nam Đàn.
 - Ban đêm có đèn chiếu tượng và đèn hắt phù điêu.
+- Sân tượng đài lát **granite đỏ bóng** hình rẻ quạt, hai bậc cấp ở mép trước. Chân phù điêu có dải cỏ viền và hàng **cau cảnh trồng chậu** (theo ảnh chụp).
+- Hai bồn **hoa sen** trước bệ (bông nở, nụ, lá khum) như ngày khánh thành, và lẵng hoa đỏ dâng trước bệ.
+
+**Quảng trường Nguyễn Tất Thành** (bên kia đường An Dương Vương, theo ảnh chụp từ trên cao)
+- Sân tròn lát đá xám, có viền đá sẫm, một vòng tròn trong và 16 đường hướng tâm.
+- Giữa sân là lưới 7×7 ô cỏ bàn cờ; cột cờ cao 26 m có cờ bay; bốn cột đèn pha.
+- Phần đất còn lại là thảm cỏ và cây xanh. Ban đêm mặt sân sáng như được đèn pha chiếu.
+- Vị trí và kích thước sân được tính tự động: là hình tròn lớn nhất nằm gọn trong vùng quảng trường trên OSM.
 
 **Nhiệm vụ "Khám phá Quảng trường"**
 - Cột sáng vàng mở câu chuyện và 3 câu hỏi.
@@ -51,7 +59,7 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 
 ## Thay tượng bằng mô hình 3D thật
 
-**Mô hình hiện tại** (`public/models/statue.glb`, 448 KB, khoảng 69 nghìn đỉnh) được tạo bằng [Hunyuan3D-2](https://huggingface.co/spaces/tencent/Hunyuan3D-2) từ một ảnh báo Tuổi Trẻ (đã cắt chỉ còn hai pho tượng).
+**Mô hình hiện tại** (`public/models/statue.glb`, 448 KB, khoảng 69 nghìn đỉnh) được tạo bằng [Hunyuan3D-2](https://huggingface.co/spaces/tencent/Hunyuan3D-2) từ một ảnh báo Tuổi Trẻ (đã cắt chỉ còn hai pho tượng, xoá bớt hoa sen trang trí ở chân tượng bằng OpenCV).
 - Mô hình chỉ có hình khối, chất liệu đồng do game phủ lên.
 - **Giấy phép:** Tencent Hunyuan Community License. Không áp dụng ở EU, Anh, Hàn Quốc; cần đọc kỹ nếu dùng thương mại.
 - **Ảnh nguồn là ảnh báo có bản quyền.** Trước khi ra mắt nên tạo lại từ ảnh tự chụp.
@@ -96,6 +104,8 @@ npm run optimize-statue
 | `src/world/sea.js` | Shader mặt biển |
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
+| `src/world/square.js` | Quảng trường tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |

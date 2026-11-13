@@ -1,7 +1,8 @@
 // Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành, dựng theo ảnh chụp và số liệu báo chí
 // (xem site.js). Vẫn là mô hình giản lược bằng khối hình học, chưa phải bản quét 3D.
 import * as THREE from 'three';
-import { YAW, STATUE_H, PLINTH, BASE, PLAZA, ARC, arcPoint } from './site.js';
+import { YAW, STATUE_H, PLINTH, BASE, PLAZA, ARC, FAN, arcPoint, fanPolygon } from './site.js';
+import { lotusCluster, pottedPalmGeometries } from './plants.js';
 import { loadStatueModel } from './statue-model.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -10,21 +11,31 @@ export function createMonument(scene) {
   const g = new THREE.Group();
   g.rotation.y = YAW;
 
-  const paving = new THREE.MeshStandardMaterial({ map: pavingTexture(), roughness: 0.75 });
   const graniteDark = new THREE.MeshStandardMaterial({ color: '#6f6a66', roughness: 0.5 });
   const stone = new THREE.MeshStandardMaterial({ color: '#d4d2cc', roughness: 0.8 });
   const bronze = new THREE.MeshStandardMaterial({ color: '#94603f', roughness: 0.38, metalness: 0.55 });
 
-  // ---- sân lát đá ----
-  const pw = PLAZA.x1 - PLAZA.x0, pd = PLAZA.z1 - PLAZA.z0;
-  paving.map.repeat.set(pw / 8, pd / 8);
-  const plaza = new THREE.Mesh(new THREE.BoxGeometry(pw, PLAZA.y, pd), paving);
-  plaza.position.set((PLAZA.x0 + PLAZA.x1) / 2, PLAZA.y / 2, (PLAZA.z0 + PLAZA.z1) / 2);
-  plaza.receiveShadow = true;
-  g.add(plaza);
-  // viền đá sẫm quanh sân
-  const edge = new THREE.Mesh(new THREE.BoxGeometry(pw + 0.8, PLAZA.y * 0.8, pd + 0.8), graniteDark);
-  edge.position.copy(plaza.position); edge.position.y = PLAZA.y * 0.4; g.add(edge);
+  // ---- sân lát granite đỏ hình rẻ quạt, hai bậc cấp ở mép trước ----
+  const redGranite = new THREE.MeshStandardMaterial({ map: graniteTexture('#b5584b', '#94443a'), roughness: 0.22, metalness: 0.08 });
+  const redStep = new THREE.MeshStandardMaterial({ map: graniteTexture('#8f3c33', '#7a322b'), roughness: 0.35 });
+  redGranite.map.repeat.set(1 / 4.8, 1 / 4.8);
+  redStep.map.repeat.set(1 / 4.8, 1 / 4.8);
+  const slab = (grow, top, mat) => {
+    const shape = new THREE.Shape(fanPolygon(grow).map(([x, z]) => new THREE.Vector2(x, -z)));
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: top, bevelEnabled: false, curveSegments: 4 });
+    geo.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(geo, mat);
+    m.receiveShadow = true;
+    g.add(m);
+    return m;
+  };
+  slab(FAN.step * 2, 0.1, redStep);
+  slab(FAN.step, 0.2, redStep);
+  const plaza = slab(0, PLAZA.y, redGranite);
+  // đường viền đá sáng chạy song song mép trước sân
+  const band = new THREE.Mesh(new THREE.RingGeometry(FAN.r - 1.6, FAN.r - 1.1, 96, 1, -Math.PI * 0.5 - 1.05, 2.1),
+    new THREE.MeshStandardMaterial({ color: '#d9c3b0', roughness: 0.4 }));
+  band.rotation.x = -Math.PI / 2; band.position.set(0, PLAZA.y + 0.01, FAN.cz); g.add(band);
 
   // ---- bậc đá và bệ tượng (bê tông cốt thép bọc đồng, cao 4,7 m) ----
   const y0 = PLAZA.y;
@@ -63,8 +74,8 @@ export function createMonument(scene) {
   relief.material.bumpScale = 3;
   g.add(relief);
 
-  // ---- bồn hoa hai bên bệ tượng và dọc chân phù điêu ----
-  addFlowerBeds(g, y0);
+  // ---- hàng cau cảnh trồng chậu dọc chân phù điêu, khóm sen trước bệ ----
+  addPlants(g, y0);
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   plaza.castShadow = false;
@@ -359,16 +370,18 @@ function reliefTexture() {
 }
 
 // ===================== phụ trợ =====================
-function pavingTexture() {
-  const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+// Đá granite: nền màu + vân lốm đốm + ron lát 4×4 viên (mỗi viên 1,2 m)
+function graniteTexture(base, joint) {
+  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d');
-  x.fillStyle = '#c3bdb3'; x.fillRect(0, 0, S, S);
-  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
-    const v = 185 + ((i * 7 + j * 13) % 5) * 6;
-    x.fillStyle = `rgb(${v},${v - 4},${v - 10})`;
-    x.fillRect(i * 64 + 2, j * 64 + 2, 60, 60);
+  x.fillStyle = base; x.fillRect(0, 0, S, S);
+  for (let i = 0; i < 14000; i++) {
+    const v = Math.random();
+    x.fillStyle = v < 0.5 ? 'rgba(40,10,8,0.18)' : v < 0.85 ? 'rgba(255,220,200,0.14)' : 'rgba(10,10,10,0.35)';
+    x.fillRect(Math.random() * S, Math.random() * S, 1 + Math.random() * 3, 1 + Math.random() * 2);
   }
-  x.strokeStyle = '#8f8a82'; x.lineWidth = 3; x.strokeRect(1, 1, S - 2, S - 2);
+  x.strokeStyle = joint; x.lineWidth = 2;
+  for (let i = 0; i <= 4; i++) { const p = (i * S) / 4; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, S); x.stroke(); x.beginPath(); x.moveTo(0, p); x.lineTo(S, p); x.stroke(); }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
@@ -391,38 +404,60 @@ function plinthLabel() {
   return t;
 }
 
-function addFlowerBeds(g, y0) {
-  const border = new THREE.MeshStandardMaterial({ color: '#7b7670', roughness: 0.6 });
-  const soil = new THREE.MeshStandardMaterial({ color: '#3f7a35', roughness: 1 });
-  const beds = [];
-  // hai bồn chữ nhật hai bên bệ tượng và hai bồn dài trước mặt
-  for (const s of [-1, 1]) {
-    beds.push([s * 10.5, 0, 5, 8], [s * 9, 9.5, 8, 3]);
+function addPlants(g, y0) {
+  let seed = 7;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // dải cỏ viền và hàng cau chậu cách đều nhau dọc chân phù điêu
+  const hedgeMat = new THREE.MeshStandardMaterial({ color: '#3f7f34', roughness: 1 });
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    const u0 = -0.97 + (1.94 * i) / N, u1 = -0.97 + (1.94 * (i + 1)) / N;
+    const [x0, z0] = arcPoint(u0, -1.6), [x1, z1] = arcPoint(u1, -1.6);
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const h = new THREE.Mesh(new THREE.BoxGeometry(len + 0.05, 0.3, 1.2), hedgeMat);
+    h.position.set((x0 + x1) / 2, y0 + 0.15, (z0 + z1) / 2);
+    h.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+    g.add(h);
   }
-  // bồn cong dọc chân phù điêu
-  for (let u = -0.9; u <= 0.9; u += 0.15) {
-    if (Math.abs(u) < 0.1) continue;
-    const [px, pz] = arcPoint(u, -2.4);
-    beds.push([px, pz, 5, 2.2, -Math.atan2(px, -(pz - ARC.cz))]);
-  }
-  const flowerGeo = new THREE.SphereGeometry(0.16, 6, 5);
-  const cols = ['#e74c3c', '#ff7eb6', '#f1c40f', '#ffffff', '#ff4f6d'];
-  const flowers = cols.map(() => []);
-  for (const [bx, bz, w, d, rot = 0] of beds) {
-    const grp = new THREE.Group(); grp.position.set(bx, y0, bz); grp.rotation.y = rot; g.add(grp);
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, d), border); b.position.y = 0.25; grp.add(b);
-    const s = new THREE.Mesh(new THREE.BoxGeometry(w - 0.3, 0.1, d - 0.3), soil); s.position.y = 0.5; grp.add(s);
-    grp.updateMatrixWorld();
-    for (let i = 0; i < w * d * 3; i++) {
-      const p = V((Math.random() - 0.5) * (w - 0.5), 0.6 + Math.random() * 0.15, (Math.random() - 0.5) * (d - 0.5));
-      p.applyAxisAngle(V(0, 1, 0), rot).add(V(bx, y0, bz));
-      flowers[i % cols.length].push(p);
-    }
-  }
-  const mtx = new THREE.Matrix4();
-  cols.forEach((c, k) => {
-    const im = new THREE.InstancedMesh(flowerGeo, new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }), flowers[k].length);
-    flowers[k].forEach((p, i) => im.setMatrixAt(i, mtx.makeTranslation(p.x, p.y, p.z)));
-    g.add(im);
+  const { pot, trunk, fronds } = pottedPalmGeometries();
+  const spots = [];
+  for (let u = -0.92; u <= 0.921; u += 0.092) spots.push(arcPoint(u, -3.4));
+  const potMat = new THREE.MeshStandardMaterial({ color: '#5b4a3c', roughness: 0.6 });
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#7d6a4f', roughness: 0.9 });
+  const frondMat = new THREE.MeshStandardMaterial({ color: '#3d7a31', roughness: 0.8, side: THREE.DoubleSide });
+  const meshes = [pot, trunk, fronds].map((geo, k) => new THREE.InstancedMesh(geo, [potMat, trunkMat, frondMat][k], spots.length));
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+  spots.forEach(([x, z], i) => {
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand() * 6.28);
+    m.compose(new THREE.Vector3(x, y0, z), q, new THREE.Vector3(1, 1, 1));
+    meshes.forEach((mm) => mm.setMatrixAt(i, m));
   });
+  meshes.forEach((mm) => { mm.castShadow = true; g.add(mm); });
+
+  // hai bồn sen hai bên mặt trước bệ tượng (như ngày khánh thành)
+  const planterMat = new THREE.MeshStandardMaterial({ color: '#6d6762', roughness: 0.45 });
+  const waterMat = new THREE.MeshStandardMaterial({ color: '#2f5560', roughness: 0.1, metalness: 0.3 });
+  for (const side of [-1, 1]) {
+    const px = side * 4.6, pz = BASE.d / 2 + 1.5;
+    const planter = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.55, 2), planterMat);
+    planter.position.set(px, y0 + 0.275, pz); g.add(planter);
+    const water = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.02, 1.7), waterMat);
+    water.position.set(px, y0 + 0.5, pz); g.add(water);
+    const cl = lotusCluster(rand, { flowers: 3, buds: 2, leaves: 6, h: 1.3, spread: 1.0 });
+    cl.position.set(px, y0 + 0.5, pz); cl.scale.set(1.9, 1.7, 1.2); g.add(cl);
+  }
+  // lẵng hoa đỏ dâng trước bệ
+  const wreath = new THREE.Group();
+  const red = new THREE.MeshStandardMaterial({ color: '#c8102e', roughness: 0.6 });
+  const yel = new THREE.MeshStandardMaterial({ color: '#f4c430', roughness: 0.6 });
+  for (let i = 0; i < 40; i++) {
+    const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * 0.45;
+    const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), i % 5 ? red : yel);
+    f.position.set(Math.cos(a) * r, 0.55 + (0.45 - r) * 0.5, Math.sin(a) * r * 0.5);
+    wreath.add(f);
+  }
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.5, 10), planterMat);
+  stand.position.y = 0.25; wreath.add(stand);
+  wreath.position.set(0, y0 + BASE.h, PLINTH.d / 2 + 0.8);
+  g.add(wreath);
 }

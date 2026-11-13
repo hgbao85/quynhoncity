@@ -15,20 +15,49 @@ export const toLocal = (x, z) => [x * C - z * S, x * S + z * C];
 export const STATUE_H = 10.8;
 export const PLINTH = { w: 8.2, d: 6.4, h: 4.7 };
 export const BASE = { w: 13, d: 10.5, h: 0.45 }; // bậc đá quanh chân bệ
-export const PLAZA = { x0: -37, x1: 37, z0: -24, z1: 28, y: 0.12 }; // ~3.800 m² sân lát đá
+// Sân tượng đài lát đá granite đỏ hình rẻ quạt (theo ảnh chụp từ trên cao):
+// phía sau giới hạn bởi phù điêu, phía trước là cung tròn tâm (0, FAN.cz) bán kính FAN.r,
+// mép trước có hai bậc cấp (STEP mỗi bậc rộng ~0,7 m) xuống bãi cỏ.
+export const PLAZA = { y: 0.3 };
+export const FAN = { cz: -4, r: 35, step: 0.7 };
 // Phù điêu: cung tròn tâm (0, ARC.cz), bán kính ARC.r, dài 76 m
 export const ARC = { cz: 26, r: 46, len: 76, thick: 1.4 };
 
+const behindWall = (lx, lz) => Math.hypot(lx, lz - ARC.cz) > ARC.r + ARC.thick / 2 + 1.2;
+
+// Đa giác sân (toạ độ local), nới rộng thêm `grow` mét ở mép trước
+export function fanPolygon(grow = 0, n = 72) {
+  const pts = [];
+  const R = FAN.r + grow;
+  // giao điểm của cung trước với vòng phía sau phù điêu
+  const rb = ARC.r + ARC.thick / 2 + 1.2;
+  let a0 = 0;
+  for (let a = 0; a < Math.PI; a += 0.001) { if (behindWall(Math.sin(a) * R, FAN.cz + Math.cos(a) * R)) { a0 = a; break; } }
+  for (let i = 0; i <= n; i++) { const a = -a0 + (2 * a0 * i) / n; pts.push([Math.sin(a) * R, FAN.cz + Math.cos(a) * R]); }
+  const b0 = Math.asin((Math.sin(a0) * R) / rb);
+  for (let i = 0; i <= n; i++) { const b = b0 - (2 * b0 * i) / n; pts.push([Math.sin(b) * rb, ARC.cz - Math.cos(b) * rb]); }
+  return pts;
+}
+
+// 0: ngoài sân, 1: bậc thấp, 2: bậc cao, 3: mặt sân
+function fanLevel(lx, lz) {
+  if (behindWall(lx, lz)) return 0;
+  const r = Math.hypot(lx, lz - FAN.cz);
+  if (r < FAN.r) return 3;
+  if (r < FAN.r + FAN.step) return 2;
+  if (r < FAN.r + FAN.step * 2) return 1;
+  return 0;
+}
+
 export function inPlaza(x, z) {
   const [lx, lz] = toLocal(x, z);
-  return lx > PLAZA.x0 && lx < PLAZA.x1 && lz > PLAZA.z0 && lz < PLAZA.z1;
+  return fanLevel(lx, lz) > 0;
 }
 
 export function groundHeight(x, z) {
   const [lx, lz] = toLocal(x, z);
   if (Math.abs(lx) < BASE.w / 2 && Math.abs(lz) < BASE.d / 2) return PLAZA.y + BASE.h;
-  if (lx > PLAZA.x0 && lx < PLAZA.x1 && lz > PLAZA.z0 && lz < PLAZA.z1) return PLAZA.y;
-  return 0.05;
+  return [0.05, 0.1, 0.2, PLAZA.y][fanLevel(lx, lz)];
 }
 
 // Điểm trên phù điêu theo tham số u ∈ [-1, 1] (từ nam sang bắc)

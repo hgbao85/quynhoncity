@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import {
   Grid, FREE, SEA, ROAD, BUILDING, OPEN, KEEP, pointInPoly, buildLandPolygon, roadWidth, rng,
 } from './geo.js';
-import { toWorld, PLAZA, PLINTH, arcPoint } from './site.js';
+import { toWorld, PLINTH, arcPoint, fanPolygon } from './site.js';
+import { squareLayout } from './square.js';
 
 const MAJOR = new Set(['primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link']);
 const FOOT = new Set(['footway', 'path', 'cycleway', 'steps', 'pedestrian']);
@@ -148,10 +149,13 @@ export function buildCity(data, footprints = []) {
   grid.a.fill(SEA);
   grid.fillPoly(land, FREE);
 
+  const square = squareLayout(data);
+
   // 2) Mặt đất
   const ground = new Builder();
   addFlat(ground, land, 0, new THREE.Color('#9c9486'));
-  const areaCol = { park: '#6fa45c', beach: '#d9be84', plaza: '#b8b0a3', water: '#4f8fb5' };
+  // quảng trường: nền là thảm cỏ, sân tròn lát đá được dựng riêng trong square.js
+  const areaCol = { park: '#6fa45c', beach: '#d9be84', plaza: '#76a861', water: '#4f8fb5' };
   const areaY = { beach: 0.02, park: 0.03, plaza: 0.035, water: 0.01 };
   for (const a of data.areas) {
     if (!near(a.pts)) continue;
@@ -208,7 +212,7 @@ export function buildCity(data, footprints = []) {
 
   // vùng cấm xây quanh tượng đài
   const rectW = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => toWorld(a, b));
-  grid.fillPoly(rectW(PLAZA.x0 - 2, PLAZA.z0 - 2, PLAZA.x1 + 2, PLAZA.z1 + 2), KEEP);
+  grid.fillPoly(fanPolygon(4).map(([a, b]) => toWorld(a, b)), KEEP);
   grid.fillPoly(rectW(-PLINTH.w / 2, -PLINTH.d / 2, PLINTH.w / 2, PLINTH.d / 2), BUILDING);
   for (let u = -1; u < 1; u += 0.02) grid.fillSegment(toWorld(...arcPoint(u)), toWorld(...arcPoint(u + 0.02)), 0.7, BUILDING);
 
@@ -243,6 +247,7 @@ export function buildCity(data, footprints = []) {
     if (Math.abs(cx) > LIMIT + 100 || Math.abs(cz) > LIMIT + 100) continue;
     const cell = grid.get(cx, cz);
     if (cell === SEA || cell === KEEP) continue;
+    if (square && Math.hypot(cx - square.cx, cz - square.cz) < square.R + 3) continue; // sân quảng trường (nhà bạt sự kiện bị nhận nhầm là nhà)
     realCount++;
     const area = polyArea(pts);
     const obb = orientedBox(pts);
@@ -327,6 +332,7 @@ export function buildCity(data, footprints = []) {
   for (let k = 0; k < 9000 && palms.length + trees.length < 900; k++) {
     const x = (R() * 2 - 1) * LIMIT, z = (R() * 2 - 1) * LIMIT;
     if (grid.get(x, z) !== OPEN || Math.hypot(x, z) < 55) continue; // để trống quanh tượng đài
+    if (square && Math.hypot(x - square.cx, z - square.cz) < square.R + 5) continue; // sân tròn quảng trường
     const isBeach = data.areas.some((a) => a.kind === 'beach' && pointInPoly(x, z, a.pts));
     if (isBeach && R() < 0.75) continue; // bãi cát thưa cây hơn
     (isBeach || R() < 0.45 ? palms : trees).push([x, z, R()]);
@@ -356,7 +362,7 @@ export function buildCity(data, footprints = []) {
   group.add(iTrunk, iCrown, iBlob, iStem);
 
   console.info(`[city] OSM ${data.buildings.length} nhà, footprint thật ${realCount} → ${generated} căn, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây`);
-  return { group, grid, land, buildingMat, lampMat, lampSpots };
+  return { group, grid, land, buildingMat, lampMat, lampSpots, square };
 }
 
 function polyArea(pts) {
