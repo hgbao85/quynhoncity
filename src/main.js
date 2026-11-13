@@ -11,6 +11,7 @@ import { createMonument } from './world/landmark.js';
 import { createSquare } from './world/square.js';
 import { createBeach } from './world/beach.js';
 import { createMountains } from './world/mountains.js';
+import { createHighlands } from './world/highlands.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
 import { createQuest } from './quest.js';
@@ -94,6 +95,7 @@ async function start() {
   const plazaSq = createSquare(scene, city.square);
   const beach = createBeach(scene, data, city.grid);
   const mountains = createMountains(scene);
+  const highlands = createHighlands(scene, city.grid);
   const sky = createSky(scene, renderer);
   const sea = createSea(scene);
   const player = createPlayer(scene, camera, city.grid, canvas);
@@ -148,6 +150,7 @@ async function start() {
     beach.update(t, env.night);
     beach.setNight(env.night);
     mountains.update(scene.fog.color, env.night);
+    highlands.setNight(env.night);
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;

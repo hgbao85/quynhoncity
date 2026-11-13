@@ -65,6 +65,11 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - Chụp ảnh lưu niệm gần tượng.
 - Hoàn thành cả ba thì nhận 1 mảnh ghép. Tiến độ lưu trong trình duyệt.
 
+**Quán Highlands Coffee, 162A Nguyễn Huệ** (góc Nguyễn Huệ – Đô Đốc Bảo, dựng theo ảnh Street View tháng 9-2026)
+- Tầng trệt cột kem, kính sẫm; dải diềm đen hoa văn chữ V có chữ HIGHLANDS COFFEE chạy liền mặt Đô Đốc Bảo, góc bo và mặt Nguyễn Huệ; đèn rọi dưới diềm.
+- Tầng 2 lam gỗ có hoa văn ô vuông ở góc; mái đua xám; tháp bo tròn ở góc với ban công cong lan can đen, huy hiệu tròn đỏ; các tầng trên ốp gạch tím nhạt, cửa sổ khung nâu đỏ.
+- Vỉa hè có dù đỏ, bàn ghế sắt đỏ và hàng dừa cao. Ban đêm quán sáng đèn vàng ấm.
+
 **Núi bao quanh** (phông nền xa, vị trí ước lượng): dãy Bà Hỏa – Vũng Chua phía tây, Ghềnh Ráng phía nam nhô ra biển, bán đảo Phương Mai phía bắc, một hòn đảo nhỏ ngoài khơi. Núi tự phủ sương theo khoảng cách.
 
 **Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút tua nhanh +3 giờ.
@@ -117,6 +122,7 @@ npm run optimize-statue
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
 | `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/highlands.js` | Toà nhà quán Highlands Coffee góc Nguyễn Huệ – Đô Đốc Bảo |
 | `src/world/mountains.js` | Núi phông nền quanh thành phố |
 | `src/world/beach.js` | Mép sóng, cát ướt, lối đi dạo ven biển, đèn, ghế đá, dù lá |
 | `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
@@ -130,6 +136,7 @@ npm run optimize-statue
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).
 - **Hướng tượng (60°) và kích thước sân** được suy ra từ bản đồ OSM, chưa đo thực địa.
 - **Bản quyền dữ liệu nhà (Microsoft, ODbL):** giữ dòng ghi nguồn trên màn hình.
+- **Tên Highlands Coffee là thương hiệu đã đăng ký.** Bản mẫu chỉ vẽ chữ đơn giản, không chép logo gốc. Trước khi phát hành công khai hay dùng thương mại cần xin phép chủ thương hiệu, hoặc đổi sang tên chung.
 - **Câu chuyện và câu hỏi** trong `src/quest.js` cần kiểm chứng lại với nguồn chính thống.
 - **Bản quyền OpenStreetMap (ODbL):** phải giữ dòng ghi nguồn "© OpenStreetMap" trên màn hình.
 - **Nhà ống tự sinh là ngẫu nhiên,** không đúng từng căn ngoài đời.

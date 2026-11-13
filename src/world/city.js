@@ -6,6 +6,7 @@ import {
 } from './geo.js';
 import { toWorld, PLINTH, arcPoint, PLAZA_LOCAL, offsetPolygon, nearPlaza, FRONT_WALK } from './site.js';
 import { squareLayout } from './square.js';
+import { inHighlandsZone } from './highlands.js';
 
 const MAJOR = new Set(['primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link']);
 const FOOT = new Set(['footway', 'path', 'cycleway', 'steps', 'pedestrian']);
@@ -289,6 +290,7 @@ export function buildCity(data, footprints = []) {
     if (cell === SEA || cell === KEEP) continue;
     if (square && square.isPaved(cx, cz)) continue; // sân quảng trường (nhà bạt sự kiện bị nhận nhầm là nhà)
     if (nearPlaza(cx, cz)) continue;
+    if (inHighlandsZone(cx, cz)) continue; // toà nhà quán Highlands được dựng riêng
     realCount++;
     const area = polyArea(pts);
     const obb = orientedBox(pts);
@@ -369,7 +371,7 @@ export function buildCity(data, footprints = []) {
         // cây bóng mát trên vỉa hè hai bên, xen giữa các cột đèn
         for (const side of [1, -1]) {
           const tx = p[0] + ux * (s + 15) - uz * (hw + 2.4) * side, tz = p[1] + uz * (s + 15) + ux * (hw + 2.4) * side;
-          if (Math.abs(tx) < LIMIT && Math.abs(tz) < LIMIT && R() < 0.7 && grid.get(tx, tz) === FREE && !nearPlaza(tx, tz)) streetTrees.push([tx, tz, R()]);
+          if (Math.abs(tx) < LIMIT && Math.abs(tz) < LIMIT && R() < 0.7 && grid.get(tx, tz) === FREE && !nearPlaza(tx, tz) && !inHighlandsZone(tx, tz)) streetTrees.push([tx, tz, R()]);
         }
       }
       acc = (acc + L) % 30;
