@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {
   Grid, FREE, SEA, ROAD, BUILDING, OPEN, KEEP, pointInPoly, buildLandPolygon, roadWidth, rng,
 } from './geo.js';
-import { toWorld, PLINTH, arcPoint, fanPolygon } from './site.js';
+import { toWorld, PLINTH, arcPoint, PLAZA_LOCAL, offsetPolygon, nearPlaza, FRONT_WALK } from './site.js';
 import { squareLayout } from './square.js';
 
 const MAJOR = new Set(['primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link']);
@@ -212,7 +212,8 @@ export function buildCity(data, footprints = []) {
 
   // vùng cấm xây quanh tượng đài
   const rectW = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => toWorld(a, b));
-  grid.fillPoly(fanPolygon(4).map(([a, b]) => toWorld(a, b)), KEEP);
+  grid.fillPoly(offsetPolygon(PLAZA_LOCAL, 3).map(([a, b]) => toWorld(a, b)), KEEP);
+  grid.fillPoly(FRONT_WALK, OPEN, (v) => v !== ROAD);
   grid.fillPoly(rectW(-PLINTH.w / 2, -PLINTH.d / 2, PLINTH.w / 2, PLINTH.d / 2), BUILDING);
   for (let u = -1; u < 1; u += 0.02) grid.fillSegment(toWorld(...arcPoint(u)), toWorld(...arcPoint(u + 0.02)), 0.7, BUILDING);
 
@@ -247,22 +248,35 @@ export function buildCity(data, footprints = []) {
     if (Math.abs(cx) > LIMIT + 100 || Math.abs(cz) > LIMIT + 100) continue;
     const cell = grid.get(cx, cz);
     if (cell === SEA || cell === KEEP) continue;
-    if (square && Math.hypot(cx - square.cx, cz - square.cz) < square.R + 3) continue; // sân quảng trường (nhà bạt sự kiện bị nhận nhầm là nhà)
+    if (square && square.isPaved(cx, cz)) continue; // sân quảng trường (nhà bạt sự kiện bị nhận nhầm là nhà)
+    if (nearPlaza(cx, cz)) continue;
     realCount++;
     const area = polyArea(pts);
     const obb = orientedBox(pts);
     const coast = distCoast(cx, cz);
     if (area < 45) { putHouse(pts, 1 + Math.floor(R() * 2), pick()); continue; }
+    // khối nhà sâu 24–60 m thường là hai dãy nhà ống quay lưng vào nhau: tách đôi theo chiều sâu
+    if (obb.short > 24 && obb.short < 60 && obb.long > 30) {
+      const vx = -obb.uz, vz = obb.ux, mid = obb.t0 + obb.short / 2;
+      for (const half of [clipStrip(pts, vx, vz, obb.t0 - 1, mid - 0.1), clipStrip(pts, vx, vz, mid + 0.1, obb.t0 + obb.short + 1)]) {
+        if (half.length >= 3 && polyArea(half) > 20) rowHouses(half, orientedBox(half));
+      }
+      continue;
+    }
     if (obb.short > 24 || obb.long < 9) {
       // khối lớn: khách sạn, chung cư, công trình công cộng
       const big = area > 900;
-      const floors = big && coast < 220 ? 9 + Math.floor(R() * 14)
+      // mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn cao 12–18 tầng
+      const floors = big && coast < 220 ? (R() < 0.25 ? 12 + Math.floor(R() * 7) : 4 + Math.floor(R() * 6))
         : big ? 4 + Math.floor(R() * 4)
           : 2 + Math.floor(R() * 4);
       putHouse(pts, floors, pick());
       continue;
     }
-    // dãy nhà ống: cắt thành lô rộng 4–6 m vuông góc với cạnh dài
+    rowHouses(pts, obb);
+  }
+  // dãy nhà ống: cắt thành lô rộng 4–6 m vuông góc với cạnh dài
+  function rowHouses(pts, obb) {
     const { ux, uz, s0, s1 } = obb;
     let s = s0;
     while (s < s1 - 0.5) {
@@ -331,11 +345,30 @@ export function buildCity(data, footprints = []) {
   const palms = [], trees = [];
   for (let k = 0; k < 9000 && palms.length + trees.length < 900; k++) {
     const x = (R() * 2 - 1) * LIMIT, z = (R() * 2 - 1) * LIMIT;
-    if (grid.get(x, z) !== OPEN || Math.hypot(x, z) < 55) continue; // để trống quanh tượng đài
-    if (square && Math.hypot(x - square.cx, z - square.cz) < square.R + 5) continue; // sân tròn quảng trường
+    if (grid.get(x, z) !== OPEN || nearPlaza(x, z)) continue; // để trống sân tượng đài
+    if (square && square.isPaved(x, z)) continue; // sân lát đá quảng trường
     const isBeach = data.areas.some((a) => a.kind === 'beach' && pointInPoly(x, z, a.pts));
-    if (isBeach && R() < 0.75) continue; // bãi cát thưa cây hơn
-    (isBeach || R() < 0.45 ? palms : trees).push([x, z, R()]);
+    if (isBeach) continue; // cây ven biển do beach.js trồng theo hàng
+    (R() < 0.45 ? palms : trees).push([x, z, R()]);
+  }
+  // Trồng dày trong các công viên gần trung tâm (rừng cây quanh tượng đài, quảng trường).
+  // Dải công viên sát biển trồng phi lao xen dừa như ngoài đời.
+  const pines = [];
+  for (const a of data.areas) {
+    if (a.kind !== 'park' && a.kind !== 'plaza') continue;
+    const xs = a.pts.map((p) => p[0]), zs = a.pts.map((p) => p[1]);
+    const x0 = Math.max(-LIMIT, Math.min(...xs)), x1 = Math.min(LIMIT, Math.max(...xs));
+    const z0 = Math.max(-LIMIT, Math.min(...zs)), z1 = Math.min(LIMIT, Math.max(...zs));
+    for (let x = x0; x < x1; x += 8) for (let z = z0; z < z1; z += 8) {
+      const px = x + (R() - 0.5) * 6, pz = z + (R() - 0.5) * 6;
+      if (!pointInPoly(px, pz, a.pts) || grid.get(px, pz) !== OPEN) continue;
+      if (nearPlaza(px, pz) || (square && square.isPaved(px, pz))) continue;
+      if (data.areas.some((b) => b.kind === 'beach' && pointInPoly(px, pz, b.pts))) continue;
+      const seaside = distCoast(px, pz) < 140;
+      const r = R();
+      if (seaside) { if (r < 0.88) (r < 0.45 ? pines : palms).push([px, pz, R()]); }
+      else if (R() < 0.8) (r < 0.25 ? palms : trees).push([px, pz, R()]);
+    }
   }
   const { trunk, crown } = palmGeometries();
   const trunkMat = new THREE.MeshStandardMaterial({ color: '#8b7355', roughness: 1 });
@@ -360,8 +393,27 @@ export function buildCity(data, footprints = []) {
   });
   iBlob.castShadow = iStem.castShadow = true;
   group.add(iTrunk, iCrown, iBlob, iStem);
+  // phi lao: thân cao mảnh, tán thưa rủ xuống thành nhiều chùm lệch nhau, màu xanh xám
+  const pineCrown = mergeSimple([
+    new THREE.IcosahedronGeometry(1.6, 0).scale(1, 1.7, 1).translate(0.4, 13.2, 0.2),
+    new THREE.IcosahedronGeometry(1.5, 0).scale(1, 1.8, 1).translate(-1.2, 11.2, 0.5),
+    new THREE.IcosahedronGeometry(1.4, 0).scale(1, 1.9, 1).translate(1.1, 10.4, -0.8),
+    new THREE.IcosahedronGeometry(1.2, 0).scale(1, 2.0, 1).translate(-0.3, 9.0, -1.0),
+    new THREE.IcosahedronGeometry(1.1, 0).scale(1, 1.9, 1).translate(0.9, 8.4, 1.0),
+  ]);
+  pineCrown.computeVertexNormals();
+  const pineStem = new THREE.CylinderGeometry(0.11, 0.22, 13, 6).translate(0, 6.5, 0);
+  const iPine = new THREE.InstancedMesh(pineCrown, new THREE.MeshStandardMaterial({ color: '#647d5c', roughness: 1, flatShading: true }), pines.length);
+  const iPineStem = new THREE.InstancedMesh(pineStem, trunkMat, pines.length);
+  pines.forEach(([x, z, r], i) => {
+    const s = 0.75 + r * 0.5;
+    m.compose(new THREE.Vector3(x, 0, z), qn.setFromAxisAngle(new THREE.Vector3(0, 1, 0), r * 6), new THREE.Vector3(s * 0.9, s, s * 0.9));
+    iPine.setMatrixAt(i, m); iPineStem.setMatrixAt(i, m);
+  });
+  iPine.castShadow = iPineStem.castShadow = true;
+  group.add(iPine, iPineStem);
 
-  console.info(`[city] OSM ${data.buildings.length} nhà, footprint thật ${realCount} → ${generated} căn, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây`);
+  console.info(`[city] OSM ${data.buildings.length} nhà, footprint thật ${realCount} → ${generated} căn, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây, ${pines.length} phi lao`);
   return { group, grid, land, buildingMat, lampMat, lampSpots, square };
 }
 

@@ -9,6 +9,7 @@ import { createSky } from './world/sky.js';
 import { createSea } from './world/sea.js';
 import { createMonument } from './world/landmark.js';
 import { createSquare } from './world/square.js';
+import { createBeach } from './world/beach.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
 import { createQuest } from './quest.js';
@@ -28,6 +29,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { THREE, scene }); // ?debug: soi scene từ console
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.3, 12000);
 // ánh sáng môi trường cho vật liệu kim loại (tượng đồng, cột đèn)
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
@@ -89,6 +91,7 @@ async function start() {
   scene.add(city.group);
   const monument = createMonument(scene);
   const plazaSq = createSquare(scene, city.square);
+  const beach = createBeach(scene, data, city.grid);
   const sky = createSky(scene, renderer);
   const sea = createSea(scene);
   const player = createPlayer(scene, camera, city.grid, canvas);
@@ -139,6 +142,8 @@ async function start() {
     monument.userData.setNight(env.night);
     plazaSq.setNight(env.night);
     plazaSq.update(t);
+    beach.update(t, env.night);
+    beach.setNight(env.night);
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;

@@ -1,7 +1,7 @@
 // Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành, dựng theo ảnh chụp và số liệu báo chí
 // (xem site.js). Vẫn là mô hình giản lược bằng khối hình học, chưa phải bản quét 3D.
 import * as THREE from 'three';
-import { YAW, STATUE_H, PLINTH, BASE, PLAZA, ARC, FAN, arcPoint, fanPolygon } from './site.js';
+import { YAW, STATUE_H, PLINTH, BASE, PLAZA, ARC, arcPoint, PLAZA_LOCAL, PLAZA_STEPS, BEDS_WORLD, FRONT_WALK, toLocal } from './site.js';
 import { lotusCluster, pottedPalmGeometries } from './plants.js';
 import { loadStatueModel } from './statue-model.js';
 
@@ -15,27 +15,31 @@ export function createMonument(scene) {
   const stone = new THREE.MeshStandardMaterial({ color: '#d4d2cc', roughness: 0.8 });
   const bronze = new THREE.MeshStandardMaterial({ color: '#94603f', roughness: 0.38, metalness: 0.55 });
 
-  // ---- sân lát granite đỏ hình rẻ quạt, hai bậc cấp ở mép trước ----
+  // ---- sân lát granite đỏ (hình đo từ ảnh vệ tinh), hai bậc cấp quanh mép ----
   const redGranite = new THREE.MeshStandardMaterial({ map: graniteTexture('#b5584b', '#94443a'), roughness: 0.22, metalness: 0.08 });
   const redStep = new THREE.MeshStandardMaterial({ map: graniteTexture('#8f3c33', '#7a322b'), roughness: 0.35 });
   redGranite.map.repeat.set(1 / 4.8, 1 / 4.8);
   redStep.map.repeat.set(1 / 4.8, 1 / 4.8);
-  const slab = (grow, top, mat) => {
-    const shape = new THREE.Shape(fanPolygon(grow).map(([x, z]) => new THREE.Vector2(x, -z)));
+  const slab = (poly, top, mat, y = 0) => {
+    const shape = new THREE.Shape(poly.map(([x, z]) => new THREE.Vector2(x, -z)));
     const geo = new THREE.ExtrudeGeometry(shape, { depth: top, bevelEnabled: false, curveSegments: 4 });
     geo.rotateX(-Math.PI / 2);
     const m = new THREE.Mesh(geo, mat);
+    m.position.y = y;
     m.receiveShadow = true;
     g.add(m);
     return m;
   };
-  slab(FAN.step * 2, 0.1, redStep);
-  slab(FAN.step, 0.2, redStep);
-  const plaza = slab(0, PLAZA.y, redGranite);
-  // đường viền đá sáng chạy song song mép trước sân
-  const band = new THREE.Mesh(new THREE.RingGeometry(FAN.r - 1.6, FAN.r - 1.1, 96, 1, -Math.PI * 0.5 - 1.05, 2.1),
-    new THREE.MeshStandardMaterial({ color: '#d9c3b0', roughness: 0.4 }));
-  band.rotation.x = -Math.PI / 2; band.position.set(0, PLAZA.y + 0.01, FAN.cz); g.add(band);
+  slab(PLAZA_STEPS[0], 0.1, redStep);
+  slab(PLAZA_STEPS[1], 0.2, redStep);
+  const plaza = slab(PLAZA_LOCAL, PLAZA.y, redGranite);
+  // vỉa hè lát đá xám sáng trước sân, giáp đường An Dương Vương
+  const walkMat = new THREE.MeshStandardMaterial({ map: graniteTexture('#cfcac2', '#a9a39a'), roughness: 0.7 });
+  walkMat.map.repeat.set(1 / 4.8, 1 / 4.8);
+  slab(FRONT_WALK.map(([x, z]) => toLocal(x, z)), 0.07, walkMat);
+  // hai bồn cây bụi ở hai góc sân
+  const shrub = new THREE.MeshStandardMaterial({ color: '#3d7a32', roughness: 1 });
+  for (const bed of BEDS_WORLD) slab(bed.map(([x, z]) => toLocal(x, z)), 0.9, shrub);
 
   // ---- bậc đá và bệ tượng (bê tông cốt thép bọc đồng, cao 4,7 m) ----
   const y0 = PLAZA.y;

@@ -19,6 +19,7 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - `?h=20`: đặt giờ (ví dụ 20 giờ để xem cảnh đêm).
 - `?at=157,44`: đặt vị trí xuất phát x,z (mét, gốc tại tượng đài; x hướng đông, z hướng nam).
 - `?yaw=225`: đặt hướng camera (độ).
+- `?debug`: đưa `scene` và `THREE` ra `window` để soi trong console.
 
 ## Có gì trong bản mẫu
 
@@ -40,14 +41,20 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - Người cha đứng phía bắc, mặc áo dài, đội khăn xếp, một tay đặt lên ngực con; người con mặc sơ mi, quần âu.
 - Phía sau là phù điêu đá xanh hình cánh cung dài 76 m, vòm giữa cao 14,5 m. Hình chạm khắc từ nam ra bắc: Sài Gòn, tháp Chăm, Bình Định, Huế, Nam Đàn.
 - Ban đêm có đèn chiếu tượng và đèn hắt phù điêu.
-- Sân tượng đài lát **granite đỏ bóng** hình rẻ quạt, hai bậc cấp ở mép trước. Chân phù điêu có dải cỏ viền và hàng **cau cảnh trồng chậu** (theo ảnh chụp).
+- **Bố cục đo từ ảnh vệ tinh** (Esri World Imagery): phù điêu là cung tròn bán kính ~74 m, cách tượng 19 m; tượng quay hướng 62° (vuông góc đường An Dương Vương).
+- Sân lát **granite đỏ bóng**: mặt sau theo cung phù điêu, mặt trước là cạnh thẳng dọc vỉa hè, hai góc có bồn cây bụi, hai bậc cấp quanh mép. Trước sân là vỉa hè đá xám rộng ~14 m.
+- Chân phù điêu có dải cỏ viền và hàng **cau cảnh trồng chậu** (theo ảnh chụp). Phía sau phù điêu là rừng cây dày.
 - Hai bồn **hoa sen** trước bệ (bông nở, nụ, lá khum) như ngày khánh thành, và lẵng hoa đỏ dâng trước bệ.
 
-**Quảng trường Nguyễn Tất Thành** (bên kia đường An Dương Vương, theo ảnh chụp từ trên cao)
-- Sân tròn lát đá xám, có viền đá sẫm, một vòng tròn trong và 16 đường hướng tâm.
-- Giữa sân là lưới 7×7 ô cỏ bàn cờ; cột cờ cao 26 m có cờ bay; bốn cột đèn pha.
-- Phần đất còn lại là thảm cỏ và cây xanh. Ban đêm mặt sân sáng như được đèn pha chiếu.
-- Vị trí và kích thước sân được tính tự động: là hình tròn lớn nhất nằm gọn trong vùng quảng trường trên OSM.
+**Quảng trường Nguyễn Tất Thành** (bên kia đường An Dương Vương, đo từ ảnh vệ tinh)
+- Sân lát đá xám hình **nửa tròn**: tâm nằm ngay mép đường An Dương Vương, có bệ gạch đỏ và cột cờ cao 26 m.
+- Vòng đá sẫm bán kính ~76 m viền răng cưa; 9 tia đá sẫm toả ra phía biển, mỗi tia cách nhau 20°.
+- Lưới ô cỏ vuông 4 m (bước 7,5 m) nằm trong vòng, sát phía đường; bốn cột đèn pha.
+- Phía đông bắc và phía nam là rừng cây dày. Ban đêm mặt sân sáng như được đèn pha chiếu.
+
+**Bãi biển và đường Xuân Diệu**
+- Từ phố ra biển: đường → dải công viên trồng dày **phi lao xen dừa** → **lối đi dạo lát đá** có viền gạch đỏ, đèn trang trí hai bóng, ghế đá → bãi cát có các cụm **dù lá** và ghế nằm → **mép sóng** có bọt trắng vỗ vào bờ và cát ướt (shader).
+- Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
 **Nhiệm vụ "Khám phá Quảng trường"**
 - Cột sáng vàng mở câu chuyện và 3 câu hỏi.
@@ -104,7 +111,8 @@ npm run optimize-statue
 | `src/world/sea.js` | Shader mặt biển |
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
-| `src/world/square.js` | Quảng trường tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/beach.js` | Mép sóng, cát ướt, lối đi dạo ven biển, đèn, ghế đá, dù lá |
 | `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
