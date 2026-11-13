@@ -11,7 +11,7 @@ import { buildTileArrays } from './tilework.js';
 
 const LOAD = 1250, UNLOAD = 1600, DETAIL = 650, WORKERS = 2;
 
-export function createTileManager(parent, grid, world, mats) {
+export function createTileManager(parent, grid, world, mats, terrain = null) {
   const shared = sharedGeometries();
   const sharedSet = new Set(Object.values(shared));
   const list = new Set(world.tiles.list);
@@ -25,7 +25,10 @@ export function createTileManager(parent, grid, world, mats) {
   let workers = [];
   try {
     workers = Array.from({ length: WORKERS }, () => new Worker(new URL('./tileworker.js', import.meta.url), { type: 'module' }));
-    for (const w of workers) w.onmessage = (e) => onResult(e.data.key, e.data.res, e.data.error);
+    for (const w of workers) {
+      w.onmessage = (e) => onResult(e.data.key, e.data.res, e.data.error);
+      if (terrain) w.postMessage({ type: 'terrain', meta: terrain.meta, data: terrain.data }); // gửi trước mọi ô
+    }
   } catch { workers = []; } // trình duyệt không hỗ trợ module worker: dựng ngay trên luồng chính
   let rr = 0;
 
@@ -95,6 +98,7 @@ export function createTileManager(parent, grid, world, mats) {
     inst(res.inst.bush, [[shared.bush, mats.bush]], detail, false);
     inst(res.inst.lamp, [[shared.lampPole, mats.pole]]);
     inst(res.inst.lamp, [[shared.lampHead, mats.lamp]], detail, false);
+    inst(res.inst.forest, [[shared.forest, mats.forest]]);
 
     const tm = performance.now();
     // lô nhà → lưới va chạm và danh sách cho bản đồ nhỏ
@@ -194,5 +198,7 @@ function sharedGeometries() {
     bush: new THREE.IcosahedronGeometry(0.9, 0).scale(1.3, 0.75, 1.1).translate(0, 0.5, 0),
     lampPole: new THREE.CylinderGeometry(0.07, 0.1, 7.5, 6).translate(0, 3.75, 0),
     lampHead: new THREE.BoxGeometry(0.35, 0.16, 1.1).translate(0, 7.45, 0.45),
+    // tán rừng: khối thấp đa giác, không thân (nhìn từ xa thấy tán phủ kín đồi)
+    forest: new THREE.IcosahedronGeometry(3.4, 0).scale(1, 0.85, 1).translate(0, 3.2, 0),
   };
 }

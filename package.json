@@ -11,13 +11,15 @@
     "fetch-buildings": "node scripts/fetch-buildings.mjs",
     "optimize-statue": "gltf-transform optimize public/models/statue-raw.glb public/models/statue.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify-ratio 0.12 --simplify-error 0.001",
     "build-tiles": "node scripts/build-tiles.mjs",
-    "build-data": "npm run fetch-osm && npm run fetch-buildings && npm run build-tiles"
+    "build-data": "npm run fetch-osm && npm run fetch-buildings && npm run fetch-terrain && npm run build-tiles",
+    "fetch-terrain": "node scripts/fetch-terrain.mjs"
   },
   "dependencies": {
     "three": "^0.170.0"
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.5.1",
+    "pngjs": "^7.0.0",
     "vite": "^6.0.0"
   }
 }

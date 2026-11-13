@@ -11,8 +11,13 @@ import { squareLayout } from '../src/world/square.js';
 import { inHighlandsZone } from '../src/world/highlands.js';
 import { polyArea, orientedBox, clipSlab, clipStrip } from '../src/world/lots.js';
 import { buildWorldGrid } from '../src/world/worldgrid.js';
+import { setTerrain, heightAt } from '../src/world/terrain.js';
 
 const t0 = Date.now();
+// địa hình (npm run fetch-terrain): dùng để trồng rừng trên đồi
+const terrainMeta = JSON.parse(readFileSync('.cache/terrain-meta.json', 'utf8'));
+const tb = readFileSync('public/data/terrain.bin');
+setTerrain(terrainMeta, new Int16Array(tb.buffer, tb.byteOffset, tb.byteLength / 2));
 const osm = JSON.parse(readFileSync('.cache/osm.json', 'utf8'));
 const foot = JSON.parse(readFileSync('.cache/footprints.json', 'utf8')).b.map((flat) => {
   const pts = [];
@@ -63,7 +68,7 @@ const tiles = new Map();
 const T = (x, z) => {
   const [i, j] = tileOf(x, z);
   const k = `${i}_${j}`;
-  if (!tiles.has(k)) tiles.set(k, { b: [], t: [], r: [], palm: [], tree: [], pine: [], bush: [], lamp: [] });
+  if (!tiles.has(k)) tiles.set(k, { b: [], t: [], r: [], palm: [], tree: [], pine: [], bush: [], lamp: [], forest: [] });
   return tiles.get(k);
 };
 const dm = (v) => Math.round(v * 10);
@@ -214,6 +219,19 @@ for (const a of areas) {
   }
 }
 
+// ---- rừng trên đồi núi: tán cây dày theo lưới 18 m, thưa dần ở chân đồi ----
+let forest = 0;
+for (let x = x0; x < x1; x += 18) for (let z = z0; z < z1; z += 18) {
+  const px = x + (R() - 0.5) * 14, pz = z + (R() - 0.5) * 14;
+  const h = heightAt(px, pz);
+  if (h < 2) continue;
+  const v = grid.get(px, pz);
+  if (v === SEA || v === ROAD || v === BUILDING || v === KEEP) continue;
+  if (R() > Math.min(0.85, h / 12)) continue;
+  put('forest', px, pz, R()); forest++;
+}
+console.log(`  rừng trên đồi: ${forest} tán cây`);
+
 // ---- ghi file ----
 rmSync('public/data/tiles', { recursive: true, force: true });
 mkdirSync('public/data/tiles', { recursive: true });
@@ -225,7 +243,7 @@ for (const [k, t] of tiles) {
   writeFileSync(`public/data/tiles/${k}.json`, s);
   index.push(k);
 }
-const out = { ...world, buildings: world.buildings.map((b) => ({ pts: b.pts, h: b.h, name: b.name })), tiles: { size: TILE, nx: TILES_X, nz: TILES_Z, list: index } };
+const out = { ...world, terrain: terrainMeta, buildings: world.buildings.map((b) => ({ pts: b.pts, h: b.h, name: b.name })), tiles: { size: TILE, nx: TILES_X, nz: TILES_Z, list: index } };
 writeFileSync('public/data/world.json', JSON.stringify(out));
 console.log(`Footprint dùng ${used}/${foot.length} → ${lots} lô nhà, ${tiles.size} ô, ${(bytes / 1e6).toFixed(1)} MB dữ liệu ô; ` +
   `world.json ${(JSON.stringify(out).length / 1e6).toFixed(2)} MB; mất ${((Date.now() - t0) / 1000).toFixed(1)} s`);

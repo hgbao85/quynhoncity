@@ -10,7 +10,8 @@ import { createSea } from './world/sea.js';
 import { createMonument } from './world/landmark.js';
 import { createSquare } from './world/square.js';
 import { createBeach } from './world/beach.js';
-import { createMountains } from './world/mountains.js';
+import { createTerrain } from './world/terrainmesh.js';
+import { setTerrain } from './world/terrain.js';
 import { createHighlands } from './world/highlands.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
@@ -84,14 +85,19 @@ const weatherIcon = (code, night) =>
 
 // ---------- dựng thế giới ----------
 async function start() {
-  const data = await fetch('/data/world.json').then((r) => r.json());
+  const [data, tbin] = await Promise.all([
+    fetch('/data/world.json').then((r) => r.json()),
+    fetch('/data/terrain.bin').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
+  ]);
+  let terrain = null;
+  if (tbin && data.terrain) { terrain = { meta: data.terrain, data: new Int16Array(tbin) }; setTerrain(terrain.meta, terrain.data); }
   await new Promise((r) => setTimeout(r, 30)); // cho màn hình chờ kịp hiện
-  const city = buildCity(data);
+  const city = buildCity(data, terrain);
   scene.add(city.group);
   const monument = createMonument(scene);
   const plazaSq = createSquare(scene, city.square);
   const beach = createBeach(scene, data, city.grid);
-  const mountains = createMountains(scene);
+  const terrainMesh = createTerrain(scene);
   const highlands = createHighlands(scene, city.grid);
   const sky = createSky(scene, renderer);
   const sea = createSea(scene);
@@ -159,7 +165,7 @@ async function start() {
     plazaSq.update(t);
     beach.update(t, env.night);
     beach.setNight(env.night);
-    mountains.update(scene.fog.color, env.night);
+    terrainMesh.update(scene.fog.color, env.night);
     highlands.setNight(env.night);
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục

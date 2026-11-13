@@ -33,7 +33,8 @@ npm run build-data
 Lệnh này chạy lần lượt:
 1. `fetch-osm`: tải đường, vùng, bờ biển, nhà OSM, dựng đa giác đất liền → `.cache/osm.json`.
 2. `fetch-buildings`: tải footprint nhà Microsoft (~24 MB) → `.cache/footprints.json`.
-3. `build-tiles`: cắt nhà ống, ước lượng số tầng, gắn mái hiên cửa hàng, trồng cây, đặt đèn, chia thành ô 400 m → `public/data/world.json` và `public/data/tiles/*.json` (khoảng 8 MB).
+3. `fetch-terrain`: tải độ cao địa hình (AWS Terrain Tiles, dữ liệu SRTM ~30 m) → `public/data/terrain.bin` (0,7 MB): lưới 15 m cho vùng bản đồ, lưới 75 m cho phông nền ~30 km.
+4. `build-tiles`: trồng rừng trên đồi, cắt nhà ống, ước lượng số tầng, gắn mái hiên cửa hàng, trồng cây, đặt đèn, chia thành ô 400 m → `public/data/world.json` và `public/data/tiles/*.json` (khoảng 8 MB).
 
 **Cách game tải bản đồ lớn:**
 - Lúc vào game chỉ dựng các ô trong bán kính 700 m quanh điểm xuất phát.
@@ -90,7 +91,11 @@ Lệnh này chạy lần lượt:
 - Tầng 2 lam gỗ có hoa văn ô vuông ở góc; mái đua xám; tháp bo tròn ở góc với ban công cong lan can đen, huy hiệu tròn đỏ; các tầng trên ốp gạch tím nhạt, cửa sổ khung nâu đỏ.
 - Vỉa hè có dù đỏ, bàn ghế sắt đỏ và hàng dừa cao. Ban đêm quán sáng đèn vàng ấm.
 
-**Núi bao quanh** (phông nền xa, vị trí ước lượng): dãy Bà Hỏa – Vũng Chua phía tây, Ghềnh Ráng phía nam nhô ra biển, bán đảo Phương Mai phía bắc, một hòn đảo nhỏ ngoài khơi. Núi tự phủ sương theo khoảng cách.
+**Địa hình thật** (dữ liệu độ cao SRTM qua AWS Terrain Tiles)
+- Đồi núi đúng hình dạng và độ cao: Bà Hỏa giữa thành phố, Vũng Chua phía tây nam, Ghềnh Ráng phía nam, cùng phông nền ~30 km: bán đảo Phương Mai, các đảo, đồng bằng và núi phía tây.
+- Dữ liệu gốc là độ cao bề mặt (lẫn cả mái nhà, tán cây) nên **phố dưới ~14 m được làm phẳng**; đồi núi chuyển tiếp mềm từ 14 m lên và thấp hơn thật khoảng 20 m.
+- Đồi phủ rừng (khoảng 23 nghìn tán cây). Nhà, đường, đèn, cây, người chơi, người đi dạo đều bám theo độ cao; đường lên dốc được chia nhỏ để không chìm vào sườn đồi; camera không chui vào sườn đồi.
+- Bản đồ nhỏ tô xanh đậm dần theo độ cao đồi.
 
 **Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút tua nhanh +3 giờ.
 
@@ -148,7 +153,9 @@ npm run optimize-statue
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
 | `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
 | `src/world/highlands.js` | Toà nhà quán Highlands Coffee góc Nguyễn Huệ – Đô Đốc Bảo |
-| `src/world/mountains.js` | Núi Bà Hỏa, Vũng Chua, Ghềnh Ráng, Phương Mai (vị trí đo trên ảnh vệ tinh, độ cao ước lượng) |
+| `scripts/fetch-terrain.mjs` | Tải và làm phẳng dữ liệu độ cao |
+| `src/world/terrain.js` | Đọc độ cao tại một điểm (dùng chung game, Web Worker, script) |
+| `src/world/terrainmesh.js` | Mặt đồi núi gần và phông nền địa hình xa |
 | `src/world/beach.js` | Mép sóng, cát ướt, lối đi dạo ven biển, đèn, ghế đá, dù lá |
 | `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
@@ -158,7 +165,8 @@ npm run optimize-statue
 
 ## Cần lưu ý trước khi ra mắt
 
-- **Núi là hình ước lượng.** Vị trí đúng theo ảnh vệ tinh nhưng hình dạng và độ cao chưa thật; bước sau sẽ dùng dữ liệu độ cao (DEM).
+- **Địa hình độ phân giải ~30 m:** đủ cho đồi núi nhìn từ xa, nhưng đi bộ trên sườn đồi sẽ thấy mặt đất góc cạnh. Dữ liệu là độ cao bề mặt nên đỉnh đồi có thể lệch vài mét do tán cây.
+- **Cảnh nặng hơn:** khoảng 1,5 triệu tam giác ở điểm xuất phát (trước khi lọc phần ngoài khung nhìn). Cần đo trên điện thoại thật; nếu chậm có thể giảm mật độ rừng, cây hoặc độ chi tiết địa hình xa.
 - **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm Thị Nại đã xây nhà): script tự bỏ vùng nước có trên 15 nhà bên trong.
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).

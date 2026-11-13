@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { ROAD_TYPES, PALETTE, BOUNDS } from './config.js';
 import { roadWidth, pointInPoly, CELL } from './geo.js';
 import { Builder, UP, addBuilding, addQuadUp, MAJOR, FOOT } from './citykit.js';
+import { heightAt } from './terrain.js';
 
 const palette = PALETTE.map((c) => new THREE.Color(c));
 const roadCols = new Map();
@@ -24,14 +25,18 @@ export function buildTileArrays(data) {
   for (const L of data.b) {
     const pts = [];
     for (let k = 3; k < L.length; k += 2) pts.push([L[k] / 10, L[k + 1] / 10]);
-    addBuilding(bld, pts, L[0] / 10, palette[L[1]]);
+    // nhà trên dốc: chân tường từ điểm thấp nhất, mái ngang tầm điểm cao nhất + chiều cao nhà
+    let lo = 1e9, hi = -1e9;
+    for (const [x, z] of pts) { const y = heightAt(x, z); lo = Math.min(lo, y); hi = Math.max(hi, y); }
+    addBuilding(bld, pts, L[0] / 10 + (hi - lo), palette[L[1]], lo);
     lots.push(pts.length, ...pts.flat());
-    if (L[2] >= 0) addShopfront(shop, pts, L[2], white);
+    if (L[2] >= 0) addShopfront(shop, pts, L[2], white, lo);
   }
   for (const L of data.t) {
     const pts = [];
-    for (let k = 3; k < L.length; k += 2) pts.push([L[k] / 10, L[k + 1] / 10]);
-    addBuilding(bld, pts, L[1] / 10, palette[L[2]], L[0] / 10);
+    let hi = 0;
+    for (let k = 3; k < L.length; k += 2) { pts.push([L[k] / 10, L[k + 1] / 10]); hi = Math.max(hi, heightAt(L[k] / 10, L[k + 1] / 10)); }
+    addBuilding(bld, pts, L[1] / 10, palette[L[2]], L[0] / 10 + hi);
   }
 
   // ---- đường ----
@@ -42,22 +47,33 @@ export function buildTileArrays(data) {
     const p = [data.r[k + 1] / 10, data.r[k + 2] / 10], q = [data.r[k + 3] / 10, data.r[k + 4] / 10];
     const hw = roadWidth(type) / 2, y = FOOT.has(type) ? 0.045 : MAJOR.has(type) ? 0.07 : 0.06;
     const col = roadColor(type);
+    // đường lên dốc: chia nhỏ đoạn 6 m, nâng theo độ cao lớn hơn của hai mép để mặt đường không chìm
+    const ht = (x, z) => y + heightAt(x, z);
     // đĩa tròn ở hai đầu để các đoạn nối liền nhau
     for (const c of [p, q]) {
+      const yc = ht(c[0], c[1]);
       for (let s = 0; s < 8; s++) {
         const a0 = (s / 8) * Math.PI * 2, a1 = ((s + 1) / 8) * Math.PI * 2;
-        roads.tri([c[0], y, c[1]], [c[0] + Math.cos(a1) * hw, y, c[1] + Math.sin(a1) * hw], [c[0] + Math.cos(a0) * hw, y, c[1] + Math.sin(a0) * hw], UP, col);
+        roads.tri([c[0], yc, c[1]], [c[0] + Math.cos(a1) * hw, yc, c[1] + Math.sin(a1) * hw], [c[0] + Math.cos(a0) * hw, yc, c[1] + Math.sin(a0) * hw], UP, col);
       }
     }
     const dx = q[0] - p[0], dz = q[1] - p[1], L = Math.hypot(dx, dz);
     if (L < 0.01) continue;
     const nx = (-dz / L) * hw, nz = (dx / L) * hw;
-    addQuadUp(roads, [p[0] + nx, y, p[1] + nz], [q[0] + nx, y, q[1] + nz], [q[0] - nx, y, q[1] - nz], [p[0] - nx, y, p[1] - nz], col);
+    const hilly = heightAt(p[0], p[1]) > 0 || heightAt(q[0], q[1]) > 0 || heightAt((p[0] + q[0]) / 2, (p[1] + q[1]) / 2) > 0;
+    const n = hilly ? Math.max(1, Math.ceil(L / 6)) : 1;
+    const edgeY = (x, z) => Math.max(ht(x + nx, z + nz), ht(x - nx, z - nz));
+    for (let s = 0; s < n; s++) {
+      const a = [p[0] + (dx * s) / n, p[1] + (dz * s) / n], b = [p[0] + (dx * (s + 1)) / n, p[1] + (dz * (s + 1)) / n];
+      const ya = edgeY(a[0], a[1]), yb = edgeY(b[0], b[1]);
+      addQuadUp(roads, [a[0] + nx, ya, a[1] + nz], [b[0] + nx, yb, b[1] + nz], [b[0] - nx, yb, b[1] - nz], [a[0] - nx, ya, a[1] - nz], col);
+    }
     if (MAJOR.has(type)) {
       const ux = dx / L, uz = dz / L, px = -uz * 0.08, pz = ux * 0.08;
       for (let s = 2; s + 3 < L; s += 8) {
-        const a = [p[0] + ux * s, y + 0.01, p[1] + uz * s], b2 = [p[0] + ux * (s + 3), y + 0.01, p[1] + uz * (s + 3)];
-        addQuadUp(marks, [a[0] + px, a[1], a[2] + pz], [b2[0] + px, a[1], b2[2] + pz], [b2[0] - px, a[1], b2[2] - pz], [a[0] - px, a[1], a[2] - pz], lineCol);
+        const a = [p[0] + ux * s, 0, p[1] + uz * s], b2 = [p[0] + ux * (s + 3), 0, p[1] + uz * (s + 3)];
+        a[1] = edgeY(a[0], a[2]) + 0.01; b2[1] = edgeY(b2[0], b2[2]) + 0.01;
+        addQuadUp(marks, [a[0] + px, a[1], a[2] + pz], [b2[0] + px, b2[1], b2[2] + pz], [b2[0] - px, b2[1], b2[2] - pz], [a[0] - px, a[1], a[2] - pz], lineCol);
       }
     }
   }
@@ -70,11 +86,13 @@ export function buildTileArrays(data) {
     return out;
   };
   const inst = {
-    palm: mats(data.palm, (x, z, r) => { const s = 0.8 + r * 0.5; M.compose(V.set(x, 0, z), Q.setFromEuler(E.set((r - 0.5) * 0.15, r * 6.28, (r - 0.5) * 0.12)), S.set(s, s, s)); }),
-    tree: mats(data.tree, (x, z, r) => { const s = 0.7 + r * 0.7; M.compose(V.set(x, 0, z), Q.setFromAxisAngle(Y, r * 6), S.set(s, s * (0.9 + r * 0.3), s)); }),
-    pine: mats(data.pine, (x, z, r) => { const s = 0.75 + r * 0.5; M.compose(V.set(x, 0, z), Q.setFromAxisAngle(Y, r * 6), S.set(s * 0.9, s, s * 0.9)); }),
-    bush: mats(data.bush, (x, z, r) => { const s = 0.7 + r * 0.9; M.compose(V.set(x, 0, z), Q.setFromAxisAngle(Y, r * 6), S.set(s, s, s)); }),
-    lamp: mats(data.lamp, (x, z, yaw) => { M.compose(V.set(x, 0, z), Q.setFromAxisAngle(Y, yaw), S.set(1, 1, 1)); }),
+    palm: mats(data.palm, (x, z, r) => { const s = 0.8 + r * 0.5; M.compose(V.set(x, heightAt(x, z), z), Q.setFromEuler(E.set((r - 0.5) * 0.15, r * 6.28, (r - 0.5) * 0.12)), S.set(s, s, s)); }),
+    tree: mats(data.tree, (x, z, r) => { const s = 0.7 + r * 0.7; M.compose(V.set(x, heightAt(x, z), z), Q.setFromAxisAngle(Y, r * 6), S.set(s, s * (0.9 + r * 0.3), s)); }),
+    pine: mats(data.pine, (x, z, r) => { const s = 0.75 + r * 0.5; M.compose(V.set(x, heightAt(x, z), z), Q.setFromAxisAngle(Y, r * 6), S.set(s * 0.9, s, s * 0.9)); }),
+    bush: mats(data.bush, (x, z, r) => { const s = 0.7 + r * 0.9; M.compose(V.set(x, heightAt(x, z), z), Q.setFromAxisAngle(Y, r * 6), S.set(s, s, s)); }),
+    lamp: mats(data.lamp, (x, z, yaw) => { M.compose(V.set(x, heightAt(x, z), z), Q.setFromAxisAngle(Y, yaw), S.set(1, 1, 1)); }),
+    // tán rừng trên đồi: hơi chìm xuống dốc để không hở chân
+    forest: mats(data.forest || [], (x, z, r) => { const s = 1 + r * 0.7; M.compose(V.set(x, heightAt(x, z) - 0.6, z), Q.setFromAxisAngle(Y, r * 6), S.set(s, s * (0.8 + r * 0.5), s)); }),
   };
 
   return {
@@ -92,7 +110,7 @@ export function transferables(res) {
 }
 
 // Mái hiên bạt sọc + biển hiệu cho một lô (mã do build-tiles tạo: cạnh*1000 + mái*100 + biển*10 + độ vươn)
-function addShopfront(shop, pts, code, white) {
+function addShopfront(shop, pts, code, white, base = 0) {
   const edge = Math.floor(code / 1000), aw = Math.floor(code / 100) % 10, sg = Math.floor(code / 10) % 10, outI = code % 10;
   let p = pts[edge], q = pts[(edge + 1) % pts.length];
   if (!p || !q) return;
@@ -104,7 +122,7 @@ function addShopfront(shop, pts, code, white) {
   const ux = dx / len, uz = dz / len, inset = 0.12;
   p = [p[0] + ux * inset, p[1] + uz * inset]; q = [q[0] - ux * inset, q[1] - uz * inset];
   const [u0, v0, u1, v1] = [aw * 0.25, 0.75, aw * 0.25 + 0.25, 1];
-  const out = 1.5 + outI * 0.12, y0 = 3.1, y1 = 2.55;
+  const out = 1.5 + outI * 0.12, y0 = 3.1 + base, y1 = 2.55 + base;
   const A = [p[0] + nx * 0.02, y0, p[1] + nz * 0.02], B = [q[0] + nx * 0.02, y0, q[1] + nz * 0.02];
   const C = [q[0] + nx * out, y1, q[1] + nz * out], D = [p[0] + nx * out, y1, p[1] + nz * out];
   const nAw = [nx * 0.35, 0.94, nz * 0.35];
@@ -115,8 +133,8 @@ function addShopfront(shop, pts, code, white) {
   shop.tri(D, E, F, [nx, 0, nz], white, [u0, v0 + 0.02], [u1, v0], [u0, v0]);
   const col = sg % 4, row = 1 + Math.floor(sg / 4);
   const su0 = col * 0.25, su1 = su0 + 0.25, sv1 = 1 - row * 0.25, sv0 = sv1 - 0.25;
-  const P = [p[0] + nx * 0.06, 3.35, p[1] + nz * 0.06], Qp = [q[0] + nx * 0.06, 3.35, q[1] + nz * 0.06];
-  const Q2 = [Qp[0], 4.35, Qp[2]], P2 = [P[0], 4.35, P[2]];
+  const P = [p[0] + nx * 0.06, 3.35 + base, p[1] + nz * 0.06], Qp = [q[0] + nx * 0.06, 3.35 + base, q[1] + nz * 0.06];
+  const Q2 = [Qp[0], 4.35 + base, Qp[2]], P2 = [P[0], 4.35 + base, P[2]];
   shop.tri(P, Qp, Q2, [nx, 0, nz], white, [su0, sv0], [su1, sv0], [su1, sv1]);
   shop.tri(P, Q2, P2, [nx, 0, nz], white, [su0, sv0], [su1, sv1], [su0, sv1]);
 }

@@ -9,6 +9,7 @@
 // Hệ toạ độ "local": gốc tại tâm tượng, +z là mặt trước (hướng ra biển), +x là bên phải
 // của người đứng trước tượng nhìn vào (phía bắc ngoài đời, nơi tượng người cha đứng).
 import { pointInPoly } from './geo.js';
+import { heightAt } from './terrain.js';
 
 export const YAW = (62 * Math.PI) / 180;
 const C = Math.cos(YAW), S = Math.sin(YAW);
@@ -98,11 +99,14 @@ export function inPlaza(x, z) { const [lx, lz] = toLocal(x, z); return level(lx,
 // Gần sân (dùng để không trồng cây, không xây nhà lên sân)
 export function nearPlaza(x, z) { const [lx, lz] = toLocal(x, z); return pointInPoly(lx, lz, NEAR) || inFrontWalk(x, z); }
 
-export function groundHeight(x, z) {
+function siteHeight(x, z) {
   const [lx, lz] = toLocal(x, z);
   if (Math.abs(lx) < BASE.w / 2 && Math.abs(lz) < BASE.d / 2) return PLAZA.y + BASE.h;
   return Math.max(0.05, level(lx, lz));
 }
+
+// Độ cao mặt đất cho người chơi và người đi dạo: khu tượng đài + địa hình đồi núi
+export function groundHeight(x, z) { return siteHeight(x, z) + heightAt(x, z); }
 
 // Có bị chặn bởi bệ tượng hoặc phù điêu không (dùng cho va chạm chính xác hơn lưới 2 m)
 export function blocked(x, z) {

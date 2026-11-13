@@ -1,6 +1,7 @@
 // Bản đồ nhỏ hình tròn, xoay theo hướng camera, người chơi ở giữa.
 // Thành phố lớn nên không vẽ sẵn cả bản đồ: chỉ vẽ một mảng 1 km quanh người chơi (1 px = 1 m),
 // vẽ lại khi người chơi đi xa tâm mảng hoặc khi có ô nhà mới được tải.
+import { heightAt } from './world/terrain.js';
 const COL = { sea: '#7fb7d9', land: '#efe9dd', park: '#b5d99c', beach: '#f3e2b0', plaza: '#dcd6cc', water: '#7fb7d9', road: '#ffffff', major: '#f6c873', building: '#c9b9a6' };
 const PATCH = 1024, REDRAW = 280;
 
@@ -30,6 +31,13 @@ export function createMinimap(canvas, data, tiles) {
     g.fillStyle = COL.sea; g.fillRect(0, 0, PATCH, PATCH);
     for (const l of land) if (hit(l.box)) { path(l.pts); g.closePath(); g.fillStyle = COL.land; g.fill(); }
     for (const a of areas) if (hit(a.box)) { path(a.pts); g.closePath(); g.fillStyle = COL[a.kind] || COL.park; g.fill(); }
+    // đồi núi: tô xanh đậm dần theo độ cao (mẫu mỗi 8 m)
+    for (let px = 0; px < PATCH; px += 8) for (let pz = 0; pz < PATCH; pz += 8) {
+      const h = heightAt(x0 + px + 4, z0 + pz + 4);
+      if (h < 1) continue;
+      g.fillStyle = `rgba(70,110,60,${Math.min(0.85, 0.3 + h / 250)})`;
+      g.fillRect(px, pz, 8, 8);
+    }
     g.fillStyle = COL.building;
     tiles.forEachLot(x0, z0, x1, z1, (pts) => { path(pts); g.closePath(); g.fill(); });
     for (const b of blds) if (hit(b.box)) { path(b.pts); g.closePath(); g.fill(); }

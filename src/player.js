@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { createPerson } from './character.js';
 import { groundHeight, blocked, toWorld, YAW } from './world/site.js';
+import { heightAt } from './world/terrain.js';
 
 export { groundHeight };
 
@@ -94,7 +95,7 @@ export function createPlayer(scene, camera, grid, dom) {
     const tgt = new THREE.Vector3(s.pos.x, s.pos.y + 1.5, s.pos.z);
     const cp = s.camPitch, cy = s.camYaw;
     const want = tgt.clone().add(new THREE.Vector3(Math.sin(cy) * Math.cos(cp), Math.sin(cp), Math.cos(cy) * Math.cos(cp)).multiplyScalar(s.camDist));
-    want.y = Math.max(want.y, s.pos.y + 0.6);
+    want.y = Math.max(want.y, s.pos.y + 0.6, heightAt(want.x, want.z) + 1.2);
     camera.position.lerp(want, Math.min(1, dt * 10));
     camera.lookAt(tgt);
   }
