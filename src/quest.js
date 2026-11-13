@@ -1,8 +1,9 @@
 // Nhiệm vụ "Khám phá Quảng trường": cột sáng + câu đố, tìm chi tiết, chụp ảnh lưu niệm.
 import * as THREE from 'three';
 import { pointInPoly } from './world/geo.js';
+import { toWorld, PLAZA } from './world/site.js';
 
-const STORY = `Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành nằm cạnh Quảng trường Trung tâm Quy Nhơn, hướng ra biển.
+const STORY = `Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành khánh thành ngày 18-5-2017 tại Quảng trường Nguyễn Tất Thành, hướng ra biển. Tượng đồng cao 10,8 m trên bệ cao 4,7 m; phía sau là bức phù điêu đá xanh hình cánh cung dài 76 m.
 Ông Nguyễn Sinh Sắc là thân phụ của Chủ tịch Hồ Chí Minh; Nguyễn Tất Thành là tên của Bác thời trẻ.
 Khoảng năm 1909–1910, ông Nguyễn Sinh Sắc làm tri huyện Bình Khê (vùng Tây Sơn ngày nay) và người con Nguyễn Tất Thành đã vào thăm cha, trước khi tiếp tục hành trình vào phía Nam.
 Tượng đài ghi dấu kỷ niệm của hai cha con trên đất Bình Định xưa.`;
@@ -21,7 +22,7 @@ export function createQuest(scene, data, ui) {
   const prog = Object.assign({ quiz: 0, found: [], photo: false, piece: false }, load());
 
   // ---- cột sáng ----
-  const PILLAR = new THREE.Vector3(0, 0.25, 26);
+  const PILLAR = new THREE.Vector3(toWorld(-9, 17)[0], PLAZA.y + 0.05, toWorld(-9, 17)[1]);
   const beamMat = new THREE.MeshBasicMaterial({ color: '#ffd76a', transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 30, 24, 1, true).translate(0, 15, 0), beamMat);
   const ring = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.5, 32).rotateX(-Math.PI / 2), beamMat);
@@ -41,7 +42,7 @@ export function createQuest(scene, data, ui) {
   const plaza = data.areas.find((a) => a.kind === 'plaza');
   const plazaSpot = plaza ? centroid(plaza.pts) : [130, 55];
   const DETAILS = [
-    { id: 'plaque', pos: [0, 4.2], y: 1.0, title: 'Tấm biển trên bệ tượng', text: 'Bệ tượng khắc tên hai cha con: Nguyễn Sinh Sắc và Nguyễn Tất Thành.' },
+    { id: 'plaque', pos: toWorld(0, 6), y: 1.0, title: 'Tấm biển trên bệ tượng', text: 'Bệ tượng khắc tên hai cha con: Nguyễn Sinh Sắc và Nguyễn Tất Thành.' },
     { id: 'beach', pos: beachSpot, y: 0.1, title: 'Bãi biển Quy Nhơn', text: 'Bãi biển cong hình vầng trăng chạy dọc trung tâm thành phố, ngay sát quảng trường.' },
     { id: 'plaza', pos: plazaSpot, y: 0.1, title: 'Quảng trường Trung tâm', text: 'Quảng trường rộng mở ra biển, là nơi tổ chức lễ hội và sự kiện lớn của thành phố.' },
   ];

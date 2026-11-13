@@ -2,24 +2,17 @@
 // camera góc nhìn thứ ba xoay bằng kéo chuột / vuốt màn hình.
 import * as THREE from 'three';
 import { createPerson } from './character.js';
+import { groundHeight, blocked, toWorld, YAW } from './world/site.js';
 
-export function groundHeight(x, z) {
-  // bậc cấp tượng đài ở (0,0)
-  const r = Math.hypot(x, z);
-  if (r < 9.5) return 1.0;
-  if (r < 12.5) return 0.75;
-  if (r < 16) return 0.5;
-  if (r < 22) return 0.25;
-  return 0.05;
-}
+export { groundHeight };
 
 export function createPlayer(scene, camera, grid, dom) {
   const person = createPerson({ shirt: '#2f7f86', pants: '#45556e', backpack: '#6b5a44' });
   scene.add(person.root);
 
   const s = {
-    pos: new THREE.Vector3(0, 0, 34), facing: Math.PI, speed: 0, phase: 0,
-    camYaw: 0, camPitch: 0.32, camDist: 9, mana: 100,
+    pos: new THREE.Vector3(toWorld(0, 26)[0], 0, toWorld(0, 26)[1]), facing: YAW + Math.PI, speed: 0, phase: 0,
+    camYaw: YAW, camPitch: 0.32, camDist: 9, mana: 100,
   };
   const keys = new Set();
   const joy = { x: 0, y: 0, active: false };
@@ -58,7 +51,7 @@ export function createPlayer(scene, camera, grid, dom) {
 
   const free = (x, z) => {
     const r = 0.35;
-    if (Math.abs(x) < 3.9 && Math.abs(z) < 2.9) return false; // bệ tượng
+    if (blocked(x, z)) return false; // bệ tượng, phù điêu
     return grid.walkable(x + r, z) && grid.walkable(x - r, z) && grid.walkable(x, z + r) && grid.walkable(x, z - r);
   };
 

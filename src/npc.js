@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { createPerson, SHIRTS, PANTS, SKINS, HAIRS } from './character.js';
 import { OPEN, KEEP } from './world/geo.js';
-import { groundHeight } from './player.js';
+import { groundHeight, blocked } from './world/site.js';
 
 export function createCrowd(scene, grid, count = 45) {
   const people = [];
@@ -11,7 +11,7 @@ export function createCrowd(scene, grid, count = 45) {
     for (let k = 0; k < 60; k++) {
       const x = cx + (Math.random() * 2 - 1) * r, z = cz + (Math.random() * 2 - 1) * r;
       const v = grid.get(x, z);
-      if ((v === OPEN || v === KEEP) && !(Math.abs(x) < 4.5 && Math.abs(z) < 3.5)) return [x, z];
+      if ((v === OPEN || v === KEEP) && !blocked(x, z)) return [x, z];
     }
     return null;
   };

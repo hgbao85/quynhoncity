@@ -79,9 +79,12 @@ const weatherIcon = (code, night) =>
 
 // ---------- dựng thế giới ----------
 async function start() {
-  const data = await (await fetch('/data/quynhon.json')).json();
+  const [data, foot] = await Promise.all([
+    fetch('/data/quynhon.json').then((r) => r.json()),
+    fetch('/data/buildings.json').then((r) => (r.ok ? r.json() : { b: [] })).catch(() => ({ b: [] })),
+  ]);
   await new Promise((r) => setTimeout(r, 30)); // cho màn hình chờ kịp hiện
-  const city = buildCity(data);
+  const city = buildCity(data, foot.b);
   scene.add(city.group);
   const monument = createMonument(scene);
   const sky = createSky(scene, renderer);

@@ -4,10 +4,10 @@ import * as THREE from 'three';
 import {
   Grid, FREE, SEA, ROAD, BUILDING, OPEN, KEEP, pointInPoly, buildLandPolygon, roadWidth, rng,
 } from './geo.js';
+import { toWorld, PLAZA, PLINTH, arcPoint } from './site.js';
 
 const MAJOR = new Set(['primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link']);
 const FOOT = new Set(['footway', 'path', 'cycleway', 'steps', 'pedestrian']);
-const FRONTAGE = new Set(['primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'living_street']);
 const LIMIT = 820; // chỉ dựng chi tiết trong bán kính này (mét) quanh tượng đài
 
 // ---------- bộ gom hình học vào một BufferGeometry ----------
@@ -51,7 +51,7 @@ function addFlat(b, ptsIn, y, col, uv = [0.01, 0.01]) {
 }
 
 // Toà nhà: tường đứng (có UV để dán cửa sổ) + mái bằng
-function addBuilding(b, ptsIn, h, col) {
+function addBuilding(b, ptsIn, h, col, base = 0) {
   const pts = clean(ptsIn);
   if (pts.length < 3) return;
   const roof = col.clone().multiplyScalar(0.72);
@@ -66,11 +66,12 @@ function addBuilding(b, ptsIn, h, col) {
     const u0 = run / 16, u1 = (run + len) / 16, v1 = h / 13.2;
     run += len;
     const n = [nx, 0, nz];
-    const a = [p[0], 0, p[1]], bb = [q[0], 0, q[1]], c = [q[0], h, q[1]], d = [p[0], h, p[1]];
+    const top = base + h;
+    const a = [p[0], base, p[1]], bb = [q[0], base, q[1]], c = [q[0], top, q[1]], d = [p[0], top, p[1]];
     b.tri(a, bb, c, n, col, [u0, 0], [u1, 0], [u1, v1]);
     b.tri(a, c, d, n, col, [u0, 0], [u1, v1], [u0, v1]);
   }
-  addFlat(b, pts, h, roof);
+  addFlat(b, pts, base + h, roof);
 }
 
 // ---------- kết cấu cửa sổ vẽ bằng canvas ----------
@@ -136,7 +137,7 @@ function mergeSimple(geos) {
   return out;
 }
 
-export function buildCity(data) {
+export function buildCity(data, footprints = []) {
   const group = new THREE.Group();
   const grid = new Grid();
   const R = rng(20251113);
@@ -206,7 +207,10 @@ export function buildCity(data) {
   group.add(roadMesh, new THREE.Mesh(marks.geometry(), roadMat));
 
   // vùng cấm xây quanh tượng đài
-  for (let a = 0; a < 40; a += 2) for (let t = 0; t < Math.PI * 2; t += 0.2) grid.set(Math.cos(t) * a, Math.sin(t) * a, KEEP);
+  const rectW = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => toWorld(a, b));
+  grid.fillPoly(rectW(PLAZA.x0 - 2, PLAZA.z0 - 2, PLAZA.x1 + 2, PLAZA.z1 + 2), KEEP);
+  grid.fillPoly(rectW(-PLINTH.w / 2, -PLINTH.d / 2, PLINTH.w / 2, PLINTH.d / 2), BUILDING);
+  for (let u = -1; u < 1; u += 0.02) grid.fillSegment(toWorld(...arcPoint(u)), toWorld(...arcPoint(u + 0.02)), 0.7, BUILDING);
 
   // 4) Toà nhà OSM
   const bld = new Builder();
@@ -219,58 +223,62 @@ export function buildCity(data) {
     grid.fillPoly(b.pts, BUILDING);
   }
 
-  // 5) Nhà ống tự sinh dọc mặt đường (OSM ở Quy Nhơn còn thiếu nhiều nhà)
+  // 5) Nhà thật từ ảnh vệ tinh (Microsoft Building Footprints). Dữ liệu không có
+  // độ cao, nên số tầng được ước lượng theo diện tích và khoảng cách tới biển.
+  // Dãy nhà liền kề (thường bị gộp thành một khối) được cắt thành từng căn nhà ống.
   const coastPts = data.coastline.flat();
   const distCoast = (x, z) => coastPts.reduce((m, p) => Math.min(m, Math.hypot(p[0] - x, p[1] - z)), Infinity);
-  const rectFree = (cx, cz, ux, uz, w, d) => {
-    for (let a = -w / 2; a <= w / 2; a += 1) for (let bq = -d / 2; bq <= d / 2; bq += 1) {
-      const x = cx + ux * a - uz * bq, z = cz + uz * a + ux * bq;
-      if (Math.abs(x) > LIMIT || Math.abs(z) > LIMIT) return false;
-      if (grid.get(x, z) !== FREE) return false;
-    }
-    return true;
-  };
-  const rectPts = (cx, cz, ux, uz, w, d) => [[-1, -1], [1, -1], [1, 1], [-1, 1]]
-    .map(([sa, sb]) => [cx + ux * sa * w / 2 - uz * sb * d / 2, cz + uz * sa * w / 2 + ux * sb * d / 2]);
-  let generated = 0;
-  const place = (cx, cz, ux, uz, w, d, floors) => {
-    const pts = rectPts(cx, cz, ux, uz, w, d);
-    addBuilding(bld, pts, floors * 3.3 + 0.6, pick());
+  let realCount = 0, lots = 0;
+  const putHouse = (pts, floors, col) => {
+    const h = floors * 3.4 + 0.5;
+    addBuilding(bld, pts, h, col);
     grid.fillPoly(pts, BUILDING);
-    generated++;
+    lots++;
+    return h;
   };
-  for (const r of data.roads) {
-    if (!FRONTAGE.has(r.type) || !near(r.pts)) continue;
-    const hw = roadWidth(r.type) / 2, major = MAJOR.has(r.type);
-    for (let i = 0; i + 1 < r.pts.length; i++) {
-      const p = r.pts[i], q = r.pts[i + 1];
-      const dx = q[0] - p[0], dz = q[1] - p[1], L = Math.hypot(dx, dz);
-      if (L < 6) continue;
-      const ux = dx / L, uz = dz / L;
-      for (const side of [1, -1]) {
-        let s = 3;
-        while (s < L - 3) {
-          const w = 4 + R() * 2.5, d = 12 + R() * 8;
-          const off = hw + 2.2 + d / 2;
-          const cx = p[0] + ux * (s + w / 2) - uz * off * side, cz = p[1] + uz * (s + w / 2) + ux * off * side;
-          if (rectFree(cx, cz, ux, uz, w, d)) {
-            const tall = distCoast(cx, cz) < 160 && R() < 0.12;
-            const floors = tall ? 10 + Math.floor(R() * 14) : (major ? 3 : 2) + Math.floor(R() * (major ? 5 : 3));
-            place(cx, cz, ux, uz, tall ? Math.max(w, 14) : w, tall ? Math.max(d, 16) : d, floors);
-          }
-          s += w + 0.15;
+  for (const flat of footprints) {
+    const pts = [];
+    for (let i = 0; i < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
+    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cz = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+    if (Math.abs(cx) > LIMIT + 100 || Math.abs(cz) > LIMIT + 100) continue;
+    const cell = grid.get(cx, cz);
+    if (cell === SEA || cell === KEEP) continue;
+    realCount++;
+    const area = polyArea(pts);
+    const obb = orientedBox(pts);
+    const coast = distCoast(cx, cz);
+    if (area < 45) { putHouse(pts, 1 + Math.floor(R() * 2), pick()); continue; }
+    if (obb.short > 24 || obb.long < 9) {
+      // khối lớn: khách sạn, chung cư, công trình công cộng
+      const big = area > 900;
+      const floors = big && coast < 220 ? 9 + Math.floor(R() * 14)
+        : big ? 4 + Math.floor(R() * 4)
+          : 2 + Math.floor(R() * 4);
+      putHouse(pts, floors, pick());
+      continue;
+    }
+    // dãy nhà ống: cắt thành lô rộng 4–6 m vuông góc với cạnh dài
+    const { ux, uz, s0, s1 } = obb;
+    let s = s0;
+    while (s < s1 - 0.5) {
+      let w = 4 + R() * 2;
+      if (s1 - (s + w) < 3) w = s1 - s; // phần thừa gộp vào lô cuối
+      let piece = clipSlab(pts, ux, uz, s + 0.06, s + w - 0.06);
+      if (piece.length >= 3 && polyArea(piece) > 6) {
+        const floors = R() < 0.08 ? 6 + Math.floor(R() * 3) : 2 + Math.floor(R() * 4);
+        const h = putHouse(piece, floors, pick());
+        // tum cầu thang trên mái (rất hay gặp ở nhà ống Việt Nam)
+        if (R() < 0.55 && obb.short > 9) {
+          const vx = -uz, vz = ux; // hướng theo chiều sâu lô
+          const t0 = obb.t0 + obb.short * 0.55, t1 = obb.t0 + obb.short * 0.85;
+          const tum = clipStrip(clipSlab(piece, ux, uz, s + 0.6, s + w - 0.6), vx, vz, t0, t1);
+          if (tum.length >= 3) addBuilding(bld, tum, 2.8, pick(), h);
         }
       }
+      s += w;
     }
   }
-  // lấp bớt khoảng trống trong lòng các khu phố
-  for (let k = 0; k < 6000; k++) {
-    const x = (R() * 2 - 1) * LIMIT, z = (R() * 2 - 1) * LIMIT;
-    if (grid.get(x, z) !== FREE) continue;
-    const t = R() * Math.PI, ux = Math.cos(t), uz = Math.sin(t);
-    const w = 6 + R() * 6, d = 8 + R() * 8;
-    if (rectFree(x, z, ux, uz, w + 2, d + 2)) place(x, z, ux, uz, w, d, 1 + Math.floor(R() * 3));
-  }
+  const generated = lots;
   const tex = windowTextures();
   const buildingMat = new THREE.MeshStandardMaterial({
     vertexColors: true, map: tex.map, emissiveMap: tex.emissive, emissive: 0xffffff, emissiveIntensity: 0,
@@ -347,9 +355,56 @@ export function buildCity(data) {
   iBlob.castShadow = iStem.castShadow = true;
   group.add(iTrunk, iCrown, iBlob, iStem);
 
-  console.info(`[city] OSM ${data.buildings.length} nhà, tự sinh ${generated} nhà, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây`);
+  console.info(`[city] OSM ${data.buildings.length} nhà, footprint thật ${realCount} → ${generated} căn, ${lampSpots.length} đèn, ${palms.length} dừa, ${trees.length} cây`);
   return { group, grid, land, buildingMat, lampMat, lampSpots };
 }
+
+function polyArea(pts) {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return Math.abs(a / 2);
+}
+
+// Hộp bao định hướng theo cạnh dài nhất của đa giác:
+// u = trục dọc (cạnh dài), v = trục ngang; s0..s1 trên u, t0..t0+short trên v.
+function orientedBox(pts) {
+  let best = 0, ux = 1, uz = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (L > best) { best = L; ux = (q[0] - p[0]) / L; uz = (q[1] - p[1]) / L; }
+  }
+  let s0 = Infinity, s1 = -Infinity, t0 = Infinity, t1 = -Infinity;
+  for (const [x, z] of pts) {
+    const s = x * ux + z * uz, t = -x * uz + z * ux;
+    s0 = Math.min(s0, s); s1 = Math.max(s1, s); t0 = Math.min(t0, t); t1 = Math.max(t1, t);
+  }
+  // luôn để u là chiều dài hơn
+  if (t1 - t0 > s1 - s0) {
+    return { ux: -uz, uz: ux, s0: t0, s1: t1, t0: -s1, long: t1 - t0, short: s1 - s0 };
+  }
+  return { ux, uz, s0, s1, t0, long: s1 - s0, short: t1 - t0 };
+}
+
+// Cắt đa giác bởi nửa mặt phẳng dot(p, n) >= c (Sutherland–Hodgman)
+function clipHalf(pts, nx, nz, c) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    const dp = p[0] * nx + p[1] * nz - c, dq = q[0] * nx + q[1] * nz - c;
+    if (dp >= 0) out.push(p);
+    if ((dp >= 0) !== (dq >= 0)) {
+      const t = dp / (dp - dq);
+      out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
+    }
+  }
+  return out;
+}
+const clipSlab = (pts, ux, uz, a, b) => clipHalf(clipHalf(pts, ux, uz, a), -ux, -uz, -b);
+const clipStrip = clipSlab;
 
 function addQuadUp(b, A, B, C, D, col) {
   // đảm bảo hai tam giác hướng lên
