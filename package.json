@@ -9,7 +9,9 @@
     "preview": "vite preview --host",
     "fetch-osm": "node scripts/fetch-osm.mjs",
     "fetch-buildings": "node scripts/fetch-buildings.mjs",
-    "optimize-statue": "gltf-transform optimize public/models/statue-raw.glb public/models/statue.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify-ratio 0.12 --simplify-error 0.001"
+    "optimize-statue": "gltf-transform optimize public/models/statue-raw.glb public/models/statue.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify-ratio 0.12 --simplify-error 0.001",
+    "build-tiles": "node scripts/build-tiles.mjs",
+    "build-data": "npm run fetch-osm && npm run fetch-buildings && npm run build-tiles"
   },
   "dependencies": {
     "three": "^0.170.0"

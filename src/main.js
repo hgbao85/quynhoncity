@@ -84,12 +84,9 @@ const weatherIcon = (code, night) =>
 
 // ---------- dựng thế giới ----------
 async function start() {
-  const [data, foot] = await Promise.all([
-    fetch('/data/quynhon.json').then((r) => r.json()),
-    fetch('/data/buildings.json').then((r) => (r.ok ? r.json() : { b: [] })).catch(() => ({ b: [] })),
-  ]);
+  const data = await fetch('/data/world.json').then((r) => r.json());
   await new Promise((r) => setTimeout(r, 30)); // cho màn hình chờ kịp hiện
-  const city = buildCity(data, foot.b);
+  const city = buildCity(data);
   scene.add(city.group);
   const monument = createMonument(scene);
   const plazaSq = createSquare(scene, city.square);
@@ -102,15 +99,27 @@ async function start() {
   // nếu điểm xuất phát bị chặn, tìm ô trống gần nhất
   const s = player.state.pos;
   if (params.has('yaw')) { const y = (+params.get('yaw') * Math.PI) / 180; player.state.camYaw = y; player.state.facing = y + Math.PI; }
+  // ?zoom=300&pitch=0.9: đưa camera lên cao để xem toàn cảnh (thử nghiệm)
+  if (params.has('zoom')) player.state.camDist = +params.get('zoom');
+  if (params.has('pitch')) player.state.camPitch = +params.get('pitch');
   if (params.has('at')) { const [x, z] = params.get('at').split(',').map(Number); if (isFinite(x) && isFinite(z)) s.set(x, 0, z); }
   const sx = s.x, sz = s.z;
   for (let r = 1; r < 120 && !city.grid.walkable(s.x, s.z); r += 1) {
     const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
   }
   camera.position.set(s.x, 6, s.z + 12);
+  // dựng sẵn các ô quanh điểm xuất phát, phần còn lại tải dần khi di chuyển
+  const tLoad = performance.now();
+  await city.tiles.loadAround(s, 700);
+  console.info(`[tiles] dựng ${city.tiles.stats().built} ô quanh điểm xuất phát trong ${(performance.now() - tLoad).toFixed(0)} ms`);
+  // ô vừa dựng có thể chặn điểm xuất phát: tìm lại ô trống
+  for (let r = 1; r < 120 && !city.grid.walkable(s.x, s.z); r += 1) {
+    const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
+  }
+  if (params.has('debug')) window.game = { player, city };
   const crowd = createCrowd(scene, city.grid, isTouch ? 30 : 50);
   const quest = createQuest(scene, data, ui);
-  const minimap = createMinimap($('minimap'), data, city.land);
+  const minimap = createMinimap($('minimap'), data, city.tiles);
 
   $('photo').onclick = () => {
     composer.render();
@@ -139,6 +148,7 @@ async function start() {
     const pos = player.state.pos;
     const env = sky.update(d, h, pos);
     sea.update(t, env, pos);
+    city.tiles.update(pos, dt);
     crowd.update(dt, pos);
     quest.update(t, pos, env.night);
     city.buildingMat.emissiveIntensity = env.night * 1.4;

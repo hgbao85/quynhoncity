@@ -1,6 +1,6 @@
 # Quy Nhơn 3D · Bản mẫu
 
-Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo quanh **Quảng trường Trung tâm Quy Nhơn**, Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và bãi biển Quy Nhơn.
+Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo khắp **nội thành Quy Nhơn** (khoảng 6,6 × 6,8 km, từ Ghềnh Ráng tới cảng và bờ đầm Thị Nại), với điểm nhấn là Quảng trường Trung tâm, Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và bãi biển.
 
 ## Chạy thử
 
@@ -19,13 +19,33 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - `?h=20`: đặt giờ (ví dụ 20 giờ để xem cảnh đêm).
 - `?at=157,44`: đặt vị trí xuất phát x,z (mét, gốc tại tượng đài; x hướng đông, z hướng nam).
 - `?yaw=225`: đặt hướng camera (độ).
-- `?debug`: đưa `scene` và `THREE` ra `window` để soi trong console.
+- `?zoom=600&pitch=0.6`: đưa camera lên cao để xem toàn cảnh.
+- `?debug`: đưa `scene`, `THREE` và `game` (người chơi, thành phố) ra `window` để soi trong console; `game.city.tiles.stats()` cho biết số ô đang dựng và thời gian gắn ô.
+
+## Dữ liệu bản đồ
+
+Dữ liệu game trong `public/data` đã có sẵn trong kho. Chỉ cần tạo lại khi muốn cập nhật từ OSM hoặc đổi vùng bản đồ (`BBOX` trong `src/world/config.js`):
+
+```bash
+npm run build-data
+```
+
+Lệnh này chạy lần lượt:
+1. `fetch-osm`: tải đường, vùng, bờ biển, nhà OSM, dựng đa giác đất liền → `.cache/osm.json`.
+2. `fetch-buildings`: tải footprint nhà Microsoft (~24 MB) → `.cache/footprints.json`.
+3. `build-tiles`: cắt nhà ống, ước lượng số tầng, gắn mái hiên cửa hàng, trồng cây, đặt đèn, chia thành ô 400 m → `public/data/world.json` và `public/data/tiles/*.json` (khoảng 8 MB).
+
+**Cách game tải bản đồ lớn:**
+- Lúc vào game chỉ dựng các ô trong bán kính 700 m quanh điểm xuất phát.
+- Khi đi lại, ô trong bán kính 1,25 km được tải dần, ô xa hơn 1,6 km bị huỷ.
+- Việc tải file và dựng hình chạy trong Web Worker; luồng chính chỉ gắn ô vào cảnh (khoảng 15 ms mỗi ô), nên không khựng.
+- Mái hiên, biển hiệu, bụi cây chỉ hiện trong bán kính 650 m.
 
 ## Có gì trong bản mẫu
 
 **Bản đồ thật từ OpenStreetMap**
-- Đường phố, đường bờ biển, bãi biển, công viên, quảng trường.
-- 86 toà nhà có sẵn trên OSM, cộng khoảng 2.800 **footprint nhà thật** nhận dạng từ ảnh vệ tinh (Microsoft Global ML Building Footprints).
+- Toàn nội thành: đường phố, bờ biển, cảng, bờ đầm Thị Nại, hồ, bãi biển, công viên, quảng trường.
+- 380 toà nhà có sẵn trên OSM, cộng khoảng 23 nghìn **footprint nhà thật** nhận dạng từ ảnh vệ tinh (Microsoft Global ML Building Footprints), sau khi cắt thành khoảng 83 nghìn căn.
 - Dãy nhà liền kề được cắt thành từng căn nhà ống rộng 4–6 m, có tum cầu thang trên mái.
 - Dữ liệu không có độ cao, nên **số tầng là ước lượng**: khối lớn gần biển cao hơn (khách sạn), nhà ống 2–5 tầng.
 - Đèn đường và cây dừa.
@@ -113,17 +133,22 @@ npm run optimize-statue
 
 | File | Vai trò |
 |---|---|
-| `scripts/fetch-osm.mjs` | Tải dữ liệu OSM, đổi sang mét, lưu `public/data/quynhon.json` (`npm run fetch-osm`) |
-| `scripts/fetch-buildings.mjs` | Tải footprint nhà Microsoft (~24 MB), lọc quanh tượng đài, lưu `public/data/buildings.json` (`npm run fetch-buildings`, chạy sau `fetch-osm`) |
-| `src/world/geo.js` | Lưới va chạm 2 m/ô, hàm đa giác, ghép đường bờ biển thành đất liền |
-| `src/world/city.js` | Dựng mặt đất, đường, toà nhà, nhà ống tự sinh, đèn, cây |
+| `src/world/config.js` | Vùng bản đồ, gốc toạ độ, kích thước ô (dùng chung cho game và script) |
+| `scripts/fetch-osm.mjs`, `scripts/lib/coast.mjs` | Tải dữ liệu OSM, dựng đa giác đất liền từ đường bờ biển |
+| `scripts/fetch-buildings.mjs` | Tải footprint nhà Microsoft cho cả vùng |
+| `scripts/build-tiles.mjs` | Tạo dữ liệu game: cắt nhà ống, chiều cao, cửa hàng, cây, đèn, chia ô |
+| `src/world/worldgrid.js` | Dựng lưới va chạm cả vùng (dùng chung cho game và script) |
+| `src/world/tiles.js`, `tilework.js`, `tileworker.js` | Tải/huỷ ô theo vị trí; dựng hình trong Web Worker |
+| `src/world/lots.js`, `citykit.js` | Hàm cắt lô nhà; công cụ dựng hình (nhà, cửa sổ, mái hiên, cây) |
+| `src/world/geo.js` | Lưới va chạm 2 m/ô, hàm đa giác |
+| `src/world/city.js` | Mặt đất, công viên, mặt nước, vật liệu dùng chung, khởi tạo trình quản lý ô |
 | `src/world/sky.js` | Trời, vị trí mặt trời, ánh sáng ngày và đêm, sương mù |
 | `src/world/sea.js` | Shader mặt biển |
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
 | `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
 | `src/world/highlands.js` | Toà nhà quán Highlands Coffee góc Nguyễn Huệ – Đô Đốc Bảo |
-| `src/world/mountains.js` | Núi phông nền quanh thành phố |
+| `src/world/mountains.js` | Núi Bà Hỏa, Vũng Chua, Ghềnh Ráng, Phương Mai (vị trí đo trên ảnh vệ tinh, độ cao ước lượng) |
 | `src/world/beach.js` | Mép sóng, cát ướt, lối đi dạo ven biển, đèn, ghế đá, dù lá |
 | `src/world/plants.js` | Hoa sen, cau cảnh trồng chậu |
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
@@ -132,6 +157,9 @@ npm run optimize-statue
 | `src/quest.js`, `src/minimap.js` | Nhiệm vụ và bản đồ nhỏ |
 
 ## Cần lưu ý trước khi ra mắt
+
+- **Núi là hình ước lượng.** Vị trí đúng theo ảnh vệ tinh nhưng hình dạng và độ cao chưa thật; bước sau sẽ dùng dữ liệu độ cao (DEM).
+- **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm Thị Nại đã xây nhà): script tự bỏ vùng nước có trên 15 nhà bên trong.
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).
 - **Hướng tượng (60°) và kích thước sân** được suy ra từ bản đồ OSM, chưa đo thực địa.

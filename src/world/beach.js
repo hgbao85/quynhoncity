@@ -4,16 +4,19 @@
 // Ở đây dựng: mép sóng vỗ và cát ướt (shader), lối đi dạo lát đá, đèn trang trí, ghế đá, dù lá.
 import * as THREE from 'three';
 import { SEA, pointInPoly, rng } from './geo.js';
-
-const LIMIT = 820;
+import { inBounds } from './config.js';
 
 export function createBeach(scene, data, grid) {
   const g = new THREE.Group();
   const R = rng(9917);
   const coastPts = data.coastline.flat();
   const distCoast = (x, z) => coastPts.reduce((m, p) => Math.min(m, Math.hypot(p[0] - x, p[1] - z)), Infinity);
-  const beachAreas = data.areas.filter((a) => a.kind === 'beach');
+  const beachAreas = data.areas.filter((a) => a.kind === 'beach').map((a) => {
+    const xs = a.pts.map((p) => p[0]), zs = a.pts.map((p) => p[1]);
+    return { pts: a.pts, box: [Math.min(...xs) - 60, Math.min(...zs) - 60, Math.max(...xs) + 60, Math.max(...zs) + 60] };
+  });
   const onBeach = (x, z) => beachAreas.some((a) => pointInPoly(x, z, a.pts));
+  const nearBeach = ([x, z]) => beachAreas.some(({ box }) => x > box[0] && x < box[2] && z > box[1] && z < box[3]);
 
   // ---------- mép sóng + cát ướt ----------
   const foamUniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { t: { value: 0 }, light: { value: 1 } }]);
@@ -48,8 +51,17 @@ export function createBeach(scene, data, grid) {
         #include <fog_fragment>
       }`,
   });
+  // sóng vỗ chỉ ở bãi cát (không có ở cảng và bờ đầm): tách đường bờ thành các đoạn gần bãi cát
+  const runs = [];
   for (const seg of data.coastline) {
-    const pts = densify(seg, 4);
+    let cur = [];
+    for (const p of densify(seg, 4)) {
+      if (nearBeach(p) && inBounds(p[0], p[1], 50)) cur.push(p);
+      else { if (cur.length > 2) runs.push(cur); cur = []; }
+    }
+    if (cur.length > 2) runs.push(cur);
+  }
+  for (const pts of runs) {
     const pos = [], across = [], along = [], idx = [];
     let run = 0;
     for (let i = 0; i < pts.length; i++) {
@@ -83,7 +95,7 @@ export function createBeach(scene, data, grid) {
 
   // ---------- lối đi dạo ven biển: lát đá, đèn trang trí, ghế đá ----------
   const promenade = data.roads.filter((r) => ['footway', 'path', 'pedestrian', 'cycleway'].includes(r.type)
-    && r.pts.some(([x, z]) => Math.abs(x) < LIMIT && Math.abs(z) < LIMIT && distCoast(x, z) < 110));
+    && r.pts.some(([x, z]) => inBounds(x, z) && nearBeach([x, z]) && distCoast(x, z) < 110));
   const walkPos = [];
   const lampSpots = [], benchSpots = [];
   for (const r of promenade) {
@@ -101,7 +113,7 @@ export function createBeach(scene, data, grid) {
         let nx = -uz, nz = ux;
         const x = p[0] + ux * s, z = p[1] + uz * s;
         if (distCoast(x + nx * 4, z + nz * 4) < distCoast(x, z)) { nx = -nx; nz = -nz; }
-        if (Math.abs(x) > LIMIT || Math.abs(z) > LIMIT) continue;
+        if (!inBounds(x, z)) continue;
         lampSpots.push([x + nx * 3.2, z + nz * 3.2]);
         if (R() < 0.66) benchSpots.push([x + ux * 8 + nx * 3.4, z + uz * 8 + nz * 3.4, Math.atan2(-nx, -nz)]);
       }
@@ -151,6 +163,7 @@ export function createBeach(scene, data, grid) {
   // ---------- dù lá và ghế nằm trên cát, thành từng cụm ----------
   const umbrellas = [], loungers = [];
   for (const seg of data.coastline) {
+    if (!seg.some(nearBeach)) continue;
     const pts = densify(seg, 55);
     for (let i = 1; i < pts.length - 1; i++) {
       if (R() < 0.35) continue;
@@ -163,7 +176,7 @@ export function createBeach(scene, data, grid) {
       for (let k = 0; k < n; k++) {
         const along = (k - n / 2) * 6 + (R() - 0.5) * 2, inland = 20 + (k % 2) * 7 + R() * 3;
         const x = p[0] + tx * along + nx * inland, z = p[1] + tz * along + nz * inland;
-        if (Math.abs(x) > LIMIT || Math.abs(z) > LIMIT || !onBeach(x, z) || grid.get(x, z) === SEA) continue;
+        if (!inBounds(x, z) || !onBeach(x, z) || grid.get(x, z) === SEA) continue;
         umbrellas.push([x, z, R()]);
         const yaw = Math.atan2(-nx, -nz); // ghế quay mặt ra biển
         for (const side of [-1, 1]) loungers.push([x + tz * side * 0.9 - nx * 0.4, z - tx * side * 0.9 - nz * 0.4, yaw]);

@@ -1,13 +1,17 @@
-// Núi bao quanh Quy Nhơn (phông nền xa, dựng thô từ hàm nhiễu, vị trí ước theo bản đồ và Street View):
-//   - phía tây: dãy Bà Hỏa / Vũng Chua, cao 300–550 m, cách trung tâm ~2–3 km
-//   - phía nam: Ghềnh Ráng nhô ra biển, cao 150–260 m, ~3 km
-//   - phía bắc: bán đảo Phương Mai bên kia đầm Thị Nại, cao 200–300 m, ~6–7 km
+// Núi quanh và giữa Quy Nhơn (dựng thô từ hàm nhiễu, vị trí đo trên ảnh vệ tinh, độ cao ước lượng):
+//   - khối Bà Hỏa nằm giữa thành phố, phía tây bắc tượng đài (cao ~250–300 m)
+//   - dãy Vũng Chua phía tây nam (cao ~450 m)
+//   - Ghềnh Ráng phía nam nhô ra biển (cao ~150–230 m)
+//   - bán đảo Phương Mai phía bắc bên kia đầm Thị Nại (cao 200–300 m, ~6–7 km)
+// Bước tiếp theo sẽ thay bằng dữ liệu độ cao thật (DEM).
 // Dùng shader riêng để tự phủ sương theo khoảng cách (sương của scene chỉ tới 1,5 km).
 import * as THREE from 'three';
 
 const RANGES = [
-  { pts: [[-2900, -3600], [-2500, -1400], [-2150, 500], [-2450, 2300], [-2200, 3600]], h: [360, 540, 470, 380, 260], w: 1500 },
-  { pts: [[-1300, 2700], [-200, 3050], [900, 3400], [1700, 3900]], h: [210, 260, 230, 150], w: 900 },
+  { pts: [[-1850, -2300], [-1150, -2150], [-550, -1900]], h: [220, 300, 230], w: 320 }, // Bà Hỏa, sống bắc
+  { pts: [[-1350, -1950], [-1150, -1250], [-1050, -700]], h: [260, 280, 170], w: 360 }, // Bà Hỏa, sống nam
+  { pts: [[-3400, 300], [-2550, 900], [-2000, 1800], [-1650, 2700], [-1350, 3400]], h: [260, 450, 480, 380, 250], w: 600 }, // Vũng Chua
+  { pts: [[-650, 2150], [-420, 2800], [100, 3300], [900, 3750]], h: [110, 200, 230, 150], w: 340 }, // Ghềnh Ráng
   { pts: [[-2500, -6600], [500, -7200], [3500, -7000], [6500, -6000]], h: [220, 300, 260, 180], w: 1600 },
   { pts: [[3300, 2300], [3600, 2450]], h: [55, 40], w: 260 }, // hòn đảo nhỏ ngoài khơi
 ];
@@ -82,7 +86,7 @@ export function createMountains(scene) {
   }
   // nền đất liền phía tây ngoài vùng bản đồ chi tiết (để chân núi không đứng trên biển)
   const landMat = new THREE.MeshBasicMaterial({ color: '#6f7a5c', fog: true });
-  for (const [x0, z0, x1, z1] of [[-9000, -9000, -1850, 9000]]) {
+  for (const [x0, z0, x1, z1] of [[-9000, -9000, -3400, 9000]]) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0).rotateX(-Math.PI / 2), landMat);
     m.position.set((x0 + x1) / 2, -0.1, (z0 + z1) / 2);
     g.add(m);
