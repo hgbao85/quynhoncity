@@ -91,6 +91,14 @@ Lệnh này chạy lần lượt:
 - Tầng 2 lam gỗ có hoa văn ô vuông ở góc; mái đua xám; tháp bo tròn ở góc với ban công cong lan can đen, huy hiệu tròn đỏ; các tầng trên ốp gạch tím nhạt, cửa sổ khung nâu đỏ.
 - Vỉa hè có dù đỏ, bàn ghế sắt đỏ và hàng dừa cao. Ban đêm quán sáng đèn vàng ấm.
 
+**Công trình nổi bật** (dựng tay theo ảnh vệ tinh, Street View và số liệu báo chí, `src/world/landmarks.js`)
+- **Tháp Đôi (Tháp Hưng Thạnh):** hai tháp Chăm gạch đỏ, tháp Bắc ~25 m lớn hơn, tháp Nam ~23 m, cùng quay cửa về phía nam; thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng đã mất chóp, chân đá; khuôn viên thảm cỏ.
+- **Nhà thờ Chính tòa (Nhà thờ Nhọn):** kiểu Gothic sơn trắng, dài ~60 m, tháp chuông giữa mặt tiền cao 42,7 m với chóp nhọn màu cam đỏ, đồng hồ, cánh ngang phía sau; sân trước, cổng và hàng rào trụ đá quay ra đường Trần Hưng Đạo.
+- **Chợ Lớn:** nhà lồng chợ hai tầng mái tôn, biển tên, vòng quanh là sạp hàng mái bạt nhiều màu.
+- **Ga Quy Nhơn:** nhà ga hai tầng sơn vàng, khối giữa có đầu hồi, đồng hồ và biển "GA QUY NHƠN", sân ga và đường ray phía sau.
+- **Mộ Hàn Mặc Tử (đồi Thi Nhân):** nền đá ba bậc, bia đá trắng có thánh giá, đèn trụ xanh, sân lát đá, bồn hoa, bậc thang xuống phía biển.
+- Vị trí và vùng đất của từng công trình nằm trong `src/world/landmark-sites.js`; script tạo dữ liệu tự bỏ nhà và cây tự sinh trong các vùng này.
+
 **Địa hình thật** (dữ liệu độ cao SRTM qua AWS Terrain Tiles)
 - Đồi núi đúng hình dạng và độ cao: Bà Hỏa giữa thành phố, Vũng Chua phía tây nam, Ghềnh Ráng phía nam, cùng phông nền ~30 km: bán đảo Phương Mai, các đảo, đồng bằng và núi phía tây.
 - Dữ liệu gốc là độ cao bề mặt (lẫn cả mái nhà, tán cây) nên **phố dưới ~14 m được làm phẳng**; đồi núi chuyển tiếp mềm từ 14 m lên và thấp hơn thật khoảng 20 m.
@@ -152,6 +160,7 @@ npm run optimize-statue
 | `src/world/site.js` | Bố cục khu tượng đài: hướng, kích thước, độ cao mặt sân, va chạm |
 | `src/world/landmark.js` | Tượng đài, bệ, phù điêu, bồn hoa, đèn chiếu |
 | `src/world/square.js` | Quảng trường nửa tròn: mặt sân, ô cỏ, cột cờ, đèn pha |
+| `src/world/landmark-sites.js`, `landmarks.js` | Vị trí và mô hình các công trình nổi bật |
 | `src/world/highlands.js` | Toà nhà quán Highlands Coffee góc Nguyễn Huệ – Đô Đốc Bảo |
 | `scripts/fetch-terrain.mjs` | Tải và làm phẳng dữ liệu độ cao |
 | `src/world/terrain.js` | Đọc độ cao tại một điểm (dùng chung game, Web Worker, script) |
@@ -171,6 +180,7 @@ npm run optimize-statue
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).
 - **Hướng tượng (60°) và kích thước sân** được suy ra từ bản đồ OSM, chưa đo thực địa.
+- **Công trình nổi bật là mô hình khối giản lược.** Tháp Đôi, nhà thờ, chợ, mộ dựng theo ảnh Street View; **Ga Quy Nhơn chưa có ảnh Street View** nên hình dáng, màu vàng và hướng mặt tiền là ước lượng theo kiểu nhà ga Việt Nam, cần chụp ảnh thực địa để chỉnh.
 - **Bản quyền dữ liệu nhà (Microsoft, ODbL):** giữ dòng ghi nguồn trên màn hình.
 - **Tên Highlands Coffee là thương hiệu đã đăng ký.** Bản mẫu chỉ vẽ chữ đơn giản, không chép logo gốc. Trước khi phát hành công khai hay dùng thương mại cần xin phép chủ thương hiệu, hoặc đổi sang tên chung.
 - **Câu chuyện và câu hỏi** trong `src/quest.js` cần kiểm chứng lại với nguồn chính thống.

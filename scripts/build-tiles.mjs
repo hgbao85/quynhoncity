@@ -9,6 +9,7 @@ import { FREE, SEA, ROAD, OPEN, KEEP, BUILDING, pointInPoly, roadWidth, rng } fr
 import { nearPlaza } from '../src/world/site.js';
 import { squareLayout } from '../src/world/square.js';
 import { inHighlandsZone } from '../src/world/highlands.js';
+import { inLandmarkZone } from '../src/world/landmark-sites.js';
 import { polyArea, orientedBox, clipSlab, clipStrip } from '../src/world/lots.js';
 import { buildWorldGrid } from '../src/world/worldgrid.js';
 import { setTerrain, heightAt } from '../src/world/terrain.js';
@@ -36,7 +37,8 @@ const areas = osm.areas.filter((a) => {
   if (n > 15) console.log(`  bỏ vùng nước "${a.name || '?'}" vì có ${n} nhà bên trong`);
   return n <= 15;
 });
-const world = { origin: osm.origin, bounds: BOUNDS, land: osm.land, areas, roads: osm.roads, buildings: osm.buildings, coastline: osm.coastline };
+const osmBuildings = osm.buildings.filter((b) => { const cx = b.pts.reduce((s, p) => s + p[0], 0) / b.pts.length, cz = b.pts.reduce((s, p) => s + p[1], 0) / b.pts.length; return !inLandmarkZone(cx, cz); });
+const world = { origin: osm.origin, bounds: BOUNDS, land: osm.land, areas, roads: osm.roads, buildings: osmBuildings, coastline: osm.coastline };
 const grid = buildWorldGrid(world);
 const square = squareLayout();
 const beachAreas = areas.filter((a) => a.kind === 'beach').map((a) => ({ pts: a.pts, box: bbox(a.pts) }));
@@ -104,10 +106,11 @@ function putTum(pts, base, h) {
 const floorsH = (f) => f * 3.4 + 0.5;
 
 // nhà OSM: giữ nguyên hình và độ cao
-for (const b of osm.buildings) {
+for (const b of osmBuildings) {
   const pts = b.pts.slice();
   if (pts.length > 3 && Math.hypot(pts[0][0] - pts.at(-1)[0], pts[0][1] - pts.at(-1)[1]) < 0.01) pts.pop();
-  if (pts.length >= 3) putLot(pts, b.h, pickColor());
+  const bx = pts.reduce((s, p) => s + p[0], 0) / pts.length, bz = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  if (pts.length >= 3 && !inLandmarkZone(bx, bz)) putLot(pts, b.h, pickColor());
 }
 
 // nhà từ footprint vệ tinh
@@ -115,7 +118,7 @@ let used = 0;
 for (const { pts, cx, cz } of foot) {
   const cell = grid.get(cx, cz);
   if (cell === SEA || cell === KEEP) continue;
-  if (square.isPaved(cx, cz) || nearPlaza(cx, cz) || inHighlandsZone(cx, cz)) continue;
+  if (square.isPaved(cx, cz) || nearPlaza(cx, cz) || inHighlandsZone(cx, cz) || inLandmarkZone(cx, cz)) continue;
   used++;
   const area = polyArea(pts), obb = orientedBox(pts), coast = distCoast(cx, cz);
   if (area < 45) { putLot(pts, floorsH(1 + Math.floor(R() * 2)), pickColor()); continue; }
@@ -189,7 +192,7 @@ for (const r of osm.roads) {
       if (grid.get(x, z) !== SEA) put('lamp', x, z, Math.atan2(ux, uz) + Math.PI / 2);
       for (const side of [1, -1]) {
         const tx = p[0] + ux * (s + 15) - uz * (hw + 2.4) * side, tz = p[1] + uz * (s + 15) + ux * (hw + 2.4) * side;
-        if (R() < 0.7 && grid.get(tx, tz) === FREE && !nearPlaza(tx, tz) && !inHighlandsZone(tx, tz)) put('tree', tx, tz, R());
+        if (R() < 0.7 && grid.get(tx, tz) === FREE && !nearPlaza(tx, tz) && !inHighlandsZone(tx, tz) && !inLandmarkZone(tx, tz)) put('tree', tx, tz, R());
       }
     }
     acc = (acc + L) % 30;
@@ -198,7 +201,7 @@ for (const r of osm.roads) {
 
 // ---- cây: rải ngẫu nhiên trên đất trống có cỏ + trồng dày trong công viên ----
 const { x0, z0, x1, z1 } = BOUNDS;
-const okTree = (x, z) => grid.get(x, z) === OPEN && !nearPlaza(x, z) && !square.isPaved(x, z) && !inHighlandsZone(x, z) && !onBeach(x, z);
+const okTree = (x, z) => grid.get(x, z) === OPEN && !nearPlaza(x, z) && !square.isPaved(x, z) && !inHighlandsZone(x, z) && !inLandmarkZone(x, z) && !onBeach(x, z);
 const tries = Math.round(9000 * ((x1 - x0) * (z1 - z0)) / (1640 * 1640));
 for (let k = 0; k < tries; k++) {
   const x = x0 + R() * (x1 - x0), z = z0 + R() * (z1 - z0);
@@ -226,7 +229,7 @@ for (let x = x0; x < x1; x += 18) for (let z = z0; z < z1; z += 18) {
   const h = heightAt(px, pz);
   if (h < 2) continue;
   const v = grid.get(px, pz);
-  if (v === SEA || v === ROAD || v === BUILDING || v === KEEP) continue;
+  if (v === SEA || v === ROAD || v === BUILDING || v === KEEP || inLandmarkZone(px, pz)) continue;
   if (R() > Math.min(0.85, h / 12)) continue;
   put('forest', px, pz, R()); forest++;
 }
