@@ -2,6 +2,7 @@
 // Đủ mọi mảnh ghép thì tạo được "Bưu thiếp Quy Nhơn" 1200×630: ghép các tấm ảnh người chơi đã chụp,
 // tên người chơi, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (Zalo, Facebook...).
 import { QUESTS } from './quests-data.js';
+import { track } from './stats.js';
 
 const PHOTO_KEY = 'qn3d-photos';
 const NAME_KEY = 'qn3d-name';
@@ -43,6 +44,7 @@ export function createAlbum({ getProgress, ui }) {
       const nm = $('pc-name').value.trim();
       try { localStorage.setItem(NAME_KEY, nm); } catch { /* bỏ qua */ }
       const canvas = await makePostcard(nm);
+      track('postcard');
       const url = canvas.toDataURL('image/jpeg', 0.9);
       // chuẩn bị sẵn tệp ảnh để bấm Chia sẻ gọi navigator.share ngay (Safari yêu cầu đúng lúc bấm)
       const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.9));
@@ -82,8 +84,14 @@ export function createAlbum({ getProgress, ui }) {
     // bố cục: ảnh lớn bên trái (tượng đài), 4 ảnh nhỏ bên phải
     // mỗi khung ảnh có viền trắng và dòng tên cao ~34 px bên dưới: chừa đủ khoảng cách giữa hai hàng.
     // ảnh đầu (tượng đài) lớn bên trái, các ảnh còn lại xếp lưới 3 cột × 2 hàng bên phải
-    const slots = [[40, 158, 450, 253]];
-    for (let i = 1; i < QUESTS.length; i++) { const k = i - 1; slots.push([530 + (k % 3) * 214, 158 + Math.floor(k / 3) * 176, 196, 110]); }
+    // số cột tự tính theo số địa điểm (2 hàng); ảnh lớn thu hẹp lại khi cần 4 cột
+    const small = QUESTS.length - 1, cols = Math.max(2, Math.ceil(small / 2));
+    const big = cols > 3 ? [40, 170, 390, 219] : [40, 158, 450, 253];
+    const rx0 = big[0] + big[2] + 40, rw = 1160 - rx0, gap = 28;
+    const sw = Math.floor((rw - 16 - (cols - 1) * gap) / cols), sh = Math.round((sw * 9) / 16);
+    const rowH = sh + 34 + 30, ry0 = big[1] + Math.max(0, (big[3] + 34 - (rowH * 2 - 30)) / 2);
+    const slots = [big];
+    for (let k = 0; k < small; k++) slots.push([rx0 + 8 + (k % cols) * (sw + 16 + gap - 16), ry0 + Math.floor(k / cols) * rowH, sw, sh]);
     QUESTS.forEach((q, i) => {
       const [sx, sy, sw, sh] = slots[i], im = imgs[i];
       x.save();
@@ -91,7 +99,7 @@ export function createAlbum({ getProgress, ui }) {
       x.fillStyle = '#f8f5ee'; x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 16; x.fillRect(-8, -8, sw + 16, sh + 34); x.shadowBlur = 0;
       if (im) { const r = Math.max(sw / im.width, sh / im.height), iw = im.width * r, ih = im.height * r; x.save(); x.beginPath(); x.rect(0, 0, sw, sh); x.clip(); x.drawImage(im, (sw - iw) / 2, (sh - ih) / 2, iw, ih); x.restore(); }
       else { x.fillStyle = '#d8d2c6'; x.fillRect(0, 0, sw, sh); }
-      x.fillStyle = '#1d2b4a'; x.font = `bold ${i === 0 ? 17 : 13}px "Be Vietnam Pro", Arial, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillStyle = '#1d2b4a'; x.font = `bold ${i === 0 ? 17 : sw < 160 ? 12 : 13}px "Be Vietnam Pro", Arial, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
       x.fillText(q.place, sw / 2, sh + 13, sw);
       x.restore();
     });

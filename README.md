@@ -93,8 +93,8 @@ Lệnh này chạy lần lượt:
 - **Số tầng theo loại đường mặt tiền** (quan sát Street View): nhà ống mặt đường lớn 3–5 tầng, đường tertiary 2–4, đường nhỏ 2–3, trong hẻm 1–2; khách sạn ven biển 6–22 tầng, cao ốc mặt đường chính 5–9 tầng, khối lớn khác (trường, chợ, kho) 2–4 tầng.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
-**Hành trình khám phá: 7 địa điểm, 7 mảnh ghép** (nội dung trong `src/quests-data.js`)
-- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Mộ Hàn Mặc Tử.
+**Hành trình khám phá: 8 địa điểm, 8 mảnh ghép** (nội dung trong `src/quests-data.js`)
+- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Mộ Hàn Mặc Tử, Bãi tắm Hoàng Hậu.
 - Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
 - Ảnh lưu niệm (cho album, bưu thiếp) luôn chụp từ góc máy đẹp đặt sẵn của từng địa điểm (`shot` trong `src/quests-data.js`), giữ nguyên giờ, thời tiết lúc bấm chụp. Trên máy tính, ảnh PNG tải về vẫn là đúng góc người chơi đang nhìn; trên điện thoại không tải PNG.
 - Người đi dạo vẽ gộp: mỗi bộ phận cơ thể là một InstancedMesh, cả đám đông chỉ tốn 12 lần vẽ.
@@ -119,7 +119,7 @@ Lệnh này chạy lần lượt:
 
 **Album và bưu thiếp** (bấm thẻ 🧩 Mảnh ghép; `src/album.js`)
 - Mỗi lần chụp ảnh gần một địa điểm, ảnh 640×360 được lưu vào album (trong trình duyệt). Lúc chụp, cột sáng và điểm sáng nhiệm vụ được ẩn đi; các bảng thông tin là lớp HTML nên cũng không lọt vào ảnh.
-- Đủ 7 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 7 tấm ảnh (một ảnh lớn, sáu ảnh nhỏ) đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
+- Đủ 8 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 8 tấm ảnh (một ảnh lớn, các ảnh nhỏ xếp 2 hàng, số cột tự tính) đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
 
 **Thời tiết thật** (`src/world/weather.js`)
 - Theo dữ liệu Open-Meteo (mã thời tiết WMO): ít mây/nhiều mây có mây trôi; mưa, mưa rào có mưa rơi quanh người chơi, trời u ám, sương mù dày hơn, tiếng mưa; dông có chớp sáng và tiếng sấm; sương mù làm tầm nhìn ngắn lại.
@@ -148,6 +148,7 @@ Lệnh này chạy lần lượt:
 - **Chợ Lớn:** nhà lồng chợ hai tầng mái tôn, biển tên, vòng quanh là sạp hàng mái bạt nhiều màu.
 - **Chùa Long Khánh:** chánh điện mái cong hai lớp đầu đao, hậu điện và hai dãy nhà bên (kiểu chữ Khẩu), lầu chuông, cổng tam quan có biển "LONG KHÁNH", sư tử đá, cây cổ thụ, đèn lồng đỏ.
 - **Tượng đài Quang Trung:** bùng binh tròn có vòng hoa, hồ nước 32 vòi phun, bệ tròn cao 6,5 m gắn bia đồng, tượng vua Quang Trung cưỡi ngựa chồm, tay giơ kiếm.
+- **Bãi tắm Hoàng Hậu (Ghềnh Ráng):** vịnh nhỏ dưới chân đồi (vị trí theo OSM), dải đá cuội tròn nhẵn nhiều màu sát mép nước, các tảng granite trên bờ và dưới nước, "hòn trứng" đứng chênh vênh trên tảng đá bẹt, bậc đá có lan can xuống bãi, chòi nghỉ mái ngói, biển tên, hàng dừa nghiêng. Địa hình dốc nên từng vật được đặt theo độ cao thật tại chỗ.
 - **Ga Quy Nhơn:** nhà ga hai tầng sơn vàng, khối giữa có đầu hồi, đồng hồ và biển "GA QUY NHƠN", sân ga và đường ray phía sau.
 - **Mộ Hàn Mặc Tử (đồi Thi Nhân):** nền đá ba bậc, bia đá trắng có thánh giá, đèn trụ xanh, sân lát đá, bồn hoa, bậc thang xuống phía biển.
 - Vị trí và vùng đất của từng công trình nằm trong `src/world/landmark-sites.js`; script tạo dữ liệu tự bỏ nhà và cây tự sinh trong các vùng này.
@@ -225,7 +226,7 @@ npm run optimize-statue
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |
-| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 7 địa điểm; danh sách điểm dịch chuyển |
+| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 8 địa điểm; danh sách điểm dịch chuyển |
 | `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 | `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
@@ -233,7 +234,13 @@ npm run optimize-statue
 | `src/world/weather.js` | Mây, mưa, sương mù, dông theo thời tiết thật |
 | `src/pwa.js`, `public/sw.js`, `public/manifest.webmanifest` | Cài như ứng dụng, toàn màn hình, lưu sẵn dữ liệu |
 | `vite.config.js` | Gắn mã phiên bản build vào `dist/sw.js` |
+| `src/tutorial.js` | Hướng dẫn lần đầu chơi (8 bước, khoanh sáng từng phần giao diện); mở lại bằng `?tutorial` |
+| `src/stats.js` | Vercel Web Analytics và các sự kiện: mảnh ghép, hoàn thành, bưu thiếp, dịch chuyển, hướng dẫn, cài đặt |
 | `api/weather.js` | Hàm Vercel chuyển tiếp thời tiết Open-Meteo (cho máy không gọi thẳng được), lưu đệm 10 phút |
+
+## Thống kê người chơi
+
+Game dùng Vercel Web Analytics (không cookie, không thu thông tin cá nhân). Cần bật một lần: trang dự án trên Vercel → **Analytics** → **Enable**. Gói miễn phí có lượt xem, quốc gia, thiết bị, trình duyệt; các sự kiện riêng (`piece`, `complete`, `postcard`, `travel`, `tutorial`, `install`) chỉ hiện ở gói Pro trở lên. Khi chạy `npm run dev` không gửi gì.
 
 ## Cần lưu ý trước khi ra mắt
 

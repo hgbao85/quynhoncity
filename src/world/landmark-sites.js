@@ -36,6 +36,12 @@ export const LANDMARKS = [
     zone: [[535, -1633], [595, -1633], [595, -1573], [535, -1573]],
   },
   {
+    // bãi tắm Hoàng Hậu (Ghềnh Ráng Tiên Sa), theo OSM (13.74254, 109.21556) và ảnh vệ tinh: vịnh nhỏ
+    // dưới chân đồi, bờ chạy gần bắc – nam; mặt trước (+z) nhìn ra biển phía đông
+    id: 'hoanghau', name: 'Bãi tắm Hoàng Hậu (Ghềnh Ráng)', x: -590, z: 2250, yaw: 1.81,
+    zone: [[-626, 2208], [-560, 2208], [-560, 2292], [-626, 2292]],
+  },
+  {
     id: 'hanmactu', name: 'Mộ Hàn Mặc Tử (đồi Thi Nhân)', x: -805, z: 2086, yaw: 0.6,
     zone: [[-830, 2060], [-780, 2060], [-780, 2112], [-830, 2112]],
   },

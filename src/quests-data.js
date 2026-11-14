@@ -3,7 +3,7 @@
 // Vị trí dùng toạ độ local của công trình (xem landmark-sites.js): lx sang phải, lz về phía trước.
 // Nguồn: Wikipedia tiếng Việt (Tháp Đôi), VnExpress (Nhà thờ Chính tòa, tháp 42,7 m), báo Nhân Dân,
 // Tuổi Trẻ, VTC (tượng đài), Mia.vn (đồi Thi Nhân, dốc Mộng Cầm; chùa Long Khánh: sắc phong 1805, chuông
-// đồng 1,7 m), kiến thức lịch sử phổ thông (Quang Trung). CẦN KIỂM CHỨNG LẠI TRƯỚC KHI RA MẮT.
+// đồng 1,7 m), kiến thức lịch sử phổ thông (Quang Trung, bãi tắm Hoàng Hậu: Nam Phương Hoàng hậu). CẦN KIỂM CHỨNG LẠI TRƯỚC KHI RA MẮT.
 import { LANDMARKS, siteToWorld } from './world/landmark-sites.js';
 import { toWorld } from './world/site.js';
 
@@ -150,6 +150,25 @@ export const QUESTS = [
       { id: 'view', pos: at('hanmactu', 0, 13), y: 0.3, r: 4, title: 'Nhìn ra biển', text: 'Từ đồi Thi Nhân có thể nhìn bao quát Ghềnh Ráng và biển Quy Nhơn.' },
     ],
   },
+  {
+    id: 'hoanghau', title: 'Bãi đá trứng', place: 'Bãi tắm Hoàng Hậu', piece: 'Bãi đá Hoàng Hậu',
+    center: at('hoanghau', 0, 0), pillar: at('hoanghau', 4, -24), photoRadius: 50,
+    shot: shotAt('hoanghau', [26, 9, 30], [-2, 2, 2]),
+    story: [
+      'Bãi tắm Hoàng Hậu là một vịnh nhỏ dưới chân đồi trong khu du lịch Ghềnh Ráng – Tiên Sa, phía nam trung tâm Quy Nhơn, chỉ cách mộ Hàn Mặc Tử vài trăm mét.',
+      'Tương truyền vào thập niên 1930–1940, Nam Phương Hoàng hậu, vợ vua Bảo Đại, thường đến đây tắm biển, nên bãi được gọi là Bãi tắm Hoàng Hậu.',
+      'Nét đặc biệt của bãi là những viên đá tròn nhẵn nhiều màu, nằm chồng lên nhau như những quả trứng, được sóng biển mài giũa qua rất nhiều năm.',
+    ],
+    quiz: [
+      { q: 'Bãi tắm mang tên vị hoàng hậu nào?', a: ['Từ Dũ', 'Nam Phương', 'Lệ Thiên', 'Thánh Thiên'], ok: 1 },
+      { q: 'Đá ở bãi tắm Hoàng Hậu nổi tiếng với hình dáng gì?', a: ['Nhọn như mũi giáo', 'Phẳng như mặt bàn', 'Tròn nhẵn như quả trứng', 'Xếp thành cột lục giác'], ok: 2 },
+      { q: 'Bãi tắm Hoàng Hậu nằm trong khu du lịch nào?', a: ['Kỳ Co – Eo Gió', 'Ghềnh Ráng – Tiên Sa', 'Hầm Hô', 'Cù Lao Xanh'], ok: 1 },
+    ],
+    details: [
+      { id: 'pebbles', pos: at('hoanghau', 2, 3), y: 0.3, r: 5, title: 'Bãi đá trứng', text: 'Hàng nghìn viên đá tròn nhẵn đủ màu xám, nâu, trắng phủ kín mép nước.' },
+      { id: 'egg', pos: at('hoanghau', -6, 1), y: 0.3, r: 4.5, title: 'Hòn đá chênh vênh', text: 'Một tảng đá tròn lớn đứng chênh vênh trên tảng đá bẹt, như quả trứng khổng lồ.' },
+    ],
+  },
 ];
 
 // Điểm dịch chuyển nhanh trên bản đồ lớn (toạ độ thế giới, mét)
@@ -163,5 +182,6 @@ export const PLACES = [
   { id: 'thapdoi', name: 'Tháp Đôi', pos: at('thapdoi', 0, 22), icon: '🛕' },
   { id: 'longkhanh', name: 'Chùa Long Khánh', pos: at('longkhanh', 0, 40), icon: '🔔' },
   { id: 'quangtrung', name: 'Tượng Quang Trung', pos: at('quangtrung', 0, 30), icon: '🐎', label: 'right' },
+  { id: 'hoanghau', name: 'Bãi tắm Hoàng Hậu', pos: at('hoanghau', 4, -20), icon: '🪨', label: 'right' },
   { id: 'hanmactu', name: 'Mộ Hàn Mặc Tử', pos: at('hanmactu', -8, 9), icon: '✒️' },
 ];

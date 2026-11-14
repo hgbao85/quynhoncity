@@ -25,6 +25,9 @@ import { createTraffic } from './traffic.js';
 import { createAudio } from './audio.js';
 import { createAlbum } from './album.js';
 import { setupPwa } from './pwa.js';
+import { createTutorial } from './tutorial.js';
+import { track } from './stats.js';
+import { QUESTS } from './quests-data.js';
 import { createWeather, testWeatherCode } from './world/weather.js';
 
 const $ = (id) => document.getElementById(id);
@@ -210,6 +213,7 @@ async function start() {
   const minimap = createMinimap($('minimap'), data, city.tiles);
 
   // ---- bản đồ lớn và dịch chuyển nhanh ----
+  const tutorial = createTutorial({ isTouch, total: QUESTS.length });
   let travelling = false;
   createBigMap(data, {
     getPlayer: () => ({ x: player.state.pos.x, z: player.state.pos.z, facing: player.state.facing }),
@@ -229,6 +233,7 @@ async function start() {
         camera.position.set(p.x, p.y + 6, p.z + 12);
         crowd.relocate?.(p);
         ui.toast(`📍 ${pl.name}`, 3000);
+        track('travel', { to: pl.id });
       } finally {
         $('travel').hidden = true;
         travelling = false;
@@ -284,7 +289,10 @@ async function start() {
 
   $('loading').style.opacity = 0;
   setTimeout(() => $('loading').remove(), 700);
-  ui.toast('Chào mừng đến Quy Nhơn! Tìm các cột sáng vàng để khám phá 7 địa điểm. Bấm 🗺️ để xem bản đồ.', 7000);
+  // lần đầu chơi (hoặc ?tutorial): hướng dẫn từng bước; các lần sau chỉ một dòng chào
+  const welcome = () => ui.toast(`Chào mừng đến Quy Nhơn! Tìm các cột sáng vàng để khám phá ${QUESTS.length} địa điểm. Bấm 🗺️ để xem bản đồ.`, 7000);
+  if (!tutorial.done() || params.has('tutorial')) setTimeout(() => tutorial.start(() => { audio.sfx?.('piece'); }), 700);
+  else welcome();
 
   // ---- nút đồ hoạ: hiện FPS, bấm để đổi mức Cao/Thấp (tải lại trang) ----
   const fpsMeter = createFpsMeter();
@@ -305,7 +313,7 @@ async function start() {
     const dt = Math.min(raw, 0.05), t = clock.elapsedTime;
     const { d, h } = vnTime();
     // dừng điều khiển khi đang mở bảng, bản đồ lớn hoặc đang dịch chuyển
-    if ($('modal').hidden && $('bigmap').hidden && !travelling) player.update(dt);
+    if ($('modal').hidden && $('bigmap').hidden && !travelling && !tutorial.open) player.update(dt);
     const pos = player.state.pos;
     const env = sky.update(d, h, pos);
     wx.setCode(wxTest ?? weather.code);

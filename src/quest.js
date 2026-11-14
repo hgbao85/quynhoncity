@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { QUESTS } from './quests-data.js';
 import { groundHeight } from './world/site.js';
+import { track } from './stats.js';
 
 const SAVE_KEY = 'qn3d-progress-v2';
 const OLD_KEY = 'qn3d-progress-v1';
@@ -66,6 +67,8 @@ export function createQuest(scene, data, ui) {
     $('pieces-bar').style.width = `${(pieces() / QUESTS.length) * 100}%`;
     if (!p.piece && d1 && d2 && d3) {
       p.piece = true; save(all);
+      track('piece', { place: q.id, n: pieces() });
+      if (pieces() === QUESTS.length) track('complete');
       ui.toast(`🧩 Bạn nhận được mảnh ghép "${q.piece}"! (${pieces()}/${QUESTS.length})`, 5000);
       ui.sfx?.('piece');
       if (pieces() === QUESTS.length) setTimeout(() => { ui.toast('🎉 Bạn đã khám phá đủ mọi địa điểm của Quy Nhơn! Tạo bưu thiếp để lưu lại nhé.', 7000); ui.onComplete?.(); }, 3000);

@@ -17,16 +17,21 @@ import { LANDMARKS, siteToWorld } from './landmark-sites.js';
 const box = (w, h, d, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y + h / 2, z); m.castShadow = m.receiveShadow = true; return m; };
 const cyl = (r0, r1, h, seg, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, seg), mat); m.position.set(x, y + h / 2, z); m.castShadow = true; return m; };
 
+// độ cao đặt công trình: điểm thấp nhất trong vùng ±10 m quanh tâm
+function baseHeight(l) {
+  let y = 1e9;
+  for (let lx = -10; lx <= 10; lx += 5) for (let lz = -10; lz <= 10; lz += 5) y = Math.min(y, heightAt(...siteToWorld(l, lx, lz)));
+  return y;
+}
+
 export function createLandmarks(scene, grid) {
   const glow = []; // vật liệu sáng ban đêm: [mat, cường độ]
   const all = new THREE.Group();
-  const builders = { thapdoi: thapDoi, cathedral, market, station, hanmactu: tomb, longkhanh: pagoda, quangtrung: quangTrung };
+  const builders = { thapdoi: thapDoi, cathedral, market, station, hanmactu: tomb, longkhanh: pagoda, quangtrung: quangTrung, hoanghau: queenBeach };
   for (const l of LANDMARKS) {
     const g = builders[l.id](glow, l);
     // đặt theo độ cao thấp nhất trong khuôn viên để chân công trình không lơ lửng
-    let y = 1e9;
-    for (let lx = -10; lx <= 10; lx += 5) for (let lz = -10; lz <= 10; lz += 5) y = Math.min(y, heightAt(...siteToWorld(l, lx, lz)));
-    g.position.set(l.x, y, l.z);
+    g.position.set(l.x, baseHeight(l), l.z);
     g.rotation.y = l.yaw;
     g.userData.landmark = l.id;
     all.add(g);
@@ -629,4 +634,130 @@ function quangTrung(glow) {
   for (const sx of [-1, 1]) { const lg = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.9, 4, 8), bronze); lg.position.set(sx * 0.55, -0.1, 0.3); lg.rotation.x = 1.2; rider.add(lg); }
   st.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   return g;
+}
+
+// ======================= Bãi tắm Hoàng Hậu (Ghềnh Ráng) =======================
+// Vịnh nhỏ dưới chân đồi Ghềnh Ráng: bãi đá cuội tròn nhẵn như trứng, những tảng đá granite lớn
+// trên bờ và dưới nước, bậc đá từ lưng đồi xuống, chòi nghỉ mái ngói và biển tên.
+// Địa hình dốc nên từng vật được đặt theo độ cao thật tại chỗ (heightAt), không theo một mặt phẳng.
+// Hệ local: +z ra biển (đông), +x dọc bờ về phía bắc.
+function queenBeach(glow, l) {
+  const g = new THREE.Group();
+  const base = baseHeight(l);
+  const hy = (lx, lz) => Math.max(heightAt(...siteToWorld(l, lx, lz)), -1.6) - base;
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const granite = new THREE.MeshStandardMaterial({ color: '#b08a6e', roughness: 0.85, flatShading: true });
+  const stone = new THREE.MeshStandardMaterial({ color: '#8f8a80', roughness: 0.9 });
+  const tile = new THREE.MeshStandardMaterial({ color: '#b5502f', roughness: 0.8 });
+  const ridge = new THREE.MeshStandardMaterial({ color: '#7d3a22', roughness: 0.7 });
+  const wood = new THREE.MeshStandardMaterial({ color: '#7a4b2a', roughness: 0.8 });
+
+  // đá cuội tròn nhẵn ("trứng") phủ dải bờ dài ~50 m: một InstancedMesh, màu từng viên khác nhau
+  const MAXP = 520;
+  const pebbles = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.45 }), MAXP);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), col = new THREE.Color();
+  const tones = ['#9a948a', '#7d7a74', '#b3aa9b', '#6f7378', '#a39079', '#c2b8a8', '#5f6266'];
+  let n = 0;
+  for (let k = 0; k < 3000 && n < MAXP; k++) {
+    const lx = -26 + rnd() * 52, lz = -6 + rnd() * 20;
+    const h = hy(lx, lz);
+    if (h + base < -0.7 || h + base > 2.2) continue; // chỉ ở dải bờ sát mép nước
+    const r = 0.18 + rnd() ** 2 * 0.5;
+    e.set(rnd() * 0.6, rnd() * Math.PI * 2, rnd() * 0.6); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(lx, h + r * 0.35, lz), q, new THREE.Vector3(r * 1.35, r * 0.8, r));
+    pebbles.setMatrixAt(n, m4);
+    pebbles.setColorAt(n, col.set(tones[Math.floor(rnd() * tones.length)]));
+    n++;
+  }
+  pebbles.count = n; pebbles.castShadow = pebbles.receiveShadow = true;
+  g.add(pebbles);
+
+  // tảng đá granite lớn: khối nhiều mặt được bóp méo ngẫu nhiên
+  const boulder = (lx, lz, size, solid = true) => {
+    const geo = new THREE.IcosahedronGeometry(1, 1);
+    const pos = geo.attributes.position, fac = new Map();
+    // cùng một đỉnh (các mặt dùng chung) phải co giãn như nhau, nếu không các mặt sẽ tách rời
+    for (let i = 0; i < pos.count; i++) {
+      const key = `${pos.getX(i).toFixed(3)},${pos.getY(i).toFixed(3)},${pos.getZ(i).toFixed(3)}`;
+      if (!fac.has(key)) fac.set(key, 0.8 + rnd() * 0.35);
+      const f = fac.get(key);
+      pos.setXYZ(i, pos.getX(i) * f, pos.getY(i) * f, pos.getZ(i) * f);
+    }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, granite);
+    m.scale.set(size * (0.9 + rnd() * 0.5), size * (0.6 + rnd() * 0.35), size * (0.8 + rnd() * 0.4));
+    m.rotation.set(rnd() * 0.4, rnd() * Math.PI, rnd() * 0.3);
+    m.position.set(lx, hy(lx, lz) + size * 0.25, lz);
+    m.castShadow = m.receiveShadow = true;
+    m.userData.solid = solid;
+    g.add(m);
+    return m;
+  };
+  // trên bờ hai đầu vịnh và dưới nước
+  for (const [lx, lz, s] of [[-24, 2, 4.5], [-29, 7, 3.2], [-20, 9, 2.6], [22, 1, 4], [27, 6, 5.5], [19, 10, 2.4],
+    [-9, 11, 2.2], [6, 14, 3], [13, 18, 1.8], [-16, 16, 2.8], [2, 22, 1.6]]) boulder(lx, lz, s, lz < 8);
+  // "hòn trứng": tảng đá tròn đứng chênh vênh trên một tảng bẹt ở đầu vịnh phía nam
+  const flat = boulder(-12, 4, 3);
+  flat.scale.y *= 0.55;
+  const egg = new THREE.Mesh(new THREE.SphereGeometry(1.7, 20, 16), granite);
+  egg.scale.set(1, 1.25, 0.95);
+  egg.position.set(-12, flat.position.y + 2.4, 4);
+  egg.castShadow = true; g.add(egg);
+
+  // bậc đá từ lưng đồi xuống bãi, có lan can gỗ
+  for (let k = 0; k < 16; k++) {
+    const lz = -30 + k * 1.6, lx = 9 - k * 0.15;
+    g.add(box(2.6, 0.5, 1.7, stone, lx, hy(lx, lz) - 0.3, lz));
+    if (k % 3 === 0) g.add(cyl(0.06, 0.06, 1.1, 6, wood, lx + 1.5, hy(lx, lz), lz));
+  }
+
+  // chòi nghỉ mái ngói trên lưng đồi, nhìn ra biển
+  const hut = new THREE.Group();
+  for (const [x, z] of [[-2.6, -2.6], [2.6, -2.6], [-2.6, 2.6], [2.6, 2.6]]) hut.add(cyl(0.18, 0.18, 3, 8, wood, x, 0, z));
+  const floor = box(6.4, 1.6, 6.4, stone, 0, -1.6, 0); floor.userData.solid = true; hut.add(floor);
+  const roof = vnRoof(7.4, 7.4, 2.2, tile, ridge); roof.position.y = 3; hut.add(roof);
+  hut.add(box(4, 0.12, 0.9, wood, 0, 0.75, 1.6)); // ghế
+  hut.position.set(-14, hy(-14, -20) + 0.3, -20);
+  g.add(hut);
+
+  // biển tên ở đầu bậc đá
+  const sx0 = 12, sz0 = -28, sy = hy(sx0, sz0);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.1), new THREE.MeshStandardMaterial({ map: queenSign(), roughness: 0.6 }));
+  sign.position.set(sx0, sy + 2.3, sz0); g.add(sign);
+  g.add(box(5.8, 1.3, 0.12, wood, sx0, sy + 1.65, sz0 - 0.08));
+  for (const sx of [-2.6, 2.6]) g.add(cyl(0.1, 0.1, 2.9, 8, wood, sx0 + sx, sy, sz0 - 0.08));
+
+  // cây dừa nghiêng ra biển dọc bờ
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#8a6a48', roughness: 0.9 });
+  const leafMat = new THREE.MeshStandardMaterial({ color: '#3f7f3a', roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
+  for (const [lx, lz] of [[-4, -11], [4, -12], [15, -10], [-19, -9]]) {
+    const tall = 7 + rnd() * 3;
+    const palm = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, tall, 7), trunkMat);
+    trunk.position.y = tall / 2; palm.add(trunk);
+    for (let k = 0; k < 7; k++) {
+      const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 3.6), leafMat);
+      leaf.geometry.translate(0, 1.8, 0);
+      leaf.position.y = tall; leaf.rotation.set(1.1, (k / 7) * Math.PI * 2, 0, 'YXZ');
+      palm.add(leaf);
+    }
+    palm.rotation.set(0.25, 0, 0); // nghiêng về phía biển (+z)
+    palm.position.set(lx, hy(lx, lz), lz);
+    palm.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    g.add(palm);
+  }
+  void glow;
+  return g;
+}
+
+function queenSign() {
+  const c = document.createElement('canvas'); c.width = 640; c.height = 126;
+  const x = c.getContext('2d');
+  x.fillStyle = '#1f4e6e'; x.fillRect(0, 0, 640, 126);
+  x.strokeStyle = '#f2e6c8'; x.lineWidth = 5; x.strokeRect(7, 7, 626, 112);
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = 'bold 50px "Be Vietnam Pro", Arial, sans-serif'; x.fillText('BÃI TẮM HOÀNG HẬU', 320, 52);
+  x.font = '600 24px "Be Vietnam Pro", Arial, sans-serif'; x.fillStyle = '#f2e6c8'; x.fillText('Ghềnh Ráng Tiên Sa · Quy Nhơn', 320, 96);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }

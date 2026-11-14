@@ -203,3 +203,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .card.quest { right: auto; left: 150px; bottom: 10px; width: 210px; }
   .credit { display: none; }
 }
+
+/* hướng dẫn lần đầu chơi */
+#tutorial { position: fixed; inset: 0; z-index: 40; }
+#tutorial.dim { background: rgba(5, 10, 20, .55); }
+#tutorial .tut-ring { position: fixed; border: 3px solid var(--gold); box-shadow: 0 0 0 9999px rgba(5, 10, 20, .55), 0 0 18px rgba(245, 197, 66, .8); pointer-events: none; transition: all .25s; animation: tutpulse 1.4s infinite; }
+@keyframes tutpulse { 50% { box-shadow: 0 0 0 9999px rgba(5, 10, 20, .55), 0 0 30px rgba(245, 197, 66, 1); } }
+#tutorial .tut-card { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; width: min(380px, calc(100vw - 24px)); background: #f8f5ee; color: #1d2b4a; border-radius: 16px; padding: 16px 18px 14px; box-shadow: 0 16px 50px rgba(0,0,0,.45); }
+#tutorial.center .tut-card { top: 50%; bottom: auto; transform: translate(-50%, -50%); }
+#tutorial .tut-step { color: #8a7a55; font-weight: 700; font-size: 12px; }
+#tutorial h3 { margin: 2px 0 6px; font-size: 18px; }
+#tutorial p { margin: 0 0 12px; line-height: 1.55; font-size: 14px; }
+#tutorial .tut-actions { display: flex; gap: 8px; align-items: center; }
+#tutorial .tut-actions span { flex: 1; }
+#tutorial button { padding: 9px 14px; border-radius: 10px; border: 1px solid #ccc3b2; background: #fff; color: #1d2b4a; font-weight: 700; }
+#tutorial button.primary { background: #1d2b4a; color: #fff; border-color: #1d2b4a; }
+#tutorial .tut-skip { border: 0; background: none; color: #6a7388; padding-left: 0; }
+#tutorial button[hidden] { display: none; }

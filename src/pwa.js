@@ -5,11 +5,12 @@
 // - Đã mở từ biểu tượng trên màn hình chính thì ẩn cả hai nút (game đã chạy toàn màn hình).
 // Các phần dưới đây chạy ngay khi trang tải mã (trước khi dựng bản đồ): trình duyệt chỉ báo
 // "có thể cài" một lần mỗi lần tải trang, thường là lúc màn hình chờ còn đang hiện.
+import { track } from './stats.js';
 const installed = matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 let deferred = null, onInstallable = null, onInstalled = null;
 addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; onInstallable?.(); });
-addEventListener('appinstalled', () => { deferred = null; onInstalled?.(); });
+addEventListener('appinstalled', () => { deferred = null; track('install'); onInstalled?.(); });
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const reg = () => navigator.serviceWorker.register('/sw.js').catch(() => {});
   if (document.readyState === 'complete') reg(); else addEventListener('load', reg);
