@@ -12,7 +12,7 @@ const MODES = ['all', 'nomusic', 'mute'];
 export function createAudio() {
   let mode = 'all';
   try { const m = localStorage.getItem(KEY); if (MODES.includes(m)) mode = m; } catch { /* bỏ qua */ }
-  let ctx = null, master, musicBus, sfxBus, sea, city, engine, started = false;
+  let ctx = null, master, musicBus, sfxBus, sea, city, rainN, engine, started = false;
 
   function noiseBuffer(c, seconds = 2) {
     const b = c.createBuffer(1, c.sampleRate * seconds, c.sampleRate), d = b.getChannelData(0);
@@ -39,6 +39,7 @@ export function createAudio() {
     sfxBus = ctx.createGain(); sfxBus.gain.value = 0.5; sfxBus.connect(master);
     sea = loopNoise(ctx, 700); sea.g.connect(master);
     city = loopNoise(ctx, 260); city.g.connect(master);
+    rainN = loopNoise(ctx, 5200); rainN.g.connect(master); // tiếng mưa: ồn sáng hơn
     // máy xe: răng cưa + lọc thấp + rung nhẹ
     const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 40;
     const lfo = ctx.createOscillator(); lfo.frequency.value = 18; const lg = ctx.createGain(); lg.gain.value = 6; lfo.connect(lg).connect(o.frequency); lfo.start();
@@ -109,6 +110,15 @@ export function createAudio() {
     setTimeout(scheduleMusic, 500);
   }
 
+  // sấm: tiếng ồn trầm ầm ì sau chớp ~1 giây
+  function thunderClap() {
+    const t = ctx.currentTime + 0.6 + Math.random() * 1.2;
+    const n = ctx.createBufferSource(); n.buffer = noiseBuffer(ctx, 4);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.9, t + 0.15); g.gain.exponentialRampToValueAtTime(0.001, t + 3.5);
+    n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + 3.6);
+  }
+
   // còi xe máy xa xa
   let hornTimer = 4;
   function horn() {
@@ -121,7 +131,7 @@ export function createAudio() {
   }
 
   // cập nhật theo vị trí: seaDist (m tới bờ biển), cars (số xe trong 80 m), riding, speed
-  function update(dt, { seaDist = 1e9, cars = 0, riding = false, speed = 0, night = 0 }) {
+  function update(dt, { seaDist = 1e9, cars = 0, riding = false, speed = 0, night = 0, rain = 0, thunder = false }) {
     if (!ctx || mode === 'mute') return;
     const t = ctx.currentTime;
     const swell = 0.6 + 0.4 * Math.sin(t * 0.45) * Math.sin(t * 0.17 + 1);
@@ -132,6 +142,8 @@ export function createAudio() {
     engine.eg.gain.setTargetAtTime(riding ? 0.07 + speed * 0.004 : 0, t, 0.15);
     engine.o.frequency.setTargetAtTime(32 + speed * 5.5, t, 0.1);
     engine.ef.frequency.setTargetAtTime(350 + speed * 45, t, 0.1);
+    rainN.g.gain.setTargetAtTime(rain * 0.35, t, 0.6);
+    if (thunder) thunderClap();
     hornTimer -= dt;
     if (hornTimer < 0) { hornTimer = 5 + Math.random() * 14; if (cars > 2 && night < 0.8) horn(); }
   }

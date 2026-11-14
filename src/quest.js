@@ -149,6 +149,13 @@ export function createQuest(scene, data, ui) {
   ];
   const progress = () => QUESTS.map((q) => ({ id: q.id, place: q.place, piece: all[q.id].piece, steps: done(q).filter(Boolean).length }));
 
+  // ẩn/hiện cột sáng và điểm sáng (khi chụp ảnh lưu niệm cho đẹp)
+  function setMarkersVisible(on) {
+    for (const s of state) {
+      s.pillar.visible = on;
+      s.sparks.forEach((m, i) => { m.visible = on && !all[s.q.id].found.includes(s.q.details[i].id); });
+    }
+  }
   render();
-  return { update, photoTaken, markers, progress };
+  return { update, photoTaken, markers, progress, setMarkersVisible };
 }

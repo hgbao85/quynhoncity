@@ -30,6 +30,7 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - `?yaw=225`: đặt hướng camera (độ).
 - `?zoom=600&pitch=0.6`: đưa camera lên cao để xem toàn cảnh.
 - `?q=low` / `?q=high`: chọn mức đồ hoạ.
+- `?wx=rain|storm|cloud|fog|clear`: thử thời tiết.
 - `?debug`: đưa `scene`, `THREE` và `game` (người chơi, thành phố, camera) ra `window` để soi trong console; `game.city.tiles.stats()` cho biết số ô đang dựng và thời gian gắn ô.
 
 ## Dữ liệu bản đồ
@@ -114,8 +115,18 @@ Lệnh này chạy lần lượt:
 - Hiệu ứng khi tìm thấy chi tiết, trả lời đúng/sai, nhận mảnh ghép, chụp ảnh. Âm thanh bắt đầu sau lần chạm/bấm đầu tiên (quy định của trình duyệt).
 
 **Album và bưu thiếp** (bấm thẻ 🧩 Mảnh ghép; `src/album.js`)
-- Mỗi lần chụp ảnh gần một địa điểm, ảnh thu nhỏ được lưu vào album (trong trình duyệt).
+- Mỗi lần chụp ảnh gần một địa điểm, ảnh 640×360 được lưu vào album (trong trình duyệt). Lúc chụp, cột sáng và điểm sáng nhiệm vụ được ẩn đi; các bảng thông tin là lớp HTML nên cũng không lọt vào ảnh.
 - Đủ 5 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 5 tấm ảnh đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
+
+**Thời tiết thật** (`src/world/weather.js`)
+- Theo dữ liệu Open-Meteo (mã thời tiết WMO): ít mây/nhiều mây có mây trôi; mưa, mưa rào có mưa rơi quanh người chơi, trời u ám, sương mù dày hơn, tiếng mưa; dông có chớp sáng và tiếng sấm; sương mù làm tầm nhìn ngắn lại.
+- Thử nhanh không cần chờ trời mưa: `?wx=rain`, `?wx=storm`, `?wx=cloud`, `?wx=fog`, `?wx=clear`.
+
+**Cài như ứng dụng** (`public/manifest.webmanifest`, `public/sw.js`, `src/pwa.js`)
+- Android/Chrome: nút 📲 để cài game ra màn hình chính; mở từ biểu tượng là chơi toàn màn hình, không có thanh địa chỉ.
+- iPhone/iPad: nút 📲 hiện hướng dẫn "Chia sẻ → Thêm vào MH chính".
+- Nút ⛶ bật toàn màn hình ngay trong trình duyệt (và thử xoay ngang trên điện thoại).
+- Service worker lưu sẵn trang, bản đồ, địa hình và các khu đã đi qua, nên lần sau mở nhanh hơn. Chỉ chạy trên HTTPS (bản Vercel), không chạy khi `npm run dev`.
 
 **Mức đồ hoạ** (nút ⚙, có hiện FPS)
 - **Cao** (mặc định trên máy tính): bóng đổ, hiệu ứng toả sáng ban đêm, tải bản đồ trong bán kính 1,25 km.
@@ -213,6 +224,8 @@ npm run optimize-statue
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 | `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
 | `src/album.js` | Album ảnh hành trình và bưu thiếp chia sẻ |
+| `src/world/weather.js` | Mây, mưa, sương mù, dông theo thời tiết thật |
+| `src/pwa.js`, `public/sw.js`, `public/manifest.webmanifest` | Cài như ứng dụng, toàn màn hình, lưu sẵn dữ liệu |
 
 ## Cần lưu ý trước khi ra mắt
 

@@ -97,5 +97,5 @@ export function createSky(scene, renderer) {
     renderer.toneMappingExposure = 0.55 + night * 0.35;
     return { night, dusk, sunDir: dir, fogColor: tmp };
   }
-  return { update, sun };
+  return { update, sun, hemi };
 }

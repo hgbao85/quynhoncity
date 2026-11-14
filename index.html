@@ -7,6 +7,12 @@
   <!-- thẻ chia sẻ: hiện ảnh, tiêu đề, mô tả khi gửi link qua Zalo, Facebook, Messenger, X -->
   <meta name="description" content="Dạo khắp thành phố biển Quy Nhơn 3D ngay trên trình duyệt: tượng đài và quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng. Khám phá 5 địa điểm, sưu tầm 5 mảnh ghép." />
   <meta name="theme-color" content="#1d2b4a" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Quy Nhơn 3D" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Quy Nhơn 3D" />
   <meta property="og:locale" content="vi_VN" />
@@ -67,6 +73,8 @@
         <span>🧩</span>
         <div><small>Mảnh ghép</small><b id="pieces">0/5</b><div class="track"><i id="pieces-bar"></i></div></div>
       </div>
+      <button class="card icon-btn" id="install-btn" title="Cài game ra màn hình chính" hidden><span>📲</span><small>Cài đặt</small></button>
+      <button class="card icon-btn" id="fs-btn" title="Toàn màn hình"><span>⛶</span><small>Toàn màn hình</small></button>
       <button class="card icon-btn" id="sound-btn" title="Âm thanh: bật hết / tắt nhạc / tắt tiếng"><span>🔊</span><small>Âm thanh</small></button>
       <button class="card icon-btn" id="ride-btn" title="Lên/xuống xe máy (phím F)"><span>🛵</span><small>Xe máy</small></button>
       <button class="card icon-btn" id="map-btn" title="Bản đồ và dịch chuyển nhanh (phím M)"><span>🗺️</span><small>Bản đồ</small></button>

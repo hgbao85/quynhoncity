@@ -23,6 +23,8 @@ import { createBigMap } from './bigmap.js';
 import { createTraffic } from './traffic.js';
 import { createAudio } from './audio.js';
 import { createAlbum } from './album.js';
+import { setupPwa } from './pwa.js';
+import { createWeather, testWeatherCode } from './world/weather.js';
 
 const $ = (id) => document.getElementById(id);
 // điện thoại/máy tính bảng: con trỏ thô, hoặc có cảm ứng mà màn hình nhỏ (một số trình duyệt Android
@@ -123,6 +125,8 @@ async function start() {
   const highlands = createHighlands(scene, city.grid);
   const landmarks = createLandmarks(scene, city.grid);
   const sky = createSky(scene, renderer);
+  const wx = createWeather(scene, Q.id === 'low' ? 1400 : 3000);
+  const wxTest = testWeatherCode();
   const sea = createSea(scene);
   const player = createPlayer(scene, camera, city.grid, canvas);
   // nếu điểm xuất phát bị chặn, tìm ô trống gần nhất
@@ -148,6 +152,7 @@ async function start() {
   if (params.has('debug')) window.game = { player, city, camera };
   const crowd = createCrowd(scene, city.grid, Q.crowd);
   // ---- âm thanh, album ----
+  setupPwa(ui);
   const audio = createAudio();
   ui.sfx = audio.sfx;
   const SOUND_ICON = { all: '🔊', nomusic: '🔉', mute: '🔇' }, SOUND_LBL = { all: 'Âm thanh', nomusic: 'Tắt nhạc', mute: 'Tắt tiếng' };
@@ -198,7 +203,16 @@ async function start() {
   });
 
   $('photo').onclick = () => {
+    // ảnh sạch: ẩn cột sáng, điểm sáng nhiệm vụ trong khoảnh khắc chụp (bảng thông tin là HTML nên không lọt vào ảnh)
+    quest.setMarkersVisible(false);
     composer.render();
+    const thumbCanvas = document.createElement('canvas');
+    {
+      // ảnh lưu niệm cho album/bưu thiếp: 16:9, 640×360, cắt giữa khung hình
+      const tw = 640, th = 360; thumbCanvas.width = tw; thumbCanvas.height = th;
+      const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
+      thumbCanvas.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
+    }
     canvas.toBlob((blob) => {
       if (!blob) return;
       const a = document.createElement('a');
@@ -207,13 +221,10 @@ async function start() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     });
+    quest.setMarkersVisible(true);
     const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
-    // ảnh thu nhỏ cho album (16:9, 360×203)
-    const tw = 360, th = 203, tc = document.createElement('canvas'); tc.width = tw; tc.height = th;
-    const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
-    tc.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
     audio.sfx('shutter');
-    quest.photoTaken(player.state.pos, tc.toDataURL('image/jpeg', 0.72));
+    quest.photoTaken(player.state.pos, thumbCanvas.toDataURL('image/jpeg', 0.78));
   };
 
   $('loading').style.opacity = 0;
@@ -240,12 +251,15 @@ async function start() {
     if ($('modal').hidden) player.update(dt);
     const pos = player.state.pos;
     const env = sky.update(d, h, pos);
+    wx.setCode(wxTest ?? weather.code);
+    const wxs = wx.update(dt, camera, env, { sun: sky.sun, hemi: sky.hemi, renderer });
+    if (wxs.flash > 0) { scene.fog.color.lerp(new THREE.Color('#e6ecff'), wxs.flash * 0.6); renderer.toneMappingExposure += wxs.flash * 0.8; }
     sea.update(t, env, pos);
     city.tiles.update(pos, dt);
     crowd.update(dt, pos);
     traffic.update(dt, pos);
     seaTimer -= dt; if (seaTimer <= 0) { seaTimer = 0.5; seaD = seaDist(pos.x, pos.z); }
-    audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night });
+    audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night, rain: wxs.rain, thunder: wxs.flash > 0.98 });
     quest.update(t, pos, env.night, dt);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
@@ -275,7 +289,8 @@ async function start() {
       $('date').textContent = `${WEEK[d.getUTCDay()]} ${d.getUTCDate()}/${month} · ${month >= 9 ? 'Mùa mưa' : 'Mùa khô'}`;
       $('temp').textContent = `${weather.temp}°C`;
       $('assumed').hidden = !weather.assumed;
-      $('sky-icon').textContent = weatherIcon(weather.code, env.night > 0.5);
+      $('sky-icon').textContent = weatherIcon(wxTest ?? weather.code, env.night > 0.5);
+      $('sky-icon').title = wx.label;
       $('mana').textContent = Math.round(player.state.mana);
       $('mana-bar').style.width = `${player.state.mana}%`;
       const fps = Math.round(fpsMeter.fps);

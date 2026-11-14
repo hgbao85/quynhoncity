@@ -155,3 +155,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pc-actions { display: flex; gap: 8px; margin-top: 8px; }
 .pc-actions button { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc3b2; background: #fff; font-weight: 700; }
 @media (max-width: 760px) { #sound-btn small { display: none; } }
+
+#fs-btn.on { background: var(--gold); color: #1d2b4a; }
+.howto { padding-left: 20px; line-height: 1.8; }
+@media (max-width: 760px) { #fs-btn small, #install-btn small { display: none; } }
+@media (display-mode: fullscreen), (display-mode: standalone) { #fs-btn, #install-btn { display: none !important; } }
