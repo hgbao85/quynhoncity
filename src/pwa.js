@@ -3,22 +3,24 @@
 // - iPhone/iPad (Safari): không có lời mời cài tự động → bấm 📲 hiện hướng dẫn "Chia sẻ → Thêm vào MH chính".
 // - Nút ⛶: bật/tắt toàn màn hình (ẩn hẳn khi trình duyệt không hỗ trợ, ví dụ iPhone).
 // - Đã mở từ biểu tượng trên màn hình chính thì ẩn cả hai nút (game đã chạy toàn màn hình).
+// Các phần dưới đây chạy ngay khi trang tải mã (trước khi dựng bản đồ): trình duyệt chỉ báo
+// "có thể cài" một lần mỗi lần tải trang, thường là lúc màn hình chờ còn đang hiện.
+const installed = matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let deferred = null, onInstallable = null, onInstalled = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; onInstallable?.(); });
+addEventListener('appinstalled', () => { deferred = null; onInstalled?.(); });
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  const reg = () => navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (document.readyState === 'complete') reg(); else addEventListener('load', reg);
+}
+
 export function setupPwa(ui) {
   const $ = (id) => document.getElementById(id);
-  const installed = matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-  // hàm này chạy sau khi game dựng xong bản đồ (trang đã tải xong từ lâu) nên đăng ký ngay,
-  // không chờ sự kiện 'load'
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    const reg = () => navigator.serviceWorker.register('/sw.js').catch(() => {});
-    if (document.readyState === 'complete') reg(); else addEventListener('load', reg);
-  }
-
-  let deferred = null;
   const btn = $('install-btn');
-  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; if (!installed) btn.hidden = false; });
-  addEventListener('appinstalled', () => { btn.hidden = true; ui.toast('📲 Đã cài Quy Nhơn 3D ra màn hình chính!'); });
+  onInstallable = () => { if (!installed) btn.hidden = false; };
+  onInstalled = () => { btn.hidden = true; ui.toast('📲 Đã cài Quy Nhơn 3D ra màn hình chính!'); };
+  if (deferred) onInstallable(); // sự kiện đã đến trong lúc tải
   if (isIOS && !installed) btn.hidden = false;
   btn.onclick = async () => {
     if (deferred) {

@@ -34,7 +34,8 @@ export function createWeather(scene, maxDrops = 3000) {
   for (let i = 0; i < maxDrops; i++) { P[i * 3] = (Math.random() - 0.5) * SX; P[i * 3 + 1] = Math.random() * SY; P[i * 3 + 2] = (Math.random() - 0.5) * SX; SPD[i] = 13 + Math.random() * 6; }
   const wind = new THREE.Vector3(1.8, 0, 0.9);
   const tilt = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(wind.x / 15, -1, wind.z / 15).normalize());
-  const M = new THREE.Matrix4(), V = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1);
+  const M = new THREE.Matrix4(), V = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1), IDQ = new THREE.Quaternion();
+  const CLOUD_LIGHT = new THREE.Color('#f4f6f8'), CLOUD_DARK = new THREE.Color('#a7b0b8'), FLASH_SKY = new THREE.Color('#dfe6f2'), tmpC = new THREE.Color();
 
   // ---- mây: các đám mây dẹt trôi chậm trên cao ----
   // mây không nhận ánh sáng (MeshBasic) để không bị đen ở mặt dưới; màu tự chỉnh theo độ u ám
@@ -45,7 +46,7 @@ export function createWeather(scene, maxDrops = 3000) {
   const cl = [];
   for (let i = 0; i < 90; i++) {
     const cx = (Math.random() - 0.5) * 5000, cz = (Math.random() - 0.5) * 5000;
-    for (let k = 0; k < 1; k++) cl.push({ x: cx, y: 520 + Math.random() * 180, z: cz, sx: 180 + Math.random() * 220, sy: 35 + Math.random() * 30, sz: 120 + Math.random() * 160 });
+    cl.push({ x: cx, y: 520 + Math.random() * 180, z: cz, sx: 180 + Math.random() * 220, sy: 35 + Math.random() * 30, sz: 120 + Math.random() * 160 });
   }
   scene.add(clouds);
 
@@ -78,26 +79,29 @@ export function createWeather(scene, maxDrops = 3000) {
     // sương mù gần hơn khi mưa/sương; trời u ám xám lại
     scene.fog.near = 250 * (1 - mix.fog * 0.85);
     scene.fog.far = 1500 * (1 - mix.fog * 0.75) * (1 - mix.rain * 0.3);
-    scene.fog.color.lerp(darkSky.clone().multiplyScalar(1 - env.night * 0.85), Math.min(0.85, gloom + mix.fog * 0.5));
+    scene.fog.color.lerp(tmpC.copy(darkSky).multiplyScalar(1 - env.night * 0.85), Math.min(0.85, gloom + mix.fog * 0.5));
     if (lights) {
       lights.sun.intensity *= 1 - Math.min(0.85, gloom * 1.2);
-      if (gloom > 0.5) lights.sun.castShadow = false;
+      lights.sun.shadow.intensity *= 1 - Math.min(1, gloom * 1.3); // trời u ám: bóng mờ đi (không tắt cờ)
       if (lights.hemi) lights.hemi.intensity *= 1 - gloom * 0.35;
       if (lights.renderer) lights.renderer.toneMappingExposure *= 1 - gloom * 0.3;
     }
     // vòm mây xám che trời xanh
     dome.position.copy(camera.position);
     domeMat.uniforms.opacity.value = Math.min(0.92, gloom * 1.35 + mix.fog * 0.4);
-    domeMat.uniforms.color.value.copy(darkSky).multiplyScalar(1 - env.night * 0.85).lerp(new THREE.Color('#dfe6f2'), flash * 0.8);
+    domeMat.uniforms.color.value.copy(darkSky).multiplyScalar(1 - env.night * 0.85).lerp(FLASH_SKY, flash * 0.8);
     // mây
     cloudMat.opacity = Math.min(0.85, mix.cloud) * (1 - env.night * 0.6);
-    cloudMat.color.set('#f4f6f8').lerp(new THREE.Color('#a7b0b8'), Math.min(1, gloom * 1.3)).multiplyScalar(1 - env.night * 0.8);
+    cloudMat.color.copy(CLOUD_LIGHT).lerp(CLOUD_DARK, Math.min(1, gloom * 1.3)).multiplyScalar(1 - env.night * 0.8);
     clouds.visible = cloudMat.opacity > 0.02;
     if (clouds.visible) {
       for (let i = 0; i < cl.length; i++) {
         const c = cl[i];
-        c.x += 2.5 * dt; if (c.x - camera.position.x > 2500) c.x -= 5000;
-        M.compose(V.set(c.x, c.y, c.z), new THREE.Quaternion(), S.set(c.sx, c.sy, c.sz));
+        c.x += 2.5 * dt;
+        // giữ mây quanh camera theo cả hai trục
+        if (c.x - camera.position.x > 2500) c.x -= 5000; else if (c.x - camera.position.x < -2500) c.x += 5000;
+        if (c.z - camera.position.z > 2500) c.z -= 5000; else if (c.z - camera.position.z < -2500) c.z += 5000;
+        M.compose(V.set(c.x, c.y, c.z), IDQ, S.set(c.sx, c.sy, c.sz));
         clouds.setMatrixAt(i, M);
       }
       clouds.instanceMatrix.needsUpdate = true;
@@ -120,12 +124,13 @@ export function createWeather(scene, maxDrops = 3000) {
       drops.instanceMatrix.needsUpdate = true;
     }
     // dông: thỉnh thoảng chớp sáng cả bầu trời
+    let strike = false;
     if (state.storm) {
       flashTimer -= dt;
-      if (flashTimer < 0) { flash = 1; flashTimer = 6 + Math.random() * 14; }
+      if (flashTimer < 0) { flash = 1; strike = true; flashTimer = 6 + Math.random() * 14; }
     }
     flash = Math.max(0, flash - dt * 3.5);
-    return { gloom, rain: mix.rain, flash };
+    return { gloom, rain: mix.rain, flash, strike };
   }
   return { update, setCode, get label() { return state.label; }, get rain() { return mix.rain; } };
 }

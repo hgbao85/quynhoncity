@@ -10,6 +10,8 @@ import { scooterParts } from './vehicles.js';
 
 export { groundHeight };
 
+const TGT = new THREE.Vector3(), WANT = new THREE.Vector3();
+
 export function createPlayer(scene, camera, grid, dom) {
   const person = createPerson({ shirt: '#2f7f86', pants: '#45556e', backpack: '#6b5a44' });
   scene.add(person.root);
@@ -47,11 +49,13 @@ export function createPlayer(scene, camera, grid, dom) {
     if (btn) btn.classList.toggle('on', on);
     return true;
   }
-  addEventListener('keydown', (e) => { if (e.code === 'KeyF' && e.target.tagName !== 'INPUT') setRiding(!s.riding); });
+  addEventListener('keydown', (e) => { if (e.code === 'KeyF' && !e.repeat && e.target.tagName !== 'INPUT') setRiding(!s.riding); });
   const keys = new Set();
   const joy = { x: 0, y: 0, active: false };
 
   addEventListener('keydown', (e) => { if (e.target.tagName !== 'INPUT') keys.add(e.code); });
+  // phím đang giữ khi mở bảng/bản đồ không được "dính" sau khi đóng
+  document.addEventListener('visibilitychange', () => keys.clear());
   addEventListener('keyup', (e) => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
 
@@ -129,7 +133,7 @@ export function createPlayer(scene, camera, grid, dom) {
       pr.legL.rotation.set(-1.45, 0, 0.12); pr.legR.rotation.set(-1.45, 0, -0.12);
       pr.armL.rotation.set(-1.15, 0, 0.2); pr.armR.rotation.set(-1.15, 0, -0.2);
       pr.hips.position.y = 0.86;
-      person.root.position.copy(s.pos).add(new THREE.Vector3(Math.sin(s.facing) * -0.25, -0.02, Math.cos(s.facing) * -0.25));
+      person.root.position.set(s.pos.x - Math.sin(s.facing) * 0.25, s.pos.y - 0.02, s.pos.z - Math.cos(s.facing) * 0.25);
       person.root.rotation.set(0, s.facing, 0); person.root.rotateZ(s.lean);
       bikeLamp.material.emissiveIntensity = 0.3 + (document.body.dataset.night ? 2.5 : 0);
     } else {
@@ -140,7 +144,7 @@ export function createPlayer(scene, camera, grid, dom) {
     }
 
     // camera đi theo mềm
-    const tgt = new THREE.Vector3(s.pos.x, s.pos.y + 1.5, s.pos.z);
+    const tgt = TGT.set(s.pos.x, s.pos.y + 1.5, s.pos.z);
     // trên xe: camera tự xoay dần ra sau lưng theo hướng xe chạy, lùi xa hơn một chút
     if (s.riding && s.speed > 2 && !drag) {
       let d = s.facing + Math.PI - s.camYaw; d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -148,7 +152,7 @@ export function createPlayer(scene, camera, grid, dom) {
     }
     const cp = s.camPitch, cy = s.camYaw;
     const dist = s.camDist + (s.riding ? 3 : 0);
-    const want = tgt.clone().add(new THREE.Vector3(Math.sin(cy) * Math.cos(cp), Math.sin(cp), Math.cos(cy) * Math.cos(cp)).multiplyScalar(dist));
+    const want = WANT.set(Math.sin(cy) * Math.cos(cp), Math.sin(cp), Math.cos(cy) * Math.cos(cp)).multiplyScalar(dist).add(tgt);
     want.y = Math.max(want.y, s.pos.y + 0.6, heightAt(want.x, want.z) + 1.2);
     camera.position.lerp(want, Math.min(1, dt * 10));
     camera.lookAt(tgt);

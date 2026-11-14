@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Quy Nhơn 3D · Bản mẫu</title>
   <!-- thẻ chia sẻ: hiện ảnh, tiêu đề, mô tả khi gửi link qua Zalo, Facebook, Messenger, X -->
-  <meta name="description" content="Dạo khắp thành phố biển Quy Nhơn 3D ngay trên trình duyệt: tượng đài và quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng. Khám phá 5 địa điểm, sưu tầm 5 mảnh ghép." />
+  <meta name="description" content="Dạo khắp thành phố biển Quy Nhơn 3D ngay trên trình duyệt: tượng đài và quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, chùa Long Khánh, tượng Quang Trung, Ghềnh Ráng. Khám phá 7 địa điểm, sưu tầm 7 mảnh ghép." />
   <meta name="theme-color" content="#1d2b4a" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -18,7 +18,7 @@
   <meta property="og:locale" content="vi_VN" />
   <meta property="og:url" content="https://quynhoncity.vercel.app/" />
   <meta property="og:title" content="Quy Nhơn 3D – dạo phố biển trên trình duyệt" />
-  <meta property="og:description" content="Đi bộ, chạy xe máy khắp Quy Nhơn: tượng đài, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng. Khám phá 5 địa điểm, sưu tầm 5 mảnh ghép. Chơi được trên điện thoại." />
+  <meta property="og:description" content="Đi bộ, chạy xe máy khắp Quy Nhơn: tượng đài, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, chùa Long Khánh, tượng Quang Trung, Ghềnh Ráng. Khám phá 7 địa điểm, sưu tầm 7 mảnh ghép. Chơi được trên điện thoại." />
   <meta property="og:image" content="https://quynhoncity.vercel.app/og.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -69,9 +69,9 @@
     </div>
 
     <div class="top-right">
-      <div class="card piece" id="piece-card" title="Xem album hành trình">
+      <div class="card piece" id="piece-card" title="Xem album hành trình" role="button" tabindex="0" aria-label="Mảnh ghép: mở album hành trình">
         <span>🧩</span>
-        <div><small>Mảnh ghép</small><b id="pieces">0/5</b><div class="track"><i id="pieces-bar"></i></div></div>
+        <div><small>Mảnh ghép</small><b id="pieces">0/7</b><div class="track"><i id="pieces-bar"></i></div></div>
       </div>
       <button class="card icon-btn" id="install-btn" title="Cài game ra màn hình chính" hidden><span>📲</span><small>Cài đặt</small></button>
       <button class="card icon-btn" id="fs-btn" title="Toàn màn hình"><span>⛶</span><small>Toàn màn hình</small></button>
@@ -94,16 +94,16 @@
     <div class="credit">Bản mẫu · Dữ liệu bản đồ © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, nhà: Microsoft Building Footprints (ODbL) · Tượng đài phỏng dựng</div>
   </div>
 
-  <div id="modal" hidden>
+  <div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="sheet">
-      <button class="close" id="modal-close">✕</button>
+      <button class="close" id="modal-close" aria-label="Đóng">✕</button>
       <h2 id="modal-title"></h2>
       <div id="modal-body"></div>
     </div>
   </div>
-  <div id="bigmap" hidden>
+  <div id="bigmap" hidden role="dialog" aria-modal="true" aria-label="Bản đồ Quy Nhơn">
     <div class="map-sheet">
-      <button class="close" id="bigmap-close">✕</button>
+      <button class="close" id="bigmap-close" aria-label="Đóng bản đồ">✕</button>
       <h2>Bản đồ Quy Nhơn</h2>
       <p class="map-hint">Bấm vào một địa điểm để dịch chuyển tới đó. Vàng: còn nhiệm vụ · Xanh lá: đã nhận mảnh ghép.</p>
       <div class="map-body">

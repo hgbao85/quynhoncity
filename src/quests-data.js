@@ -2,7 +2,8 @@
 // các chi tiết cần tìm (điểm sáng xanh), chụp ảnh gần công trình; xong cả ba thì nhận một mảnh ghép.
 // Vị trí dùng toạ độ local của công trình (xem landmark-sites.js): lx sang phải, lz về phía trước.
 // Nguồn: Wikipedia tiếng Việt (Tháp Đôi), VnExpress (Nhà thờ Chính tòa, tháp 42,7 m), báo Nhân Dân,
-// Tuổi Trẻ, VTC (tượng đài), Mia.vn (đồi Thi Nhân, dốc Mộng Cầm). CẦN KIỂM CHỨNG LẠI TRƯỚC KHI RA MẮT.
+// Tuổi Trẻ, VTC (tượng đài), Mia.vn (đồi Thi Nhân, dốc Mộng Cầm; chùa Long Khánh: sắc phong 1805, chuông
+// đồng 1,7 m), kiến thức lịch sử phổ thông (Quang Trung). CẦN KIỂM CHỨNG LẠI TRƯỚC KHI RA MẮT.
 import { LANDMARKS, siteToWorld } from './world/landmark-sites.js';
 import { toWorld } from './world/site.js';
 
@@ -84,6 +85,42 @@ export const QUESTS = [
     ],
   },
   {
+    id: 'longkhanh', title: 'Tiếng chuông cổ tự', place: 'Chùa Long Khánh', piece: 'Chuông chùa Long Khánh',
+    center: at('longkhanh', 0, 0), pillar: at('longkhanh', 6, 30), photoRadius: 60,
+    story: [
+      'Chùa Long Khánh nằm trên đường Trần Cao Vân, là một trong những ngôi chùa cổ và lớn nhất Quy Nhơn, có lịch sử hơn 200 năm.',
+      'Năm 1805, chùa được vua Gia Long sắc phong là "Sắc tứ Long Khánh tự". Chùa còn lưu giữ một quả chuông đồng cao khoảng 1,7 m, nặng hơn 700 kg, đúc cùng năm đó.',
+      'Chánh điện được bố trí theo hình chữ "khẩu" (口) với Thượng điện và Hạ điện; trước sân là cổng tam quan và lầu chuông.',
+    ],
+    quiz: [
+      { q: 'Vị vua nào đã sắc phong chùa là "Sắc tứ Long Khánh tự"?', a: ['Minh Mạng', 'Gia Long', 'Tự Đức', 'Quang Trung'], ok: 1 },
+      { q: 'Quả chuông đồng cổ của chùa được đúc vào năm nào?', a: ['1805', '1945', '1702', '1975'], ok: 0 },
+      { q: 'Chánh điện chùa Long Khánh được bố trí theo hình chữ gì?', a: ['Chữ Đinh (丁)', 'Chữ Khẩu (口)', 'Chữ Nhất (一)', 'Chữ Môn (門)'], ok: 1 },
+    ],
+    details: [
+      { id: 'gate', pos: at('longkhanh', 0, 50), y: 0.3, r: 5, title: 'Cổng tam quan', text: 'Cổng ba lối với biển tên "Long Khánh" chữ vàng trên nền đỏ.' },
+      { id: 'bell', pos: at('longkhanh', -12, 13), y: 0.3, r: 5, title: 'Lầu chuông', text: 'Lầu chuông hai tầng mái, chân xây đá, nơi treo quả chuông đồng cổ.' },
+    ],
+  },
+  {
+    id: 'quangtrung', title: 'Người anh hùng áo vải', place: 'Tượng đài Quang Trung', piece: 'Vó ngựa Tây Sơn',
+    center: at('quangtrung', 0, 0), pillar: at('quangtrung', 0, 30), photoRadius: 45,
+    story: [
+      'Giữa vòng xoay Lê Hồng Phong – Trần Hưng Đạo là tượng đài vua Quang Trung cưỡi ngựa chiến, tay giơ cao thanh gươm.',
+      'Quang Trung – Nguyễn Huệ là người con của đất Tây Sơn, Bình Định. Cùng anh em nhà Tây Sơn, ông dựng cờ khởi nghĩa và lên ngôi hoàng đế năm 1788.',
+      'Mùa xuân năm Kỷ Dậu 1789, ông chỉ huy đại phá quân Thanh ở Ngọc Hồi – Đống Đa, một trong những chiến công lừng lẫy nhất lịch sử Việt Nam.',
+    ],
+    quiz: [
+      { q: 'Vua Quang Trung có tên thật là gì?', a: ['Nguyễn Nhạc', 'Nguyễn Huệ', 'Nguyễn Lữ', 'Nguyễn Ánh'], ok: 1 },
+      { q: 'Phong trào Tây Sơn khởi nghĩa từ vùng đất nào?', a: ['Thanh Hoá', 'Nghệ An', 'Bình Định', 'Quảng Nam'], ok: 2 },
+      { q: 'Chiến thắng Ngọc Hồi – Đống Đa năm 1789 đánh bại đội quân nào?', a: ['Quân Thanh', 'Quân Xiêm', 'Quân Nguyên', 'Quân Minh'], ok: 0 },
+    ],
+    details: [
+      { id: 'fountain', pos: at('quangtrung', 0, 13.5), y: 0.3, r: 4.5, title: 'Vòng phun nước', text: 'Quanh bệ tượng là vòng vòi phun nước, buổi tối được thắp sáng.' },
+      { id: 'sword', pos: at('quangtrung', 0, -14), y: 0.3, r: 4.5, title: 'Thanh gươm giơ cao', text: 'Nhà vua ngồi trên lưng ngựa chồm, tay phải giơ thanh gươm như đang ra trận.' },
+    ],
+  },
+  {
     id: 'hanmactu', title: 'Đồi Thi Nhân', place: 'Mộ Hàn Mặc Tử', piece: 'Đồi Thi Nhân',
     center: at('hanmactu', 0, 0), pillar: at('hanmactu', -8, 6), photoRadius: 35,
     story: [
@@ -112,5 +149,7 @@ export const PLACES = [
   { id: 'station', name: 'Ga Quy Nhơn', pos: at('station', 0, 16), icon: '🚉' },
   { id: 'cathedral', name: 'Nhà thờ Nhọn', pos: at('cathedral', 6, 50), icon: '⛪' },
   { id: 'thapdoi', name: 'Tháp Đôi', pos: at('thapdoi', 0, 22), icon: '🛕' },
+  { id: 'longkhanh', name: 'Chùa Long Khánh', pos: at('longkhanh', 0, 40), icon: '🔔' },
+  { id: 'quangtrung', name: 'Tượng Quang Trung', pos: at('quangtrung', 0, 30), icon: '🐎', label: 'right' },
   { id: 'hanmactu', name: 'Mộ Hàn Mặc Tử', pos: at('hanmactu', -8, 9), icon: '✒️' },
 ];

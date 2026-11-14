@@ -1,7 +1,7 @@
 // Phần nền chung của thành phố: lưới va chạm, mặt đất (đất liền, công viên, bãi cát, mặt nước),
 // vật liệu dùng chung. Nhà, đường, cây, đèn được tải theo từng ô trong tiles.js.
 import * as THREE from 'three';
-import { Builder, addFlat, windowTextures, shopAtlas, MAJOR, FOOT } from './citykit.js';
+import { Builder, addFlat, windowTextures, shopAtlas } from './citykit.js';
 import { buildWorldGrid } from './worldgrid.js';
 import { squareLayout } from './square.js';
 import { createTileManager } from './tiles.js';
@@ -32,17 +32,12 @@ export function buildCity(world, terrain = null, quality = {}) {
   // ---- vật liệu dùng chung cho mọi ô ----
   const tex = windowTextures();
   const atlas = shopAtlas();
-  const roadCols = new Map();
   const mats = {
     building: new THREE.MeshStandardMaterial({
       vertexColors: true, map: tex.map, emissiveMap: tex.emissive, emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.82,
     }),
     shop: new THREE.MeshStandardMaterial({ map: atlas, emissiveMap: atlas, emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.7, side: THREE.DoubleSide }),
     road: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }),
-    roadColor: (t) => {
-      if (!roadCols.has(t)) roadCols.set(t, new THREE.Color(FOOT.has(t) ? '#b9ae9d' : MAJOR.has(t) ? '#3a3c41' : t === 'service' ? '#5a5c60' : '#47494d'));
-      return roadCols.get(t);
-    },
     trunk: new THREE.MeshStandardMaterial({ color: '#8b7355', roughness: 1 }),
     leaf: new THREE.MeshStandardMaterial({ color: '#4e8a3a', roughness: 0.9, side: THREE.DoubleSide }),
     treeBlob: new THREE.MeshStandardMaterial({ color: '#3f7a35', roughness: 1, flatShading: true }),

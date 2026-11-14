@@ -70,6 +70,8 @@ const ui = {
   openModal() { $('modal').hidden = false; },
 };
 $('modal-close').onclick = () => { $('modal').hidden = true; };
+// Esc đóng bảng và bản đồ lớn
+addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('modal').hidden = true; $('bigmap').hidden = true; } });
 $('modal').addEventListener('pointerdown', (e) => { if (e.target.id === 'modal') $('modal').hidden = true; });
 
 // ---------- thời gian & thời tiết ----------
@@ -188,17 +190,20 @@ async function start() {
       travelling = true;
       $('travel').hidden = false;
       $('travel').querySelector('.sub').textContent = `Đang tới ${pl.name}…`;
-      const p = player.state.pos;
-      p.set(pl.pos[0], 0, pl.pos[1]);
-      await city.tiles.loadAround(p, 500);
-      for (let r = 1; r < 150 && !city.grid.walkable(p.x, p.z); r += 1) {
-        const a = r * 2.4; p.set(pl.pos[0] + Math.cos(a) * r * 0.5, 0, pl.pos[1] + Math.sin(a) * r * 0.5);
+      try {
+        const p = player.state.pos;
+        p.set(pl.pos[0], 0, pl.pos[1]);
+        await city.tiles.loadAround(p, 500);
+        for (let r = 1; r < 150 && !city.grid.walkable(p.x, p.z); r += 1) {
+          const a = r * 2.4; p.set(pl.pos[0] + Math.cos(a) * r * 0.5, 0, pl.pos[1] + Math.sin(a) * r * 0.5);
+        }
+        camera.position.set(p.x, p.y + 6, p.z + 12);
+        crowd.relocate?.(p);
+        ui.toast(`📍 ${pl.name}`, 3000);
+      } finally {
+        $('travel').hidden = true;
+        travelling = false;
       }
-      camera.position.set(p.x, p.y + 6, p.z + 12);
-      crowd.relocate?.(p);
-      $('travel').hidden = true;
-      travelling = false;
-      ui.toast(`📍 ${pl.name}`, 3000);
     },
   });
 
@@ -213,7 +218,8 @@ async function start() {
       const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
       thumbCanvas.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
     }
-    canvas.toBlob((blob) => {
+    // máy tính: tải ảnh PNG về; điện thoại: chỉ lưu vào album (tránh hiện hộp tải xuống mỗi lần chụp)
+    if (!isTouch) canvas.toBlob((blob) => {
       if (!blob) return;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -229,7 +235,7 @@ async function start() {
 
   $('loading').style.opacity = 0;
   setTimeout(() => $('loading').remove(), 700);
-  ui.toast('Chào mừng đến Quy Nhơn! Tìm các cột sáng vàng để khám phá 5 địa điểm. Bấm 🗺️ để xem bản đồ.', 7000);
+  ui.toast('Chào mừng đến Quy Nhơn! Tìm các cột sáng vàng để khám phá 7 địa điểm. Bấm 🗺️ để xem bản đồ.', 7000);
 
   // ---- nút đồ hoạ: hiện FPS, bấm để đổi mức Cao/Thấp (tải lại trang) ----
   const fpsMeter = createFpsMeter();
@@ -241,6 +247,7 @@ async function start() {
   $('quality-lbl').textContent = Q.label;
   let lowWarned = false, slowTime = 0;
 
+  const FLASH_COLOR = new THREE.Color('#e6ecff');
   const clock = new THREE.Clock();
   let hudTimer = 0;
   renderer.setAnimationLoop(() => {
@@ -248,32 +255,36 @@ async function start() {
     fpsMeter.tick(raw);
     const dt = Math.min(raw, 0.05), t = clock.elapsedTime;
     const { d, h } = vnTime();
-    if ($('modal').hidden) player.update(dt);
+    // dừng điều khiển khi đang mở bảng, bản đồ lớn hoặc đang dịch chuyển
+    if ($('modal').hidden && $('bigmap').hidden && !travelling) player.update(dt);
     const pos = player.state.pos;
     const env = sky.update(d, h, pos);
     wx.setCode(wxTest ?? weather.code);
     const wxs = wx.update(dt, camera, env, { sun: sky.sun, hemi: sky.hemi, renderer });
-    if (wxs.flash > 0) { scene.fog.color.lerp(new THREE.Color('#e6ecff'), wxs.flash * 0.6); renderer.toneMappingExposure += wxs.flash * 0.8; }
-    sea.update(t, env, pos);
+    if (wxs.flash > 0) { scene.fog.color.lerp(FLASH_COLOR, wxs.flash * 0.6); renderer.toneMappingExposure += wxs.flash * 0.8; }
+    // biển dùng đúng màu sương cuối cùng (đã tính mưa, u ám, chớp)
+    sea.update(t, { ...env, fogColor: scene.fog.color }, pos);
+    if (scene.background && scene.background.isColor) scene.background.copy(scene.fog.color);
     city.tiles.update(pos, dt);
     crowd.update(dt, pos);
     traffic.update(dt, pos);
     seaTimer -= dt; if (seaTimer <= 0) { seaTimer = 0.5; seaD = seaDist(pos.x, pos.z); }
-    audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night, rain: wxs.rain, thunder: wxs.flash > 0.98 });
+    audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night, rain: wxs.rain, thunder: wxs.strike });
     quest.update(t, pos, env.night, dt);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
     city.shopMat.emissiveIntensity = env.night * 0.35;
     monument.userData.setNight(env.night);
     plazaSq.setNight(env.night);
-    plazaSq.update(t);
+    plazaSq.update(t, pos);
     beach.update(t, env.night);
     beach.setNight(env.night);
     terrainMesh.update(scene.fog.color, env.night);
     highlands.setNight(env.night);
     landmarks.setNight(env.night);
     traffic.setNight(env.night);
-    document.body.dataset.night = env.night > 0.5 ? '1' : '';
+    const nightFlag = env.night > 0.5 ? '1' : '';
+    if (document.body.dataset.night !== nightFlag) document.body.dataset.night = nightFlag;
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = Q.bloom && env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;

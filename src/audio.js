@@ -51,7 +51,16 @@ export function createAudio() {
     scheduleMusic();
   }
   // bắt đầu khi người chơi tương tác lần đầu
-  for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, start, { once: false, passive: true });
+  // trình duyệt điện thoại chỉ coi chạm-nhả (pointerup/touchend/click) là thao tác cho phép phát âm thanh
+  const UNLOCK = ['pointerup', 'touchend', 'click', 'keydown'];
+  const unlock = () => { start(); if (ctx && ctx.state === 'running') UNLOCK.forEach((ev) => removeEventListener(ev, unlock)); };
+  UNLOCK.forEach((ev) => addEventListener(ev, unlock, { passive: true }));
+  // chuyển tab/ứng dụng khác: tạm dừng toàn bộ âm thanh
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend();
+    else ctx.resume().then(() => { if (ctx.state !== 'running') UNLOCK.forEach((ev) => addEventListener(ev, unlock, { passive: true })); });
+  });
 
   function apply() {
     if (!ctx) return;
@@ -99,6 +108,7 @@ export function createAudio() {
     const beat = 0.55;
     if (nextNote < ctx.currentTime) nextNote = ctx.currentTime + 0.1;
     while (nextNote < ctx.currentTime + 1.5) {
+      if (mode !== 'all' || document.hidden) { nextNote += beat; step++; continue; } // tắt nhạc: không tạo nốt
       if (step % 8 === 0) phrase = makePhrase();
       const d = phrase[step % 8];
       if (Math.random() < 0.85) pluck(midi(degToMidi(d)), nextNote, 1.8, 0.45);

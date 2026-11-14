@@ -27,7 +27,7 @@ export function createTraffic(scene, world, count = 40) {
   // (đường dài được chia thêm điểm mỗi 40 m)
   const CELL = 100, cells = new Map();
   const ckey = (x, z) => `${Math.floor(x / CELL)},${Math.floor(z / CELL)}`;
-  roads.forEach((r, ri) => { for (let s = 0; s < r.len; s += 40) { const v = { road: ri, s }; const tmp = { road: ri, s, dir: 1, T: { lane: 0 } }; at(tmp); const k = ckey(tmp.x, tmp.z); if (!cells.has(k)) cells.set(k, []); cells.get(k).push([v.road, v.s, tmp.x, tmp.z]); } });
+  roads.forEach((r, ri) => { for (let s = 0; s < r.len; s += 40) { const tmp = { road: ri, s, dir: 1, T: { lane: 0 } }; at(tmp); const k = ckey(tmp.x, tmp.z); if (!cells.has(k)) cells.set(k, []); cells.get(k).push([ri, s, tmp.x, tmp.z]); } });
 
   // ---- đèn giao thông ở ngã ba, ngã tư có ít nhất hai đường lớn ----
   const lights = new Map(); // key nút → { x, z, bearing, offset }
@@ -152,7 +152,10 @@ export function createTraffic(scene, world, count = 40) {
       if (v.T.big && !r.big) continue;
       const d = Math.hypot(x - px, z - pz);
       if (d > SPAWN_R || d < minR) continue;
-      v.road = ri; v.s = s; v.dir = Math.random() < 0.5 ? 1 : -1;
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      // không thả xe chồng lên xe khác cùng đường cùng chiều
+      if (cars.some((o) => o.active && o !== v && o.road === ri && o.dir === dir && Math.abs(o.s - s) < 12)) continue;
+      v.road = ri; v.s = s; v.dir = dir;
       v.vmax = v.T.speed[0] + Math.random() * (v.T.speed[1] - v.T.speed[0]); v.speed = v.vmax * 0.6;
       v.active = true; at(v); return true;
     }
@@ -232,7 +235,8 @@ export function createTraffic(scene, world, count = 40) {
       for (const o of cars) {
         if (o === v || !o.active || o.road !== v.road || o.dir !== v.dir) continue;
         const gap = (o.s - v.s) * v.dir - (o.T.len + v.T.len) / 2 - 1.5;
-        if (gap > -1 && gap < 22) target = Math.min(target, Math.max(0, gap * 0.7));
+        const behind = (o.s - v.s) * v.dir > 0 || ((o.s - v.s) === 0 && o.k > v.k);
+        if (behind && gap < 22) target = Math.min(target, Math.max(0, gap * 0.7)); // kể cả khi đang chồng lên nhau: xe sau dừng lại
       }
       // đèn giao thông: dừng trước vạch (cách tâm nút ~9 m) khi đèn đỏ, hoặc vàng mà còn đủ xa để phanh
       const la = lightAhead(v);
@@ -242,7 +246,6 @@ export function createTraffic(scene, world, count = 40) {
       }
       v.waiting = target < 0.3;
       v.atLight = !!(la && target < 0.3 && !blocked);
-      v.la = la ? la.dist : null; v.lst = la ? lightState(la.L, groupOf(la.L, v.yaw), clock) : null;
       v.speed += (target - v.speed) * Math.min(1, dt * (target < v.speed ? 3 : 1));
       const prevS = v.s;
       v.s += v.dir * v.speed * dt;
@@ -266,7 +269,6 @@ export function createTraffic(scene, world, count = 40) {
     update,
     setNight(n) { lampMat.emissiveIntensity = 0.2 + n * 3; },
     countNear: (p, r) => { let n = 0; for (const c of cars) if (c.active && Math.abs(c.x - p.x) < r && Math.abs(c.z - p.z) < r) n++; return n; },
-    debug: () => cars.filter((c) => c.active && c.la !== null).map((c) => [Math.round(c.la), c.lst, +c.speed.toFixed(1)]),
     stats: () => ({ roads: roads.length, lights: lightList.length, active: cars.filter((c) => c.active).length, total: cars.length, waiting: cars.filter((c) => c.active && c.waiting).length, atLight: cars.filter((c) => c.active && c.atLight).length,
       overlap: cars.filter((v) => v.active && cars.some((o) => o !== v && o.active && o.road === v.road && o.dir === v.dir && (o.s - v.s) * v.dir > 0 && (o.s - v.s) * v.dir < (o.T.len + v.T.len) / 2 - 0.3)).length }),
     nearestCars: (x, z, n = 3) => cars.filter((c) => c.active).map((c) => ({ id: c.id, d: Math.round(Math.hypot(c.x - x, c.z - z)), speed: +c.speed.toFixed(1) })).sort((a, b) => a.d - b.d).slice(0, n),

@@ -58,7 +58,8 @@ export function createSky(scene, renderer) {
 
   const dayFog = new THREE.Color('#c5d8e6'), duskFog = new THREE.Color('#e7b38f'), nightFog = new THREE.Color('#0d1729');
   const warm = new THREE.Color('#ffb36b'), white = new THREE.Color('#fff7ea');
-  const tmp = new THREE.Color();
+  const tmp = new THREE.Color(), MD = new THREE.Vector3();
+  const HEMI_SKY = new THREE.Color('#cfe3ff'), HEMI_SKY_N = new THREE.Color('#33466e'), HEMI_GND = new THREE.Color('#8a7d66'), HEMI_GND_N = new THREE.Color('#1c1a24');
 
   function update(date, hours, focus) {
     const start = Date.UTC(date.getUTCFullYear(), 0, 0);
@@ -75,9 +76,11 @@ export function createSky(scene, renderer) {
     sun.target.position.copy(focus);
     sun.intensity = 3.2 * smooth(-0.02, 0.25, dir.y);
     sun.color.copy(white).lerp(warm, dusk);
-    sun.castShadow = renderer.shadowMap.enabled && sun.intensity > 0.05;
+    // không bật/tắt castShadow theo giờ (đổi cờ này làm mọi vật liệu biên dịch lại shader, gây khựng);
+    // bóng mờ dần theo cường độ nắng
+    sun.shadow.intensity = Math.min(1, sun.intensity / 1.2);
 
-    const md = new THREE.Vector3(-dir.x, Math.max(0.35, -dir.y), -dir.z).normalize();
+    const md = MD.set(-dir.x, Math.max(0.35, -dir.y), -dir.z).normalize();
     moonLight.position.copy(focus).addScaledVector(md, 200);
     moonLight.target.position.copy(focus);
     moonLight.intensity = 0.55 * night;
@@ -86,8 +89,8 @@ export function createSky(scene, renderer) {
     moon.material.opacity = night;
 
     hemi.intensity = 1.25 * (1 - night) + 0.32 * night;
-    hemi.color.set('#cfe3ff').lerp(new THREE.Color('#33466e'), night);
-    hemi.groundColor.set('#8a7d66').lerp(new THREE.Color('#1c1a24'), night);
+    hemi.color.copy(HEMI_SKY).lerp(HEMI_SKY_N, night);
+    hemi.groundColor.copy(HEMI_GND).lerp(HEMI_GND_N, night);
 
     tmp.copy(dayFog).lerp(duskFog, dusk * 0.7).lerp(nightFog, night);
     scene.fog.color.copy(tmp);

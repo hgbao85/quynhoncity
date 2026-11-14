@@ -20,7 +20,7 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
   const list = new Set(world.tiles.list);
   const tiles = new Map(); // key → { state, rect, res, group, detail, lots }
   const ready = []; // ô đã dựng xong hình học, chờ gắn vào cảnh
-  const waiters = new Map(); // key → resolve (cho loadAround)
+  const waiters = new Map(); // key → [resolve] (cho loadAround)
   let inflight = 0;
   const attachMs = { n: 0, sum: 0, max: 0 };
 
@@ -30,9 +30,19 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
     workers = Array.from({ length: WORKERS }, () => new Worker(new URL('./tileworker.js', import.meta.url), { type: 'module' }));
     for (const w of workers) {
       w.onmessage = (e) => onResult(e.data.key, e.data.res, e.data.error);
+      // worker không tải được (trình duyệt cũ, lỗi mạng): chuyển sang dựng trên luồng chính,
+      // dựng lại các ô đang chờ để màn hình chờ / dịch chuyển không bị treo
+      w.onerror = () => fallbackToMainThread();
       if (terrain) w.postMessage({ type: 'terrain', meta: terrain.meta, data: terrain.data }); // gửi trước mọi ô
     }
   } catch { workers = []; } // trình duyệt không hỗ trợ module worker: dựng ngay trên luồng chính
+  function fallbackToMainThread() {
+    if (!workers.length) return;
+    console.warn('[tiles] Web Worker lỗi, chuyển sang dựng trên luồng chính');
+    for (const w of workers) w.terminate();
+    workers = [];
+    for (const [key, t] of tiles) if (t.state === 'loading') { inflight--; tiles.delete(key); request(key); }
+  }
   let rr = 0;
 
   const rectOf = (i, j) => {
@@ -41,6 +51,9 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
   };
   const distRect = ([x0, z0, x1, z1], x, z) => Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(z0 - z, 0, z - z1));
 
+  // trả về promise xong khi ô đã tải xong (hoặc lỗi); nhiều nơi cùng chờ một ô thì dùng chung
+  const waitFor = (key) => new Promise((res) => { if (!waiters.has(key)) waiters.set(key, []); waiters.get(key).push(res); });
+  const resolveWaiters = (key) => { const list = waiters.get(key); waiters.delete(key); list?.forEach((f) => f()); };
   function request(key) {
     const [i, j] = key.split('_').map(Number);
     tiles.set(key, { state: 'loading', rect: rectOf(i, j) });
@@ -48,18 +61,17 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
     const url = new URL(`/data/tiles/${key}.json`, location.href).href;
     if (workers.length) workers[rr++ % workers.length].postMessage({ key, url });
     else fetch(url).then((r) => r.json()).then((d) => onResult(key, buildTileArrays(d))).catch((e) => onResult(key, null, String(e)));
-    return new Promise((res) => waiters.set(key, res));
+    return waitFor(key);
   }
 
   function onResult(key, res, error) {
-    inflight--;
     const t = tiles.get(key);
-    const done = waiters.get(key); waiters.delete(key);
-    if (!t || t.state !== 'loading') { done?.(); return; } // đã bị huỷ trong lúc tải
-    if (error || !res) { console.warn('[tiles] lỗi ô', key, error); tiles.delete(key); done?.(); return; }
+    if (!t || t.state !== 'loading') { resolveWaiters(key); return; } // đã bị huỷ trong lúc tải
+    inflight--;
+    if (error || !res) { console.warn('[tiles] lỗi ô', key, error); tiles.delete(key); resolveWaiters(key); return; }
     t.res = res; t.state = 'ready';
     ready.push(key);
-    done?.();
+    resolveWaiters(key);
   }
 
   const geo = (a) => {
@@ -142,7 +154,7 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
         const d = distRect(rectOf(i, j), pos.x, pos.z);
         const t = tiles.get(key);
         if (!t && d < LOAD && inflight < 4) request(key);
-        else if (t && d > UNLOAD) dispose(key);
+        else if (t && d > UNLOAD) { if (t.state === 'loading') inflight--; dispose(key); resolveWaiters(key); }
         else if (t && t.detail) t.detail.visible = d < DETAIL;
       }
       // gắn ô gần trước (ô gần nhất ở cuối mảng)
@@ -154,13 +166,17 @@ export function createTileManager(parent, grid, world, mats, terrain = null, opt
   }
 
   // Tải và dựng ngay mọi ô trong bán kính r (dùng lúc khởi động, trước khi ẩn màn hình chờ)
+  // Chờ cả các ô đang tải dở; quá 20 giây thì thôi chờ để màn hình chờ / dịch chuyển không treo mãi.
   async function loadAround(pos, r) {
     const jobs = [];
     for (const key of list) {
       const [i, j] = key.split('_').map(Number);
-      if (!tiles.has(key) && distRect(rectOf(i, j), pos.x, pos.z) < r) jobs.push(request(key));
+      if (distRect(rectOf(i, j), pos.x, pos.z) >= r) continue;
+      const t = tiles.get(key);
+      if (!t) jobs.push(request(key));
+      else if (t.state === 'loading') jobs.push(waitFor(key));
     }
-    await Promise.all(jobs);
+    await Promise.race([Promise.all(jobs), new Promise((res) => setTimeout(res, 20000))]);
     while (ready.length) attach(ready.pop());
     for (const t of tiles.values()) if (t.detail) t.detail.visible = distRect(t.rect, pos.x, pos.z) < DETAIL;
   }

@@ -1,5 +1,5 @@
 // Album hành trình (bấm thẻ 🧩 Mảnh ghép): 5 ô ảnh lưu niệm chụp tại từng địa điểm, tiến độ mỗi nơi.
-// Đủ 5 mảnh ghép thì tạo được "Bưu thiếp Quy Nhơn" 1200×630: ghép 5 tấm ảnh người chơi đã chụp,
+// Đủ mọi mảnh ghép thì tạo được "Bưu thiếp Quy Nhơn" 1200×630: ghép các tấm ảnh người chơi đã chụp,
 // tên người chơi, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (Zalo, Facebook...).
 import { QUESTS } from './quests-data.js';
 
@@ -11,7 +11,7 @@ export function createAlbum({ getProgress, ui }) {
   const $ = (id) => document.getElementById(id);
   let photos = loadPhotos();
 
-  // lưu ảnh thu nhỏ (JPEG 360×203) cho một địa điểm
+  // lưu ảnh lưu niệm (JPEG 640×360) cho một địa điểm
   function savePhoto(id, dataUrl) {
     photos[id] = dataUrl;
     try { localStorage.setItem(PHOTO_KEY, JSON.stringify(photos)); } catch { /* đầy bộ nhớ: bỏ qua */ }
@@ -32,11 +32,11 @@ export function createAlbum({ getProgress, ui }) {
     const complete = done === QUESTS.length;
     let name = ''; try { name = localStorage.getItem(NAME_KEY) || ''; } catch { /* bỏ qua */ }
     $('modal-body').innerHTML = `<div class="album">${cards}</div>` + (complete
-      ? `<div class="postcard-box"><p class="ok">🎉 Bạn đã khám phá đủ 5 địa điểm! Tạo bưu thiếp để lưu lại hoặc khoe với bạn bè.</p>
+      ? `<div class="postcard-box"><p class="ok">🎉 Bạn đã khám phá đủ ${QUESTS.length} địa điểm! Tạo bưu thiếp để lưu lại hoặc khoe với bạn bè.</p>
          <label>Tên của bạn <input id="pc-name" maxlength="28" placeholder="Ví dụ: Bảo" value="${name.replace(/"/g, '&quot;')}"></label>
          <button id="pc-make" class="primary">Tạo bưu thiếp</button>
          <div id="pc-out"></div></div>`
-      : '<p class="alb-hint">Ở mỗi địa điểm: trả lời câu hỏi ở cột sáng vàng, tìm các điểm sáng xanh và bấm 📷 chụp ảnh gần công trình. Ảnh đẹp nhất sẽ được dùng cho bưu thiếp khi bạn đủ 5 mảnh ghép.</p>');
+      : `<p class="alb-hint">Ở mỗi địa điểm: trả lời câu hỏi ở cột sáng vàng, tìm các điểm sáng xanh và bấm 📷 chụp ảnh gần công trình. Ảnh đẹp nhất sẽ được dùng cho bưu thiếp khi bạn đủ ${QUESTS.length} mảnh ghép.</p>`);
     ui.openModal();
     const mk = $('pc-make');
     if (mk) mk.onclick = async () => {
@@ -44,23 +44,27 @@ export function createAlbum({ getProgress, ui }) {
       try { localStorage.setItem(NAME_KEY, nm); } catch { /* bỏ qua */ }
       const canvas = await makePostcard(nm);
       const url = canvas.toDataURL('image/jpeg', 0.9);
+      // chuẩn bị sẵn tệp ảnh để bấm Chia sẻ gọi navigator.share ngay (Safari yêu cầu đúng lúc bấm)
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.9));
+      shareFile = new File([blob], 'buu-thiep-quy-nhon-3d.jpg', { type: 'image/jpeg' });
       $('pc-out').innerHTML = `<img class="pc-preview" src="${url}" alt="Bưu thiếp Quy Nhơn 3D">
         <div class="pc-actions"><button id="pc-dl" class="primary">⬇ Tải về</button><button id="pc-share">↗ Chia sẻ</button></div>`;
       $('pc-dl').onclick = () => { const a = document.createElement('a'); a.href = url; a.download = 'buu-thiep-quy-nhon-3d.jpg'; a.click(); };
-      $('pc-share').onclick = () => share(canvas);
+      $('pc-share').onclick = () => share();
     };
   }
 
-  async function share(canvas) {
-    const text = 'Mình vừa khám phá đủ 5 địa điểm trong Quy Nhơn 3D! Chơi thử tại https://quynhoncity.vercel.app';
+  let shareFile = null;
+  async function share() {
+    const text = `Mình vừa khám phá đủ ${QUESTS.length} địa điểm trong Quy Nhơn 3D! Chơi thử tại https://quynhoncity.vercel.app`;
     try {
-      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.9));
-      const file = new File([blob], 'buu-thiep-quy-nhon-3d.jpg', { type: 'image/jpeg' });
-      if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text, title: 'Quy Nhơn 3D' }); return; }
+      if (shareFile && navigator.canShare?.({ files: [shareFile] })) { await navigator.share({ files: [shareFile], text, title: 'Quy Nhơn 3D' }); return; }
       if (navigator.share) { await navigator.share({ text, url: 'https://quynhoncity.vercel.app', title: 'Quy Nhơn 3D' }); return; }
       await navigator.clipboard.writeText(text);
       ui.toast('Đã chép lời mời và đường dẫn. Dán vào Zalo/Facebook kèm ảnh bưu thiếp nhé!');
-    } catch { /* người chơi huỷ chia sẻ */ }
+    } catch (e) {
+      if (e?.name !== 'AbortError') ui.toast('Không chia sẻ được, hãy bấm Tải về rồi gửi ảnh nhé.');
+    }
   }
 
   // ---- vẽ bưu thiếp ----
@@ -76,8 +80,10 @@ export function createAlbum({ getProgress, ui }) {
       const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = photos[q.id];
     })));
     // bố cục: ảnh lớn bên trái (tượng đài), 4 ảnh nhỏ bên phải
-    // mỗi khung ảnh có viền trắng và dòng tên cao ~34 px bên dưới: chừa đủ khoảng cách giữa hai hàng
-    const slots = [[40, 152, 520, 300], [590, 152, 270, 130], [890, 152, 270, 130], [590, 340, 270, 130], [890, 340, 270, 130]];
+    // mỗi khung ảnh có viền trắng và dòng tên cao ~34 px bên dưới: chừa đủ khoảng cách giữa hai hàng.
+    // ảnh đầu (tượng đài) lớn bên trái, các ảnh còn lại xếp lưới 3 cột × 2 hàng bên phải
+    const slots = [[40, 158, 450, 253]];
+    for (let i = 1; i < QUESTS.length; i++) { const k = i - 1; slots.push([530 + (k % 3) * 214, 158 + Math.floor(k / 3) * 176, 196, 110]); }
     QUESTS.forEach((q, i) => {
       const [sx, sy, sw, sh] = slots[i], im = imgs[i];
       x.save();
@@ -85,8 +91,8 @@ export function createAlbum({ getProgress, ui }) {
       x.fillStyle = '#f8f5ee'; x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 16; x.fillRect(-8, -8, sw + 16, sh + 34); x.shadowBlur = 0;
       if (im) { const r = Math.max(sw / im.width, sh / im.height), iw = im.width * r, ih = im.height * r; x.save(); x.beginPath(); x.rect(0, 0, sw, sh); x.clip(); x.drawImage(im, (sw - iw) / 2, (sh - ih) / 2, iw, ih); x.restore(); }
       else { x.fillStyle = '#d8d2c6'; x.fillRect(0, 0, sw, sh); }
-      x.fillStyle = '#1d2b4a'; x.font = 'bold 17px "Be Vietnam Pro", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.fillText(q.place, sw / 2, sh + 13);
+      x.fillStyle = '#1d2b4a'; x.font = `bold ${i === 0 ? 17 : 13}px "Be Vietnam Pro", Arial, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText(q.place, sw / 2, sh + 13, sw);
       x.restore();
     });
     // tiêu đề
@@ -95,12 +101,12 @@ export function createAlbum({ getProgress, ui }) {
     x.fillText('QUY NHƠN', 40, 72);
     const w = x.measureText('QUY NHƠN ').width; x.fillStyle = '#f5c542'; x.fillText('3D', 40 + w, 72);
     x.fillStyle = '#dbe5f5'; x.font = '600 22px "Be Vietnam Pro", Arial, sans-serif';
-    x.fillText(`${name ? name + ' đã' : 'Đã'} khám phá đủ 5 địa điểm · ${new Date().toLocaleDateString('vi-VN')}`, 40, 110);
+    x.fillText(`${name ? name + ' đã' : 'Đã'} khám phá đủ ${QUESTS.length} địa điểm · ${new Date().toLocaleDateString('vi-VN')}`, 40, 110);
     // con dấu
     x.save(); x.translate(1085, 70); x.rotate(-0.18);
     x.strokeStyle = '#e8574a'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 48, 0, 7); x.stroke(); x.beginPath(); x.arc(0, 0, 40, 0, 7); x.stroke();
     x.fillStyle = '#e8574a'; x.font = '800 15px "Be Vietnam Pro", Arial, sans-serif'; x.textAlign = 'center';
-    x.fillText('5/5', 0, -6); x.font = '700 11px "Be Vietnam Pro", Arial, sans-serif'; x.fillText('MẢNH GHÉP', 0, 12);
+    x.fillText(`${QUESTS.length}/${QUESTS.length}`, 0, -6); x.font = '700 11px "Be Vietnam Pro", Arial, sans-serif'; x.fillText('MẢNH GHÉP', 0, 12);
     x.restore();
     x.fillStyle = 'rgba(255,255,255,.75)'; x.font = '500 18px "Be Vietnam Pro", Arial, sans-serif'; x.textAlign = 'right';
     x.fillText('quynhoncity.vercel.app', W - 40, H - 24);
@@ -108,5 +114,6 @@ export function createAlbum({ getProgress, ui }) {
   }
 
   $('piece-card').addEventListener('click', open);
+  $('piece-card').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   return { open, savePhoto };
 }

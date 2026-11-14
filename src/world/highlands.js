@@ -211,6 +211,8 @@ export function createHighlands(scene, grid) {
   scene.add(g);
   return {
     setNight(n) {
+      if (Math.abs(n - (this._n ?? -1)) < 0.01) return; // chỉ cập nhật khi độ tối đổi
+      this._n = n;
       fasciaMat.emissiveIntensity = n * 1.2;
       spotMat.emissiveIntensity = n * 3;
       glass.emissiveIntensity = n * 0.55;

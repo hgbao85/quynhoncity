@@ -8,7 +8,8 @@ Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo kh�
 
 Mỗi lần push lên `main`, Vercel tự build (`npm run build`) và đăng bản mới. File `vercel.json` đặt thời gian lưu đệm cho trình duyệt:
 - `/assets/*` (JS, CSS có mã băm trong tên): lưu 1 năm.
-- `/data/*` (bản đồ, địa hình, các ô nhà): lưu 1 giờ, sau đó vẫn dùng bản cũ ngay rồi tải bản mới ở nền (tối đa 7 ngày). Sau khi tạo lại dữ liệu, người chơi có thể thấy bản cũ ở lần vào đầu tiên.
+- `/data/*` (bản đồ, địa hình, các ô nhà): trình duyệt luôn hỏi lại máy chủ (không đổi thì chỉ nhận mã 304), nên dữ liệu tạo lại có hiệu lực ngay, không lẫn với mã mới.
+- `/sw.js`: không lưu đệm, để bản mới được nhận ngay.
 - `/models/*` (mô hình tượng): lưu 1 ngày.
 
 ## Chạy thử
@@ -92,8 +93,8 @@ Lệnh này chạy lần lượt:
 - **Số tầng theo loại đường mặt tiền** (quan sát Street View): nhà ống mặt đường lớn 3–5 tầng, đường tertiary 2–4, đường nhỏ 2–3, trong hẻm 1–2; khách sạn ven biển 6–22 tầng, cao ốc mặt đường chính 5–9 tầng, khối lớn khác (trường, chợ, kho) 2–4 tầng.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
-**Hành trình khám phá: 5 địa điểm, 5 mảnh ghép** (nội dung trong `src/quests-data.js`)
-- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Mộ Hàn Mặc Tử.
+**Hành trình khám phá: 7 địa điểm, 7 mảnh ghép** (nội dung trong `src/quests-data.js`)
+- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Mộ Hàn Mặc Tử.
 - Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
 - Bảng nhiệm vụ tự hiện địa điểm gần người chơi nhất. Tiến độ lưu trong trình duyệt (tiến độ bản cũ ở tượng đài được giữ lại).
 
@@ -116,7 +117,7 @@ Lệnh này chạy lần lượt:
 
 **Album và bưu thiếp** (bấm thẻ 🧩 Mảnh ghép; `src/album.js`)
 - Mỗi lần chụp ảnh gần một địa điểm, ảnh 640×360 được lưu vào album (trong trình duyệt). Lúc chụp, cột sáng và điểm sáng nhiệm vụ được ẩn đi; các bảng thông tin là lớp HTML nên cũng không lọt vào ảnh.
-- Đủ 5 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 5 tấm ảnh đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
+- Đủ 7 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 7 tấm ảnh (một ảnh lớn, sáu ảnh nhỏ) đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
 
 **Thời tiết thật** (`src/world/weather.js`)
 - Theo dữ liệu Open-Meteo (mã thời tiết WMO): ít mây/nhiều mây có mây trôi; mưa, mưa rào có mưa rơi quanh người chơi, trời u ám, sương mù dày hơn, tiếng mưa; dông có chớp sáng và tiếng sấm; sương mù làm tầm nhìn ngắn lại.
@@ -126,7 +127,8 @@ Lệnh này chạy lần lượt:
 - Android/Chrome: nút 📲 để cài game ra màn hình chính; mở từ biểu tượng là chơi toàn màn hình, không có thanh địa chỉ.
 - iPhone/iPad: nút 📲 hiện hướng dẫn "Chia sẻ → Thêm vào MH chính".
 - Nút ⛶ bật toàn màn hình ngay trong trình duyệt (và thử xoay ngang trên điện thoại).
-- Service worker lưu sẵn trang, bản đồ, địa hình và các khu đã đi qua, nên lần sau mở nhanh hơn. Chỉ chạy trên HTTPS (bản Vercel), không chạy khi `npm run dev`.
+- Service worker lưu sẵn trang, mã JS/CSS, bản đồ, địa hình và các khu đã đi qua, nên lần sau mở nhanh hơn và vẫn mở được khi mất mạng. Chỉ chạy trên HTTPS (bản Vercel), không chạy khi `npm run dev`.
+- Tên bộ nhớ đệm gắn với từng bản build (`vite.config.js` thay `__BUILD__` trong `dist/sw.js`). Mỗi lần đăng bản mới, service worker mới tải lại toàn bộ và xoá bộ nhớ cũ.
 
 **Mức đồ hoạ** (nút ⚙, có hiện FPS)
 - **Cao** (mặc định trên máy tính): bóng đổ, hiệu ứng toả sáng ban đêm, tải bản đồ trong bán kính 1,25 km.
@@ -142,6 +144,8 @@ Lệnh này chạy lần lượt:
 - **Tháp Đôi (Tháp Hưng Thạnh):** hai tháp Chăm gạch đỏ đứng cạnh nhau theo hướng bắc – nam; tháp Bắc lớn hơn (~21 m), cửa chính có bậc thềm quay về phía đông; tháp Nam thấp và bè (~16 m) với khối mái cụt. Tỉ lệ chỉnh theo ảnh chụp; thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng thu nhỏ dần đã mất chóp, chân đá; khuôn viên thảm cỏ.
 - **Nhà thờ Chính tòa (Nhà thờ Nhọn):** dựng theo ảnh Street View chụp thẳng mặt tiền: tường trắng, mái ngói đỏ, thân dài ~58 m có cánh ngang. Tháp chuông cao 42,7 m mọc từ mặt đất giữa mặt tiền, thu nhỏ dần qua các tầng: cổng vòm có khung nhô, tranh ghép lớn và băng rôn, huy hiệu tròn, thánh giá nổi, tầng chuông có cửa chớp, đồng hồ bốn mặt, đèn lồng, chóp nhọn cam đỏ thanh mảnh. Hai cánh thấp hai bên có cửa sổ tròn và ba cửa sổ vòm. Sân trước lát đá, bụi cây cắt tỉa, cổng và hàng rào trụ đá ra đường Trần Hưng Đạo. Tranh ghép chỉ vẽ giản lược, không sao chép tác phẩm gốc.
 - **Chợ Lớn:** nhà lồng chợ hai tầng mái tôn, biển tên, vòng quanh là sạp hàng mái bạt nhiều màu.
+- **Chùa Long Khánh:** chánh điện mái cong hai lớp đầu đao, hậu điện và hai dãy nhà bên (kiểu chữ Khẩu), lầu chuông, cổng tam quan có biển "LONG KHÁNH", sư tử đá, cây cổ thụ, đèn lồng đỏ.
+- **Tượng đài Quang Trung:** bùng binh tròn có vòng hoa, hồ nước 32 vòi phun, bệ tròn cao 6,5 m gắn bia đồng, tượng vua Quang Trung cưỡi ngựa chồm, tay giơ kiếm.
 - **Ga Quy Nhơn:** nhà ga hai tầng sơn vàng, khối giữa có đầu hồi, đồng hồ và biển "GA QUY NHƠN", sân ga và đường ray phía sau.
 - **Mộ Hàn Mặc Tử (đồi Thi Nhân):** nền đá ba bậc, bia đá trắng có thánh giá, đèn trụ xanh, sân lát đá, bồn hoa, bậc thang xuống phía biển.
 - Vị trí và vùng đất của từng công trình nằm trong `src/world/landmark-sites.js`; script tạo dữ liệu tự bỏ nhà và cây tự sinh trong các vùng này.
@@ -219,18 +223,21 @@ npm run optimize-statue
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |
-| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 5 địa điểm; danh sách điểm dịch chuyển |
+| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 7 địa điểm; danh sách điểm dịch chuyển |
 | `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 | `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
 | `src/album.js` | Album ảnh hành trình và bưu thiếp chia sẻ |
 | `src/world/weather.js` | Mây, mưa, sương mù, dông theo thời tiết thật |
 | `src/pwa.js`, `public/sw.js`, `public/manifest.webmanifest` | Cài như ứng dụng, toàn màn hình, lưu sẵn dữ liệu |
+| `vite.config.js` | Gắn mã phiên bản build vào `dist/sw.js` |
 
 ## Cần lưu ý trước khi ra mắt
 
 - **Địa hình độ phân giải ~30 m:** đủ cho đồi núi nhìn từ xa, nhưng đi bộ trên sườn đồi sẽ thấy mặt đất góc cạnh. Dữ liệu là độ cao bề mặt nên đỉnh đồi có thể lệch vài mét do tán cây.
 - **Cảnh nặng hơn:** khoảng 1,5 triệu tam giác ở điểm xuất phát (trước khi lọc phần ngoài khung nhìn). Cần đo trên điện thoại thật; nếu chậm có thể giảm mật độ rừng, cây hoặc độ chi tiết địa hình xa.
+- **Thông tin chùa Long Khánh và tượng đài Quang Trung** (năm sắc phong, quả chuông, câu hỏi đố) cần kiểm chứng lại trước khi ra mắt; hình dáng hai công trình dựng theo ảnh tham khảo, chưa đo chính xác.
+- **Cầu Thị Nại** chưa có: đầu cầu phía Quy Nhơn nằm sát mép bắc bản đồ, cần mở rộng vùng bản đồ.
 - **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm Thị Nại đã xây nhà): script tự bỏ vùng nước có trên 15 nhà bên trong.
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).

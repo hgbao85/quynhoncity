@@ -155,7 +155,8 @@ export function createSquare(scene, L) {
 
   scene.add(g);
 
-  const update = (t) => {
+  const update = (t, pos) => {
+    if (pos && Math.hypot(pos.x - fx, pos.z - fz) > 400) return; // xa thì không cần cờ bay
     // cờ bay: sóng chạy từ cán cờ ra mép ngoài, hướng gió từ biển thổi vào
     const p = flagGeo.attributes.position;
     for (let i = 0; i < p.count; i++) {

@@ -22,7 +22,6 @@ export function createQuest(scene, data, ui) {
   const P = (q) => (all[q.id] = Object.assign({ quiz: 0, found: [], photo: false, piece: false }, all[q.id] || {}));
   QUESTS.forEach(P);
   const $ = (id) => document.getElementById(id);
-  void data;
 
   // ---- cột sáng và điểm sáng cho mọi địa điểm ----
   const beamMat = new THREE.MeshBasicMaterial({ color: '#ffd76a', transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
@@ -80,10 +79,10 @@ export function createQuest(scene, data, ui) {
     $('modal-body').innerHTML = q.story.map((s) => `<p>${s}</p>`).join('') +
       (p.quiz >= q.quiz.length ? '<p class="ok">Bạn đã trả lời đúng tất cả câu hỏi ở đây. 🎉</p>' : '<button id="start-quiz" class="primary">Trả lời câu hỏi</button>');
     ui.openModal();
-    const b = $('start-quiz'); if (b) b.onclick = () => askQuestion(p.quiz);
+    const b = $('start-quiz'); if (b) b.onclick = () => askQuestion(q, p.quiz);
   }
-  function askQuestion(i) {
-    const q = current, p = all[q.id];
+  function askQuestion(q, i) {
+    const p = all[q.id];
     if (i >= q.quiz.length) { $('modal-body').innerHTML = '<p class="ok">Chính xác hết rồi! Bạn đã hiểu thêm về nơi này. 🎉</p>'; return; }
     const Q = q.quiz[i];
     $('modal-title').textContent = `${q.place} · Câu hỏi ${i + 1}/${q.quiz.length}`;
@@ -92,8 +91,9 @@ export function createQuest(scene, data, ui) {
       btn.onclick = () => {
         if (+btn.dataset.k === Q.ok) {
           btn.classList.add('right'); ui.sfx?.('right');
+          $('modal-body').querySelectorAll('.answers button').forEach((x) => { x.disabled = true; });
           p.quiz = Math.max(p.quiz, i + 1); save(all); render();
-          setTimeout(() => askQuestion(i + 1), 700);
+          setTimeout(() => askQuestion(q, i + 1), 700);
         } else {
           btn.classList.add('wrong'); btn.disabled = true; ui.sfx?.('wrong');
           $('quiz-msg').textContent = 'Chưa đúng, thử lại nhé!';

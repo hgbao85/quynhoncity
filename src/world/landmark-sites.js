@@ -24,6 +24,18 @@ export const LANDMARKS = [
     zone: [[440, -1665], [490, -1665], [490, -1620], [440, -1620]],
   },
   {
+    // chùa Long Khánh, 141 Trần Cao Vân: cụm chánh điện mái ngói đỏ ở phía tây bắc, sân và cổng tam quan
+    // mở ra phía đông nam; trục chùa lệch khoảng 33° (theo dãy mái trên ảnh vệ tinh)
+    id: 'longkhanh', name: 'Chùa Long Khánh', x: 918, z: -1300, yaw: 0.58,
+    zone: [[872, -1352], [945, -1352], [972, -1238], [880, -1238]],
+  },
+  {
+    // tượng đài Quang Trung giữa vòng xoay Lê Hồng Phong – Trần Hưng Đạo (đo trên ảnh vệ tinh):
+    // bệ tròn, vòng phun nước bán kính ~10 m, sân đá sẫm ~27 m, viền vàng ~33 m
+    id: 'quangtrung', name: 'Tượng đài Quang Trung', x: 565, z: -1603, yaw: Math.PI / 2,
+    zone: [[535, -1633], [595, -1633], [595, -1573], [535, -1573]],
+  },
+  {
     id: 'hanmactu', name: 'Mộ Hàn Mặc Tử (đồi Thi Nhân)', x: -805, z: 2086, yaw: 0.6,
     zone: [[-830, 2060], [-780, 2060], [-780, 2112], [-830, 2112]],
   },
