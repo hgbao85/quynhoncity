@@ -97,9 +97,41 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .place b { font-size: 14px; } .place small { display: none; }
   .clock b#time, .clock .temp b { font-size: 16px; }
   .track { min-width: 70px; }
-  .card.quest { top: auto; bottom: 178px; left: auto; right: 12px; width: 220px; }
+  /* điện thoại: bảng nhiệm vụ dưới các thẻ thông tin; cột nút dọc bên phải, phía trên nút chụp ảnh,
+     để không đè lên joystick ở góc trái dưới */
+  .card.quest { top: 158px; left: 12px; width: min(230px, 60vw); padding: 8px 10px; }
+  .quest h3 { font-size: 12px; margin-bottom: 6px; }
   .quest li { font-size: 12px; padding: 4px 6px; }
-  .top-right { top: auto; bottom: 110px; right: 12px; }
-  .card.piece { min-width: 0; }
+  .top-right { top: auto; bottom: 108px; right: 14px; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .top-right .icon-btn { width: 56px; padding: 6px 4px; }
+  .card.piece { min-width: 0; padding: 6px 10px; gap: 6px; }
+  .card.piece .track { display: none; }
+  .piece > span { font-size: 20px; }
   #toast { top: 130px; font-size: 13px; }
+}
+
+#quality-btn small { text-align: center; line-height: 1.2; }
+#quality-btn b { font-size: 11px; color: var(--gold); }
+#quality-btn i { font-style: normal; font-size: 10px; }
+
+#bigmap { position: fixed; inset: 0; background: rgba(5,10,20,.6); display: grid; place-items: center; z-index: 25; padding: 12px; }
+#bigmap[hidden], #travel[hidden] { display: none; }
+.map-sheet { position: relative; width: min(1100px, 100%); max-height: 94vh; overflow: auto; background: #f8f5ee; color: #1d2b4a; border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.map-sheet h2 { margin: 0 34px 4px 0; font-size: 20px; }
+.map-hint { margin: 0 0 10px; font-size: 13px; color: #55607a; }
+.map-body { display: grid; grid-template-columns: 1fr 260px; gap: 12px; align-items: start; }
+#bigmap-canvas { width: 100%; height: auto; border-radius: 12px; cursor: pointer; border: 1px solid #d8d2c6; }
+#bigmap-list { display: grid; gap: 6px; }
+#bigmap-list button { display: grid; grid-template-columns: 30px 1fr; grid-template-rows: auto auto; text-align: left; align-items: center; gap: 0 8px; padding: 8px 10px; border: 1px solid #ddd5c6; background: #fff; border-radius: 10px; color: #1d2b4a; }
+#bigmap-list button:hover { background: #fff6dc; border-color: var(--gold); }
+#bigmap-list button span { grid-row: span 2; font-size: 20px; text-align: center; }
+#bigmap-list button small { color: #6a7388; font-size: 12px; }
+.map-sheet .close { position: absolute; top: 10px; right: 12px; }
+#travel { position: fixed; inset: 0; z-index: 30; display: grid; place-content: center; gap: 12px; text-align: center; background: rgba(11,20,38,.85); }
+#travel .bar { width: 220px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; margin: 0 auto; }
+#travel .bar i { display: block; height: 100%; width: 30%; background: var(--gold); animation: load 1.2s infinite ease-in-out; }
+@media (max-width: 760px) {
+  .map-body { grid-template-columns: 1fr; }
+  #bigmap-list { grid-template-columns: 1fr 1fr; }
+  #map-btn small, #time-btn small { display: none; }
 }

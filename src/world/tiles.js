@@ -9,9 +9,12 @@ import { BUILDING } from './geo.js';
 import { palmGeometries, mergeSimple } from './citykit.js';
 import { buildTileArrays } from './tilework.js';
 
-const LOAD = 1250, UNLOAD = 1600, DETAIL = 650, WORKERS = 2;
+const WORKERS = 2;
 
-export function createTileManager(parent, grid, world, mats, terrain = null) {
+// opts: { load, unload, detail, forestKeep, treeKeep } (xem quality.js)
+export function createTileManager(parent, grid, world, mats, terrain = null, opts = {}) {
+  const LOAD = opts.load ?? 1250, UNLOAD = opts.unload ?? 1600, DETAIL = opts.detail ?? 650;
+  const forestKeep = opts.forestKeep ?? 1, treeKeep = opts.treeKeep ?? 1;
   const shared = sharedGeometries();
   const sharedSet = new Set(Object.values(shared));
   const list = new Set(world.tiles.list);
@@ -81,24 +84,26 @@ export function createTileManager(parent, grid, world, mats, terrain = null) {
     if (res.shop) { const m = new THREE.Mesh(geo(res.shop), mats.shop); m.castShadow = true; detail.add(m); }
     if (res.road) { const m = new THREE.Mesh(geo(res.road), mats.road); m.receiveShadow = true; group.add(m); }
     if (res.marks) group.add(new THREE.Mesh(geo(res.marks), mats.road));
-    const inst = (arr, parts, into = group, shadow = true) => {
-      const n = arr.length / 16;
+    // keep < 1: chỉ vẽ một phần đầu danh sách (các cây đã được xáo ngẫu nhiên khi tạo dữ liệu)
+    const inst = (arr, parts, into = group, shadow = true, keep = 1) => {
+      const n = Math.floor((arr.length / 16) * keep);
       if (!n) return;
       for (const [g, mat] of parts) {
         const im = new THREE.InstancedMesh(g, mat, n);
         im.instanceMatrix = new THREE.InstancedBufferAttribute(arr, 16);
+        im.count = n;
         im.castShadow = shadow;
         im.computeBoundingSphere();
         into.add(im);
       }
     };
     inst(res.inst.palm, [[shared.palmTrunk, mats.trunk], [shared.palmCrown, mats.leaf]]);
-    inst(res.inst.tree, [[shared.treeBlob, mats.treeBlob], [shared.treeStem, mats.trunk]]);
+    inst(res.inst.tree, [[shared.treeBlob, mats.treeBlob], [shared.treeStem, mats.trunk]], group, true, treeKeep);
     inst(res.inst.pine, [[shared.pineCrown, mats.pine], [shared.pineStem, mats.trunk]]);
     inst(res.inst.bush, [[shared.bush, mats.bush]], detail, false);
     inst(res.inst.lamp, [[shared.lampPole, mats.pole]]);
     inst(res.inst.lamp, [[shared.lampHead, mats.lamp]], detail, false);
-    inst(res.inst.forest, [[shared.forest, mats.forest]]);
+    inst(res.inst.forest, [[shared.forest, mats.forest]], group, true, forestKeep);
 
     const tm = performance.now();
     // lô nhà → lưới va chạm và danh sách cho bản đồ nhỏ

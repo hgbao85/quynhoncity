@@ -20,7 +20,8 @@ Mở `http://localhost:5173`. Điện thoại cùng mạng Wi-Fi mở địa ch�
 - `?at=157,44`: đặt vị trí xuất phát x,z (mét, gốc tại tượng đài; x hướng đông, z hướng nam).
 - `?yaw=225`: đặt hướng camera (độ).
 - `?zoom=600&pitch=0.6`: đưa camera lên cao để xem toàn cảnh.
-- `?debug`: đưa `scene`, `THREE` và `game` (người chơi, thành phố) ra `window` để soi trong console; `game.city.tiles.stats()` cho biết số ô đang dựng và thời gian gắn ô.
+- `?q=low` / `?q=high`: chọn mức đồ hoạ.
+- `?debug`: đưa `scene`, `THREE` và `game` (người chơi, thành phố, camera) ra `window` để soi trong console; `game.city.tiles.stats()` cho biết số ô đang dựng và thời gian gắn ô.
 
 ## Dữ liệu bản đồ
 
@@ -80,11 +81,19 @@ Lệnh này chạy lần lượt:
 - Nhà mặt phố có **mái hiên bạt sọc** và **biển hiệu** ở tầng trệt (cà phê, tạp hóa, phở…), vỉa hè đường lớn có cây bóng mát.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
-**Nhiệm vụ "Khám phá Quảng trường"**
-- Cột sáng vàng mở câu chuyện và 3 câu hỏi.
-- Tìm 3 chi tiết (điểm sáng xanh).
-- Chụp ảnh lưu niệm gần tượng.
-- Hoàn thành cả ba thì nhận 1 mảnh ghép. Tiến độ lưu trong trình duyệt.
+**Hành trình khám phá: 5 địa điểm, 5 mảnh ghép** (nội dung trong `src/quests-data.js`)
+- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Mộ Hàn Mặc Tử.
+- Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
+- Bảng nhiệm vụ tự hiện địa điểm gần người chơi nhất. Tiến độ lưu trong trình duyệt (tiến độ bản cũ ở tượng đài được giữ lại).
+
+**Bản đồ lớn và dịch chuyển nhanh** (nút 🗺️, bấm vào bản đồ nhỏ, hoặc phím M)
+- Bản đồ toàn thành phố: đất, nước, công viên, đồi núi, đường chính, 8 địa điểm kèm khoảng cách và tiến độ nhiệm vụ.
+- Bấm vào địa điểm để dịch chuyển tới đó; game tải sẵn khu vực rồi đặt người chơi vào chỗ đi được. Người đi dạo cũng chuyển theo.
+
+**Mức đồ hoạ** (nút ⚙, có hiện FPS)
+- **Cao** (mặc định trên máy tính): bóng đổ, hiệu ứng toả sáng ban đêm, tải bản đồ trong bán kính 1,25 km.
+- **Thấp** (mặc định trên điện thoại): tắt bóng đổ và toả sáng, độ phân giải 1×, tải bán kính 800 m, rừng thưa còn 45%, cây còn 60%, ít người đi dạo hơn.
+- Bấm ⚙ để đổi (tải lại trang, lựa chọn được ghi nhớ), hoặc dùng `?q=low` / `?q=high`. Nếu máy chậm dưới 24 FPS ở mức Cao, game sẽ gợi ý chuyển sang Thấp.
 
 **Quán Highlands Coffee, 162A Nguyễn Huệ** (góc Nguyễn Huệ – Đô Đốc Bảo, dựng theo ảnh Street View tháng 9-2026)
 - Tầng trệt cột kem, kính sẫm; dải diềm đen hoa văn chữ V có chữ HIGHLANDS COFFEE chạy liền mặt Đô Đốc Bảo, góc bo và mặt Nguyễn Huệ; đèn rọi dưới diềm.
@@ -105,7 +114,7 @@ Lệnh này chạy lần lượt:
 - Đồi phủ rừng (khoảng 23 nghìn tán cây). Nhà, đường, đèn, cây, người chơi, người đi dạo đều bám theo độ cao; đường lên dốc được chia nhỏ để không chìm vào sườn đồi; camera không chui vào sườn đồi.
 - Bản đồ nhỏ tô xanh đậm dần theo độ cao đồi.
 
-**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút tua nhanh +3 giờ.
+**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút bản đồ, nút tua nhanh +3 giờ, nút đồ hoạ. Trên điện thoại các nút xếp dọc bên phải để không che joystick.
 
 ## Thay tượng bằng mô hình 3D thật
 
@@ -170,7 +179,9 @@ npm run optimize-statue
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |
-| `src/quest.js`, `src/minimap.js` | Nhiệm vụ và bản đồ nhỏ |
+| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 5 địa điểm; danh sách điểm dịch chuyển |
+| `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
+| `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 
 ## Cần lưu ý trước khi ra mắt
 
@@ -183,6 +194,6 @@ npm run optimize-statue
 - **Công trình nổi bật là mô hình khối giản lược.** Tháp Đôi, nhà thờ, chợ, mộ dựng theo ảnh Street View; **Ga Quy Nhơn chưa có ảnh Street View** nên hình dáng, màu vàng và hướng mặt tiền là ước lượng theo kiểu nhà ga Việt Nam, cần chụp ảnh thực địa để chỉnh.
 - **Bản quyền dữ liệu nhà (Microsoft, ODbL):** giữ dòng ghi nguồn trên màn hình.
 - **Tên Highlands Coffee là thương hiệu đã đăng ký.** Bản mẫu chỉ vẽ chữ đơn giản, không chép logo gốc. Trước khi phát hành công khai hay dùng thương mại cần xin phép chủ thương hiệu, hoặc đổi sang tên chung.
-- **Câu chuyện và câu hỏi** trong `src/quest.js` cần kiểm chứng lại với nguồn chính thống.
+- **Câu chuyện và câu hỏi** trong `src/quests-data.js` cần kiểm chứng lại với nguồn chính thống (đã ghi nguồn tham khảo ở đầu file).
 - **Bản quyền OpenStreetMap (ODbL):** phải giữ dòng ghi nguồn "© OpenStreetMap" trên màn hình.
 - **Nhà ống tự sinh là ngẫu nhiên,** không đúng từng căn ngoài đời.

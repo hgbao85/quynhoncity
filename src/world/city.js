@@ -8,7 +8,7 @@ import { createTileManager } from './tiles.js';
 import { heightAt } from './terrain.js';
 import { UP } from './citykit.js';
 
-export function buildCity(world, terrain = null) {
+export function buildCity(world, terrain = null, quality = {}) {
   const group = new THREE.Group();
   const t0 = performance.now();
   const grid = buildWorldGrid(world);
@@ -52,7 +52,7 @@ export function buildCity(world, terrain = null) {
     lamp: new THREE.MeshStandardMaterial({ color: '#fff4d6', emissive: '#ffcf80', emissiveIntensity: 0 }),
     forest: new THREE.MeshStandardMaterial({ color: '#3d5f35', roughness: 1, flatShading: true }),
   };
-  const tiles = createTileManager(group, grid, world, mats, terrain);
+  const tiles = createTileManager(group, grid, world, mats, terrain, quality);
   console.info(`[city] lưới va chạm ${grid.nx}×${grid.nz} ô dựng trong ${tGrid.toFixed(0)} ms, ${world.tiles.list.length} ô dữ liệu`);
 
   return {

@@ -41,16 +41,18 @@
     </div>
 
     <div class="card quest">
-      <h3>Nhiệm vụ: Khám phá Quảng trường</h3>
+      <h3 id="quest-title">Nhiệm vụ</h3>
       <ul id="tasks"></ul>
     </div>
 
     <div class="top-right">
       <div class="card piece">
         <span>🧩</span>
-        <div><small>Mảnh ghép</small><b id="pieces">0/1</b><div class="track"><i id="pieces-bar"></i></div></div>
+        <div><small>Mảnh ghép</small><b id="pieces">0/5</b><div class="track"><i id="pieces-bar"></i></div></div>
       </div>
+      <button class="card icon-btn" id="map-btn" title="Bản đồ và dịch chuyển nhanh (phím M)"><span>🗺️</span><small>Bản đồ</small></button>
       <button class="card icon-btn" id="time-btn" title="Tua nhanh 3 giờ"><span>⏩</span><small>+3 giờ</small></button>
+      <button class="card icon-btn" id="quality-btn" title="Đổi mức đồ hoạ (Cao/Thấp)"><span>⚙</span><small><b id="quality-lbl">Cao</b><i id="fps">-- FPS</i></small></button>
     </div>
 
     <div id="joystick"><div class="knob"></div></div>
@@ -72,6 +74,18 @@
       <div id="modal-body"></div>
     </div>
   </div>
+  <div id="bigmap" hidden>
+    <div class="map-sheet">
+      <button class="close" id="bigmap-close">✕</button>
+      <h2>Bản đồ Quy Nhơn</h2>
+      <p class="map-hint">Bấm vào một địa điểm để dịch chuyển tới đó. Vàng: còn nhiệm vụ · Xanh lá: đã nhận mảnh ghép.</p>
+      <div class="map-body">
+        <canvas id="bigmap-canvas"></canvas>
+        <div id="bigmap-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="travel" hidden><div class="sub">Đang tới nơi…</div><div class="bar"><i></i></div></div>
   <div id="flash"></div>
 
   <script type="module" src="/src/main.js"></script>

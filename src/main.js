@@ -18,6 +18,8 @@ import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
 import { createQuest } from './quest.js';
 import { createMinimap } from './minimap.js';
+import { pickQuality, saveQuality, createFpsMeter } from './quality.js';
+import { createBigMap } from './bigmap.js';
 
 const $ = (id) => document.getElementById(id);
 const isTouch = matchMedia('(pointer: coarse)').matches;
@@ -25,11 +27,13 @@ if (isTouch) document.body.classList.add('touch');
 
 // ---------- renderer ----------
 const canvas = $('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isTouch, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+const Q = pickQuality(isTouch);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.antialias, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, Q.pixelRatio));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = Q.shadows;
+renderer.userData = { shadowMap: Q.shadowMap };
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
@@ -93,7 +97,7 @@ async function start() {
   let terrain = null;
   if (tbin && data.terrain) { terrain = { meta: data.terrain, data: new Int16Array(tbin) }; setTerrain(terrain.meta, terrain.data); }
   await new Promise((r) => setTimeout(r, 30)); // cho màn hình chờ kịp hiện
-  const city = buildCity(data, terrain);
+  const city = buildCity(data, terrain, Q);
   scene.add(city.group);
   const monument = createMonument(scene);
   const plazaSq = createSquare(scene, city.square);
@@ -125,9 +129,33 @@ async function start() {
     const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
   }
   if (params.has('debug')) window.game = { player, city, camera };
-  const crowd = createCrowd(scene, city.grid, isTouch ? 30 : 50);
+  const crowd = createCrowd(scene, city.grid, Q.crowd);
   const quest = createQuest(scene, data, ui);
   const minimap = createMinimap($('minimap'), data, city.tiles);
+
+  // ---- bản đồ lớn và dịch chuyển nhanh ----
+  let travelling = false;
+  createBigMap(data, {
+    getPlayer: () => ({ x: player.state.pos.x, z: player.state.pos.z, facing: player.state.facing }),
+    getProgress: () => quest.progress(),
+    onTravel: async (pl) => {
+      if (travelling) return;
+      travelling = true;
+      $('travel').hidden = false;
+      $('travel').querySelector('.sub').textContent = `Đang tới ${pl.name}…`;
+      const p = player.state.pos;
+      p.set(pl.pos[0], 0, pl.pos[1]);
+      await city.tiles.loadAround(p, 500);
+      for (let r = 1; r < 150 && !city.grid.walkable(p.x, p.z); r += 1) {
+        const a = r * 2.4; p.set(pl.pos[0] + Math.cos(a) * r * 0.5, 0, pl.pos[1] + Math.sin(a) * r * 0.5);
+      }
+      camera.position.set(p.x, p.y + 6, p.z + 12);
+      crowd.relocate?.(p);
+      $('travel').hidden = true;
+      travelling = false;
+      ui.toast(`📍 ${pl.name}`, 3000);
+    },
+  });
 
   $('photo').onclick = () => {
     composer.render();
@@ -145,12 +173,24 @@ async function start() {
 
   $('loading').style.opacity = 0;
   setTimeout(() => $('loading').remove(), 700);
-  ui.toast('Chào mừng đến Quy Nhơn! Đi tới cột sáng vàng trước tượng đài để bắt đầu.', 6000);
+  ui.toast('Chào mừng đến Quy Nhơn! Tìm các cột sáng vàng để khám phá 5 địa điểm. Bấm 🗺️ để xem bản đồ.', 7000);
+
+  // ---- nút đồ hoạ: hiện FPS, bấm để đổi mức Cao/Thấp (tải lại trang) ----
+  const fpsMeter = createFpsMeter();
+  $('quality-btn').onclick = () => {
+    const next = Q.id === 'high' ? 'low' : 'high';
+    saveQuality(next);
+    const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.href;
+  };
+  $('quality-lbl').textContent = Q.label;
+  let lowWarned = false;
 
   const clock = new THREE.Clock();
   let hudTimer = 0;
   renderer.setAnimationLoop(() => {
-    const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    const raw = clock.getDelta();
+    fpsMeter.tick(raw);
+    const dt = Math.min(raw, 0.05), t = clock.elapsedTime;
     const { d, h } = vnTime();
     if ($('modal').hidden) player.update(dt);
     const pos = player.state.pos;
@@ -158,7 +198,7 @@ async function start() {
     sea.update(t, env, pos);
     city.tiles.update(pos, dt);
     crowd.update(dt, pos);
-    quest.update(t, pos, env.night);
+    quest.update(t, pos, env.night, dt);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
     city.shopMat.emissiveIntensity = env.night * 0.35;
@@ -171,7 +211,7 @@ async function start() {
     highlands.setNight(env.night);
     landmarks.setNight(env.night);
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
-    bloom.enabled = env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
+    bloom.enabled = Q.bloom && env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;
     bloom.threshold = 0.82;
     composer.render();
@@ -188,6 +228,10 @@ async function start() {
       $('sky-icon').textContent = weatherIcon(weather.code, env.night > 0.5);
       $('mana').textContent = Math.round(player.state.mana);
       $('mana-bar').style.width = `${player.state.mana}%`;
+      const fps = Math.round(fpsMeter.fps);
+      $('fps').textContent = `${fps} FPS`;
+      // máy chậm ở mức Cao: gợi ý chuyển sang Thấp (một lần)
+      if (Q.id === 'high' && !lowWarned && t > 15 && fps < 24) { lowWarned = true; ui.toast('Máy hơi chậm — bấm nút ⚙ để chuyển sang đồ hoạ Thấp cho mượt hơn.', 7000); }
     }
     minimap.draw(pos.x, pos.z, player.state.camYaw, player.state.facing, quest.markers());
   });

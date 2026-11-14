@@ -240,7 +240,15 @@ rmSync('public/data/tiles', { recursive: true, force: true });
 mkdirSync('public/data/tiles', { recursive: true });
 let bytes = 0;
 const index = [];
+// xáo trộn danh sách cây (bộ ba x, z, r) để game ở mức đồ hoạ thấp chỉ cần vẽ phần đầu mà cây vẫn thưa đều
+const shuffle3 = (arr) => {
+  for (let i = arr.length / 3 - 1; i > 0; i--) {
+    const j = Math.floor(R() * (i + 1));
+    for (let k = 0; k < 3; k++) { const tmp = arr[i * 3 + k]; arr[i * 3 + k] = arr[j * 3 + k]; arr[j * 3 + k] = tmp; }
+  }
+};
 for (const [k, t] of tiles) {
+  for (const key of ['tree', 'forest', 'palm', 'pine', 'bush']) shuffle3(t[key]);
   const s = JSON.stringify(t);
   bytes += s.length;
   writeFileSync(`public/data/tiles/${k}.json`, s);

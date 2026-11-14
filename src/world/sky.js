@@ -43,8 +43,8 @@ export function createSky(scene, renderer) {
   scene.add(moon);
 
   const sun = new THREE.DirectionalLight(0xffffff, 3);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.castShadow = renderer.shadowMap.enabled;
+  sun.shadow.mapSize.set(renderer.userData?.shadowMap || 2048, renderer.userData?.shadowMap || 2048);
   const sc = sun.shadow.camera;
   sc.left = sc.bottom = -70; sc.right = sc.top = 70; sc.near = 1; sc.far = 400;
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
@@ -75,7 +75,7 @@ export function createSky(scene, renderer) {
     sun.target.position.copy(focus);
     sun.intensity = 3.2 * smooth(-0.02, 0.25, dir.y);
     sun.color.copy(white).lerp(warm, dusk);
-    sun.castShadow = sun.intensity > 0.05;
+    sun.castShadow = renderer.shadowMap.enabled && sun.intensity > 0.05;
 
     const md = new THREE.Vector3(-dir.x, Math.max(0.35, -dir.y), -dir.z).normalize();
     moonLight.position.copy(focus).addScaledVector(md, 200);
