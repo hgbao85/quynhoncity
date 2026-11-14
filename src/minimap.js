@@ -13,7 +13,10 @@ const boxOf = (pts) => {
   return [a, b, c, d];
 };
 
-export function createMinimap(canvas, data, tiles) {
+import { BOUNDS } from './world/config.js';
+import { SEA } from './world/geo.js';
+
+export function createMinimap(canvas, data, tiles, grid = null) {
   const off = document.createElement('canvas');
   off.width = off.height = PATCH;
   const g = off.getContext('2d');
@@ -40,6 +43,9 @@ export function createMinimap(canvas, data, tiles) {
       for (const a of areas) if (hit(a.box)) { bp(a.pts); gb.closePath(); gb.fillStyle = COL[a.kind] || COL.park; gb.fill(); }
       // đồi núi: tô xanh đậm dần theo độ cao (mẫu mỗi 8 m)
       for (let px = 0; px < PATCH; px += 8) for (let pz = 0; pz < PATCH; pz += 8) {
+        // ngoài bản đồ chính (khu Kỳ Co, Eo Gió): đất lấy theo lưới va chạm của khu
+        const wx = x0 + px + 4, wz = z0 + pz + 4;
+        if (grid && (wx < BOUNDS.x0 || wx > BOUNDS.x1 || wz < BOUNDS.z0 || wz > BOUNDS.z1) && grid.get(wx, wz) !== SEA) { gb.fillStyle = COL.land; gb.fillRect(px, pz, 8, 8); }
         const h = heightAt(x0 + px + 4, z0 + pz + 4);
         if (h < 1) continue;
         gb.fillStyle = `rgba(70,110,60,${Math.min(0.85, 0.3 + h / 250)})`;

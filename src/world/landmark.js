@@ -64,6 +64,7 @@ export function createMonument(scene) {
   buildFather(statue, bronze);
   statue.scale.setScalar(STATUE_H / 1.8);
   statue.position.y = top;
+  statue.userData.keep = true; // sẽ bị ẩn khi nạp xong mô hình thật: không gộp lưới
   g.add(statue);
   // mô hình 3D thật (nếu có public/models/statue.glb) sẽ thay cho tượng khối
   loadStatueModel(statue, bronze);

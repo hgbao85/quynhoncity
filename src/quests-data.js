@@ -213,6 +213,46 @@ export const QUESTS = [
       { id: 'east', pos: [3520, -5958], y: 0.3, r: 9, title: 'Đầu cầu Phương Mai', text: 'Đầu cầu phía đông dẫn vào bán đảo Phương Mai và khu kinh tế Nhơn Hội.' },
     ],
   },
+  {
+    // khu riêng Kỳ Co (zones-config.js): bãi cát theo OSM 13.85012, 109.29233
+    id: 'kyco', zone: 'kyco', title: 'Biển xanh Nhơn Lý', place: 'Kỳ Co', piece: 'Bãi cát Kỳ Co',
+    center: [7760, -9720], pillar: [7745, -9700], photoRadius: 220,
+    shot: shotW([7835, 16, -9800], [7745, 3, -9690]),
+    story: [
+      'Kỳ Co thuộc xã Nhơn Lý cũ (nay thuộc phường Quy Nhơn Đông), cách trung tâm Quy Nhơn khoảng 25 km đường bộ về phía đông bắc.',
+      'Bãi biển cát trắng nằm giữa hai mỏm núi, nước trong xanh, có rạn san hô, nên thường được ví là "Maldives của Việt Nam".',
+      'Du khách thường đi ca nô khoảng 15 phút từ Nhơn Lý hoặc Eo Gió để tới đây; mùa đẹp nhất là từ tháng 4 tới tháng 9.',
+    ],
+    quiz: [
+      { q: 'Kỳ Co thường được ví là gì?', a: ['"Maldives của Việt Nam"', '"Sa Pa thu nhỏ"', '"Vịnh Hạ Long trên cạn"', '"Đà Lạt thứ hai"'], ok: 0 },
+      { q: 'Du khách thường đến Kỳ Co bằng phương tiện gì từ Nhơn Lý?', a: ['Cáp treo', 'Ca nô', 'Tàu hoả', 'Khinh khí cầu'], ok: 1 },
+      { q: 'Mùa đẹp nhất để tắm biển Kỳ Co là khoảng thời gian nào?', a: ['Tháng 11 – tháng 1', 'Tháng 4 – tháng 9', 'Tháng 10 – tháng 12', 'Quanh năm đều có bão'], ok: 1 },
+    ],
+    details: [
+      { id: 'pier', pos: [7752, -9722], y: 0.3, r: 8, title: 'Cầu cảng gỗ', text: 'Cầu cảng gỗ vươn ra biển giữa bãi, nơi ca nô đưa đón khách cập bến.' },
+      { id: 'south', pos: [7795, -9560], y: 0.3, r: 8, title: 'Mỏm đá phía nam', text: 'Hai đầu bãi là những mỏm đá granite, nước ở đây xanh trong, nhìn thấy cả san hô.' },
+    ],
+  },
+  {
+    // khu riêng Eo Gió: sống đá hẹp theo ảnh vệ tinh, điểm OSM 13.88486–13.89088, 109.292
+    id: 'eogio', zone: 'eogio', title: 'Nơi ngắm hoàng hôn', place: 'Eo Gió', piece: 'Hoàng hôn Eo Gió',
+    center: [7650, -13800], pillar: [7640, -13700], photoRadius: 220,
+    shot: shotW([7480, 40, -13980], [7650, 25, -13820]),
+    story: [
+      'Eo Gió ở Nhơn Lý, cách trung tâm Quy Nhơn hơn 20 km, là một eo biển nhỏ nằm giữa hai dãy núi đá, có lối đi bộ men theo sườn núi nhìn xuống biển.',
+      'Nơi đây thường được nhắc tới như một trong những điểm ngắm hoàng hôn đẹp nhất Việt Nam.',
+      'Eo Gió chỉ cách Kỳ Co khoảng 2 km; từ đây có thuyền đưa khách sang Kỳ Co.',
+    ],
+    quiz: [
+      { q: 'Eo Gió nổi tiếng là nơi ngắm cảnh gì đẹp?', a: ['Hoàng hôn', 'Tuyết rơi', 'Ruộng bậc thang', 'Thác nước'], ok: 0 },
+      { q: 'Eo Gió nằm ở đâu?', a: ['Nhơn Lý', 'Ghềnh Ráng', 'Tháp Đôi', 'Cù Lao Xanh'], ok: 0 },
+      { q: 'Eo Gió cách bãi Kỳ Co khoảng bao xa?', a: ['Khoảng 2 km', 'Khoảng 50 km', 'Khoảng 200 m', 'Khoảng 100 km'], ok: 0 },
+    ],
+    details: [
+      { id: 'view', pos: [7654, -13830], y: 0.6, r: 6, title: 'Đài ngắm cảnh', text: 'Từ sống đá nhìn một bên là vịnh lặng có thuyền thúng neo, một bên là biển khơi sóng vỗ.' },
+      { id: 'bay', pos: [7605, -13950], y: 0.3, r: 7, title: 'Vịnh làng chài', text: 'Vịnh phía tây kín gió là nơi thuyền thúng, thuyền gỗ của làng chài Nhơn Lý neo đậu.' },
+    ],
+  },
 ];
 
 // Điểm dịch chuyển nhanh trên bản đồ lớn (toạ độ thế giới, mét)
@@ -228,6 +268,8 @@ export const PLACES = [
   { id: 'quangtrung', name: 'Tượng Quang Trung', pos: at('quangtrung', 0, 30), icon: '🐎', label: 'right' },
   { id: 'museum', name: 'Bảo tàng Tổng hợp', pos: at('museum', -6, 30), icon: '🏛️' },
   { id: 'thinai', name: 'Cầu Thị Nại', pos: [767, -5433], icon: '🌉', label: 'right' },
+  { id: 'kyco', zone: 'kyco', name: 'Kỳ Co', pos: [7730, -9690], icon: '🏝️' },
+  { id: 'eogio', zone: 'eogio', name: 'Eo Gió', pos: [7630, -13690], icon: '🌅' },
   { id: 'hoanghau', name: 'Bãi tắm Hoàng Hậu', pos: at('hoanghau', 4, -20), icon: '🪨', label: 'right' },
   { id: 'hanmactu', name: 'Mộ Hàn Mặc Tử', pos: at('hanmactu', -8, 9), icon: '✒️' },
 ];

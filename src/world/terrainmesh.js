@@ -41,14 +41,27 @@ export function createTerrain(scene) {
   const g = new THREE.Group();
   const near = nearGrid(), far = farGrid();
   if (near) g.add(buildMesh(near, mat, { skipInside: null, y: (h) => (h > 0 ? h : -0.3), land: () => true, value: (h) => h }));
-  if (far) {
-    // bỏ các ô nằm trong vùng bản đồ (lưới gần và mặt đất thành phố đã phủ)
+  // lưới xa: bỏ các ô nằm trong vùng bản đồ (lưới gần đã phủ) và trong các khu riêng đã nạp
+  const holes = [];
+  let farMesh = null;
+  const buildFar = () => {
+    if (!far) return;
+    if (farMesh) { g.remove(farMesh); farMesh.geometry.dispose(); }
     const pad = far.step;
-    const inside = (x, z) => x > BOUNDS.x0 + pad && x < BOUNDS.x1 - pad && z > BOUNDS.z0 + pad && z < BOUNDS.z1 - pad;
-    g.add(buildMesh(far, mat, { skipInside: inside, y: (h) => (h > 0.5 ? flatten(h) - 0.05 : -3), land: (h) => h > 0.5, value: (h) => flatten(h) }));
-  }
+    const inside = (x, z) => (x > BOUNDS.x0 + pad && x < BOUNDS.x1 - pad && z > BOUNDS.z0 + pad && z < BOUNDS.z1 - pad)
+      || holes.some((r) => x > r.x0 + pad && x < r.x1 - pad && z > r.z0 + pad && z < r.z1 - pad);
+    farMesh = buildMesh(far, mat, { skipInside: inside, y: (h) => (h > 0.5 ? flatten(h) - 0.05 : -3), land: (h) => h > 0.5, value: (h) => flatten(h) });
+    g.add(farMesh);
+  };
+  buildFar();
   scene.add(g);
   return {
+    // khu riêng: mặt đất chi tiết từ lưới của khu, đục lỗ lưới xa ở chỗ đó; color(x, z, h, dốc) → màu hoặc null
+    addZone(gr, rect, color) {
+      g.add(buildMesh(gr, mat, { skipInside: null, y: (h) => (h > 0 ? h : -0.3), land: () => true, value: (h) => h, color }));
+      holes.push(rect);
+      buildFar();
+    },
     update(fogColor, night) {
       uniforms.fogColor.value.copy(fogColor);
       uniforms.light.value = 1 - night * 0.85;
@@ -83,8 +96,9 @@ function buildMesh(gr, mat, opt) {
     const hz = opt.value(H(i, Math.min(nz - 1, j + 1))) - opt.value(H(i, Math.max(0, j - 1)));
     const n = new THREE.Vector3(-hx, 2 * step, -hz).normalize();
     const slope = 1 - n.y, v = opt.value(raw), r = noise(x, z);
-    let c;
-    if (isFar && !opt.land(raw)) c = C.shore;
+    let c = opt.color ? opt.color(x, z, v, slope) : null;
+    if (c) { /* màu do khu riêng quyết định */ }
+    else if (isFar && !opt.land(raw)) c = C.shore;
     else if (v < 3) c = (isFar ? C.farm : C.grass).clone().lerp(C.forest, Math.max(0, v / 3) * 0.6);
     else c = C.forest.clone().lerp(C.forestDark, 0.5 + 0.5 * r);
     if (slope > 0.35) c = c.clone().lerp(C.rock, Math.min(1, (slope - 0.35) * 2.5));

@@ -13,7 +13,7 @@ import { createBeach } from './world/beach.js';
 import { createTerrain } from './world/terrainmesh.js';
 import { setTerrain } from './world/terrain.js';
 import { createHighlands } from './world/highlands.js';
-import { createLandmarks } from './world/landmarks.js';
+import { createLandmarks, mergeStatic } from './world/landmarks.js';
 import { setBridges } from './world/bridges.js';
 import { createBridges } from './world/bridgemesh.js';
 import { createPlayer } from './player.js';
@@ -28,6 +28,9 @@ import { createAudio } from './audio.js';
 import { createAlbum } from './album.js';
 import { setupPwa } from './pwa.js';
 import { createTutorial } from './tutorial.js';
+import { createSideQuests } from './sidequests.js';
+import { createZones } from './world/zones.js';
+import { zoneAt } from './world/zones-config.js';
 import { track } from './stats.js';
 import { QUESTS } from './quests-data.js';
 import { createWeather, testWeatherCode } from './world/weather.js';
@@ -157,8 +160,12 @@ async function start() {
   scene.add(city.group);
   const monument = createMonument(scene);
   const plazaSq = createSquare(scene, city.square);
+  // tượng đài, phù điêu, cây cảnh, quảng trường: hàng trăm khối nhỏ → gộp theo vật liệu (bớt lần vẽ, nhất là bóng đổ)
+  mergeStatic(monument);
+  mergeStatic(plazaSq.group);
   const beach = createBeach(scene, data, city.grid);
   const terrainMesh = createTerrain(scene);
+  const zones = createZones({ scene, terrain: terrainMesh, grid: city.grid });
   const highlands = createHighlands(scene, city.grid);
   const landmarks = createLandmarks(scene, city.grid);
   const bridges = createBridges(scene);
@@ -187,7 +194,7 @@ async function start() {
   for (let r = 1; r < 120 && !city.grid.walkable(s.x, s.z); r += 1) {
     const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
   }
-  if (params.has('debug')) window.game = { player, city, camera, renderer };
+  if (params.has('debug')) window.game = { player, city, camera, renderer, scene };
   const crowd = createCrowd(scene, city.grid, Q.crowd);
   // ---- âm thanh, album ----
   setupPwa(ui);
@@ -202,6 +209,10 @@ async function start() {
   ui.onComplete = () => album?.open();
   const quest = createQuest(scene, data, ui);
   album = createAlbum({ getProgress: () => quest.progress(), ui });
+  const side = createSideQuests({ scene, grid: city.grid, player, ui, audio });
+  ui.sideSummary = () => side.summaryHTML();
+  if (window.game) Object.assign(window.game, { side, zones, quest, groundHeight });
+  let lastEnv = null, lastH = 12;
   // khoảng cách tới bờ biển (lấy mẫu đường bờ biển thưa) cho tiếng sóng
   const coastPts = [];
   for (const c of data.coastline) for (let i = 0; i < c.length; i += 2) coastPts.push(c[i]);
@@ -214,7 +225,7 @@ async function start() {
     if (player.setRiding(!was) === false) ui.toast('Chỗ này hẹp quá, ra chỗ rộng hơn để lên xe nhé.');
     else ui.toast(was ? '🚶 Đã xuống xe' : '🛵 Lên xe! Đi chậm, đội mũ bảo hiểm, nhường người đi bộ nhé.', 3500);
   };
-  const minimap = createMinimap($('minimap'), data, city.tiles);
+  const minimap = createMinimap($('minimap'), data, city.tiles, city.grid);
 
   // ---- bản đồ lớn và dịch chuyển nhanh ----
   const tutorial = createTutorial({ isTouch, total: QUESTS.length });
@@ -228,6 +239,8 @@ async function start() {
       $('travel').hidden = false;
       $('travel').querySelector('.sub').textContent = `Đang tới ${pl.name}…`;
       try {
+        // khu riêng (Kỳ Co, Eo Gió): tải địa hình và cảnh của khu trước khi đặt người chơi xuống
+        if (pl.zone) { await zones.load(pl.zone); quest.refreshHeights(); }
         const p = player.state.pos;
         p.set(pl.pos[0], 0, pl.pos[1]);
         await city.tiles.loadAround(p, 500);
@@ -289,6 +302,7 @@ async function start() {
     const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
     audio.sfx('shutter');
     quest.photoTaken(player.state.pos, thumbCanvas.toDataURL('image/jpeg', 0.78));
+    if (lastEnv) side.onPhoto(player.state.pos, { ...lastEnv, hours: lastH });
   };
 
   $('loading').style.opacity = 0;
@@ -320,6 +334,7 @@ async function start() {
     if ($('modal').hidden && $('bigmap').hidden && !travelling && !tutorial.open) player.update(dt);
     const pos = player.state.pos;
     const env = sky.update(d, h, pos);
+    lastEnv = env; lastH = h;
     wx.setCode(wxTest ?? weather.code);
     const wxs = wx.update(dt, camera, env, { sun: sky.sun, hemi: sky.hemi, renderer });
     if (wxs.flash > 0) { scene.fog.color.lerp(FLASH_COLOR, wxs.flash * 0.6); renderer.toneMappingExposure += wxs.flash * 0.8; }
@@ -332,6 +347,7 @@ async function start() {
     seaTimer -= dt; if (seaTimer <= 0) { seaTimer = 0.5; seaD = seaDist(pos.x, pos.z); }
     audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night, rain: wxs.rain, thunder: wxs.strike });
     quest.update(t, pos, env.night, dt);
+    side.update(dt, pos);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
     city.shopMat.emissiveIntensity = env.night * 0.35;
@@ -343,6 +359,7 @@ async function start() {
     terrainMesh.update(scene.fog.color, env.night);
     highlands.setNight(env.night);
     landmarks.setNight(env.night);
+    landmarks.update(camera.position);
     bridges.setNight(env.night);
     traffic.setNight(env.night);
     const nightFlag = env.night > 0.5 ? '1' : '';
@@ -361,6 +378,13 @@ async function start() {
       const month = d.getUTCMonth() + 1;
       $('date').textContent = `${WEEK[d.getUTCDay()]} ${d.getUTCDate()}/${month} · ${month >= 9 ? 'Mùa mưa' : 'Mùa khô'}`;
       $('temp').textContent = `${weather.temp}°C`;
+      // thẻ địa danh: tên khu (Nhơn Lý ở Kỳ Co, Eo Gió) và địa điểm gần nhất
+      {
+        const zn = zoneAt(pos.x, pos.z), near = quest.nearest?.(pos);
+        const title = zn ? 'NHƠN LÝ' : 'QUY NHƠN', sub = near && near.d < 500 ? near.place : zn ? zn.name : 'Thành phố biển Quy Nhơn';
+        if ($('place-title').textContent !== title) $('place-title').textContent = title;
+        if ($('place-sub').textContent !== sub) $('place-sub').textContent = sub;
+      }
       $('assumed').hidden = !weather.assumed;
       $('sky-icon').textContent = weatherIcon(wxTest ?? weather.code, env.night > 0.5);
       $('sky-icon').title = wx.label;
@@ -373,7 +397,7 @@ async function start() {
       slowTime = Q.id === 'high' && t > 20 && fps < 24 ? slowTime + 0.25 : 0;
       if (!lowWarned && slowTime >= 8) { lowWarned = true; ui.toast('Máy hơi chậm — bấm nút ⚙ để chuyển sang đồ hoạ Thấp cho mượt hơn.', 7000); }
     }
-    minimap.draw(pos.x, pos.z, player.state.camYaw, player.state.facing, quest.markers());
+    minimap.draw(pos.x, pos.z, player.state.camYaw, player.state.facing, [...quest.markers(), ...side.markers()]);
   });
 }
 

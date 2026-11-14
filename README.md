@@ -93,8 +93,8 @@ Lệnh này chạy lần lượt:
 - **Số tầng theo loại đường mặt tiền** (quan sát Street View): nhà ống mặt đường lớn 3–5 tầng, đường tertiary 2–4, đường nhỏ 2–3, trong hẻm 1–2; khách sạn ven biển 6–22 tầng, cao ốc mặt đường chính 5–9 tầng, khối lớn khác (trường, chợ, kho) 2–4 tầng.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
-**Hành trình khám phá: 10 địa điểm, 10 mảnh ghép** (nội dung trong `src/quests-data.js`)
-- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Bảo tàng Tổng hợp, Cầu Thị Nại, Mộ Hàn Mặc Tử, Bãi tắm Hoàng Hậu.
+**Hành trình khám phá: 12 địa điểm, 12 mảnh ghép** (nội dung trong `src/quests-data.js`)
+- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Bảo tàng Tổng hợp, Cầu Thị Nại, Mộ Hàn Mặc Tử, Bãi tắm Hoàng Hậu, Kỳ Co, Eo Gió.
 - Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
 - Ảnh lưu niệm (cho album, bưu thiếp) luôn chụp từ góc máy đẹp đặt sẵn của từng địa điểm (`shot` trong `src/quests-data.js`), giữ nguyên giờ, thời tiết lúc bấm chụp. Trên máy tính, ảnh PNG tải về vẫn là đúng góc người chơi đang nhìn; trên điện thoại không tải PNG.
 - Người đi dạo vẽ gộp: mỗi bộ phận cơ thể là một InstancedMesh, cả đám đông chỉ tốn 12 lần vẽ.
@@ -124,6 +124,19 @@ Lệnh này chạy lần lượt:
 **Thời tiết thật** (`src/world/weather.js`)
 - Theo dữ liệu Open-Meteo (mã thời tiết WMO): ít mây/nhiều mây có mây trôi; mưa, mưa rào có mưa rơi quanh người chơi, trời u ám, sương mù dày hơn, tiếng mưa; dông có chớp sáng và tiếng sấm; sương mù làm tầm nhìn ngắn lại.
 - Thử nhanh không cần chờ trời mưa: `?wx=rain`, `?wx=storm`, `?wx=cloud`, `?wx=fog`, `?wx=clear`.
+
+**Khu riêng Kỳ Co và Eo Gió** (`src/world/zones.js`, `src/world/zones-config.js`, `scripts/fetch-zones.mjs`)
+- Hai khu ở Nhơn Lý, cách trung tâm 12–15 km, nằm ngoài bản đồ chính. Mỗi khu là một ô vuông khoảng 1,2 km, **chỉ tải khi dịch chuyển tới** (250–380 KB mỗi khu), nên không làm chậm lúc mở game.
+- Đất/biển cắt theo đường bờ biển OSM, độ cao SRTM lấy mẫu lưới 4 m; dải đất thấp sát biển được hạ thành dốc thoai thoải (SRTM 30 m làm bãi cát gò cao 5–9 m). Lưới địa hình xa được đục lỗ đúng chỗ khu để không chồng hình.
+- Va chạm: lưới riêng của khu (biển, đất, đường, nhà) ghép vào lưới chính qua `grid.get`. Đi tới mép khu là gặp "tường" vô hình.
+- Kỳ Co: bãi cát trắng rộng, cầu cảng gỗ ~130 m giữa bãi (theo ảnh vệ tinh), ca nô, dù lá và ghế nằm, biển tên, khu nghỉ dưỡng (footprint Microsoft), đồi cây.
+- Eo Gió: sống đá hẹp màu đá nâu xen cây bụi, đài ngắm cảnh có lan can ở chỗ cao nhất, biển tên, làng chài Nhơn Lý (~1.100 nhà từ footprint Microsoft), thuyền thúng và thuyền gỗ trong vịnh phía tây.
+- Tạo lại dữ liệu: `npm run fetch-zones`.
+
+**Nhiệm vụ phụ** (`src/sidequests.js`, tóm tắt trong album)
+- Xe ôm: đang chạy xe máy sẽ có khách đứng chờ bên đường (cột sáng xanh lá); dừng gần để đón, chở tới nơi khách muốn (cột sáng xanh dương, chấm xanh trên bản đồ nhỏ), nhận tiền công (tiền trong game).
+- Sổ ẩm thực: 5 xe hàng đặc sản (bánh xèo tôm nhảy, bún chả cá, bánh hỏi cháo lòng, nem chợ Huyện, tré), chấm cam trên bản đồ nhỏ, bấm "Ăn thử".
+- Hoàng hôn: chụp ảnh lúc chiều tà (khoảng 16:40 – 17:45 giờ trong game) gần biển hoặc đầm.
 
 **Cài như ứng dụng** (`public/manifest.webmanifest`, `public/sw.js`, `src/pwa.js`)
 - Android/Chrome: nút 📲 để cài game ra màn hình chính; mở từ biểu tượng là chơi toàn màn hình, không có thanh địa chỉ.
@@ -229,7 +242,7 @@ npm run optimize-statue
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |
-| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 10 địa điểm; danh sách điểm dịch chuyển |
+| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 12 địa điểm; danh sách điểm dịch chuyển |
 | `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 | `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
@@ -245,13 +258,14 @@ npm run optimize-statue
 
 Game dùng Vercel Web Analytics (không cookie, không thu thông tin cá nhân). Cần bật một lần: trang dự án trên Vercel → **Analytics** → **Enable**. Gói miễn phí có lượt xem, quốc gia, thiết bị, trình duyệt; các sự kiện riêng (`piece`, `complete`, `postcard`, `travel`, `tutorial`, `install`) chỉ hiện ở gói Pro trở lên. Khi chạy `npm run dev` không gửi gì.
 
+**Hiệu năng:** các công trình dựng tay, tượng đài và quảng trường gồm hàng trăm khối nhỏ được gộp theo vật liệu lúc tải (`mergeStatic` trong `landmarks.js`); công trình xa hơn 1,7 km (ngoài tầm sương) không vẽ. Số lần vẽ ở điểm xuất phát giảm từ ~900 xuống ~280 mỗi khung hình (lượt bóng đổ từ 363 xuống 73).
+
 ## Cần lưu ý trước khi ra mắt
 
 - **Địa hình độ phân giải ~30 m:** đủ cho đồi núi nhìn từ xa, nhưng đi bộ trên sườn đồi sẽ thấy mặt đất góc cạnh. Dữ liệu là độ cao bề mặt nên đỉnh đồi có thể lệch vài mét do tán cây.
 - **Cảnh nặng hơn:** khoảng 1,5 triệu tam giác ở điểm xuất phát (trước khi lọc phần ngoài khung nhìn). Cần đo trên điện thoại thật; nếu chậm có thể giảm mật độ rừng, cây hoặc độ chi tiết địa hình xa.
 - **Nội dung đã đối chiếu nguồn (11/2026):** sửa chiều cao nhà thờ (47,2 m), bỏ chi tiết "Gia Long sắc phong năm 1805" (chỉ một nguồn yếu; năm 1805 là năm đúc chuông), "Hạ điện" → "Hậu điện", thêm năm khánh thành tượng Quang Trung (2008) và nhà thờ (1939). Nguồn ghi ở đầu `src/quests-data.js`.
 - **Hướng các cửa tháp Đôi:** các nguồn mô tả khác nhau (hướng đông hay hướng nam), mô hình đang để cửa chính tháp Bắc quay về phía đông.
-- **Kỳ Co, Eo Gió** chưa có: cách trung tâm 20–25 km; muốn thêm phải mở rộng bản đồ khoảng 3,5 lần (địa hình tải lúc mở game tăng từ 1 MB lên khoảng 2,5 MB).
 - **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm đã xây nhà): script bỏ vùng nước có mật độ nhà trên 0,5 căn/ha. Đầm Thị Nại rộng có nhà chòi, ao nuôi rải rác (139 nhà trên ~4.000 ha) vẫn được giữ là mặt nước.
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).

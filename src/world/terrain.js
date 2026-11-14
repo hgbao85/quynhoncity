@@ -35,7 +35,16 @@ function sample(g, x, z) {
   return y / 10;
 }
 
+// lưới độ cao của các khu riêng (Kỳ Co, Eo Gió): nạp khi người chơi dịch chuyển tới, ưu tiên hơn lưới xa
+const zoneGrids = [];
+export function addZoneGrid(g) { zoneGrids.push(g); }
+
 export function heightAt(x, z) {
+  for (const g of zoneGrids) {
+    if (x < g.x0 || z < g.z0 || x > g.x0 + (g.nx - 1) * g.step || z > g.z0 + (g.nz - 1) * g.step) continue;
+    const y = sample(g, x, z);
+    if (y !== null) return y;
+  }
   if (!near) return 0;
   const y = sample(near, x, z);
   if (y !== null) return y;

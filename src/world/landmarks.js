@@ -10,12 +10,56 @@
 //   - Mộ Hàn Mặc Tử: nền đá ba bậc, bia đá trắng có tượng, đèn trụ xanh, lối lát đá, bồn hoa
 // Mỗi công trình đặt theo độ cao địa hình và chặn đường đi trên lưới va chạm.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BUILDING } from './geo.js';
 import { heightAt } from './terrain.js';
 import { LANDMARKS, siteToWorld } from './landmark-sites.js';
 
 const box = (w, h, d, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y + h / 2, z); m.castShadow = m.receiveShadow = true; return m; };
 const cyl = (r0, r1, h, seg, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, h, seg), mat); m.position.set(x, y + h / 2, z); m.castShadow = true; return m; };
+
+// Gộp mọi lưới tĩnh trong một công trình theo vật liệu (và cùng bộ thuộc tính, cùng cờ bóng đổ) thành một lưới.
+// Bỏ qua InstancedMesh, lưới ẩn (khối va chạm), lưới nhiều vật liệu và lưới đánh dấu userData.keep.
+export function mergeStatic(root) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), m = new THREE.Matrix4();
+  const buckets = new Map(), done = [];
+  root.traverse((o) => {
+    if (!o.isMesh || o.isInstancedMesh || Array.isArray(o.material) || o.userData.keep || o.userData.night) return;
+    let vis = true;
+    for (let p = o; p && p !== root; p = p.parent) if (!p.visible || p.userData.keep) vis = false;
+    if (!vis) return;
+    let geo = o.geometry.clone();
+    m.multiplyMatrices(inv, o.matrixWorld);
+    geo.applyMatrix4(m);
+    if (m.determinant() < 0) { // khối lật gương: đảo chiều tam giác để mặt không bị quay ngược
+      geo = geo.index ? geo.toNonIndexed() : geo;
+      const a = geo.attributes;
+      for (const name of Object.keys(a)) {
+        const arr = a[name].array, k = a[name].itemSize;
+        for (let t = 0; t < arr.length; t += 3 * k) for (let c = 0; c < k; c++) { const tmp = arr[t + k + c]; arr[t + k + c] = arr[t + 2 * k + c]; arr[t + 2 * k + c] = tmp; }
+      }
+    }
+    if (geo.index) geo = geo.toNonIndexed();
+    for (const name of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv'].includes(name)) geo.deleteAttribute(name);
+    if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
+    if (!geo.attributes.normal) geo.computeVertexNormals();
+    geo.morphAttributes = {};
+    geo.clearGroups();
+    const key = `${o.material.uuid}|${o.castShadow}|${o.receiveShadow}`;
+    if (!buckets.has(key)) buckets.set(key, { mat: o.material, cast: o.castShadow, recv: o.receiveShadow, geos: [] });
+    buckets.get(key).geos.push(geo);
+    done.push(o);
+  });
+  for (const o of done) o.parent.remove(o);
+  for (const b of buckets.values()) {
+    const merged = mergeGeometries(b.geos, false);
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, b.mat);
+    mesh.castShadow = b.cast; mesh.receiveShadow = b.recv;
+    root.add(mesh);
+  }
+}
 
 // độ cao đặt công trình: điểm thấp nhất trong vùng ±10 m quanh tâm
 function baseHeight(l) {
@@ -43,11 +87,15 @@ export function createLandmarks(scene, grid) {
       const pts = [[bb.min.x, bb.min.z], [bb.max.x, bb.min.z], [bb.max.x, bb.max.z], [bb.min.x, bb.max.z]];
       grid.fillPoly(pts, BUILDING);
     });
+    // gộp các khối tĩnh cùng vật liệu thành một lưới: mỗi công trình còn khoảng chục lần vẽ thay vì hàng trăm
+    mergeStatic(g);
   }
   scene.add(all);
+  const FAR = 1700; // xa hơn tầm sương mù (1500 m) thì không vẽ
   return {
     group: all,
     setNight(n) { for (const [m, k] of glow) m.emissiveIntensity = n * k; },
+    update(cam) { for (const g of all.children) g.visible = Math.hypot(g.position.x - cam.x, g.position.z - cam.z) < FAR; },
   };
 }
 

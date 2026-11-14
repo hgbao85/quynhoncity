@@ -220,3 +220,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #tutorial button.primary { background: #1d2b4a; color: #fff; border-color: #1d2b4a; }
 #tutorial .tut-skip { border: 0; background: none; color: #6a7388; padding-left: 0; }
 #tutorial button[hidden] { display: none; }
+
+/* nhiệm vụ phụ trong album; nút "Ăn thử" */
+.side-sum { margin-top: 14px; padding-top: 10px; border-top: 1px solid #ddd5c6; }
+.side-sum h3 { margin: 0 0 6px; font-size: 16px; }
+.side-sum ul { margin: 0; padding-left: 4px; list-style: none; display: grid; gap: 6px; }
+.side-sum small { color: #6a7388; }
+#side-action { background: #ff9f43; box-shadow: 0 4px 16px rgba(255,159,67,.5); }

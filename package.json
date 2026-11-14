@@ -12,7 +12,8 @@
     "optimize-statue": "gltf-transform optimize public/models/statue-raw.glb public/models/statue.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify-ratio 0.12 --simplify-error 0.001",
     "build-tiles": "node scripts/build-tiles.mjs",
     "build-data": "npm run fetch-osm && npm run fetch-buildings && npm run fetch-terrain && npm run build-tiles",
-    "fetch-terrain": "node scripts/fetch-terrain.mjs"
+    "fetch-terrain": "node scripts/fetch-terrain.mjs",
+    "fetch-zones": "node scripts/fetch-zones.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",

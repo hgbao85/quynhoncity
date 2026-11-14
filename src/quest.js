@@ -163,5 +163,9 @@ export function createQuest(scene, data, ui) {
     }
   }
   render();
-  return { update, photoTaken, shotNear, markers, progress, setMarkersVisible };
+  // đặt lại độ cao cột sáng (sau khi nạp địa hình một khu riêng)
+  const refreshHeights = () => { for (const s of state) s.pillar.position.y = groundHeight(s.q.pillar[0], s.q.pillar[1]) + 0.05; };
+  // địa điểm gần nhất (cho thẻ địa danh)
+  const nearest = (pos) => { let best = null; for (const q of QUESTS) { const d = Math.hypot(pos.x - q.center[0], pos.z - q.center[1]); if (!best || d < best.d) best = { place: q.place, d }; } return best; };
+  return { update, photoTaken, shotNear, markers, progress, setMarkersVisible, refreshHeights, nearest };
 }

@@ -72,6 +72,8 @@ export function createSky(scene, renderer) {
     u.rayleigh.value = 1.6 + dusk * 1.5;
     sky.material.visible = night < 0.999;
 
+    // hộp trời đi theo người chơi (khu Eo Gió cách gốc toạ độ hơn 13 km, ngoài hộp 20 km đặt cố định)
+    sky.position.set(focus.x, 0, focus.z);
     sun.position.copy(focus).addScaledVector(dir, 200);
     sun.target.position.copy(focus);
     sun.intensity = 3.2 * smooth(-0.02, 0.25, dir.y);

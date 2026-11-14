@@ -38,6 +38,7 @@ export function createAlbum({ getProgress, ui }) {
          <button id="pc-make" class="primary">Tạo bưu thiếp</button>
          <div id="pc-out"></div></div>`
       : `<p class="alb-hint">Ở mỗi địa điểm: trả lời câu hỏi ở cột sáng vàng, tìm các điểm sáng xanh và bấm 📷 chụp ảnh gần công trình. Ảnh đẹp nhất sẽ được dùng cho bưu thiếp khi bạn đủ ${QUESTS.length} mảnh ghép.</p>`);
+    if (ui.sideSummary) $('modal-body').insertAdjacentHTML('beforeend', ui.sideSummary());
     ui.openModal();
     const mk = $('pc-make');
     if (mk) mk.onclick = async () => {

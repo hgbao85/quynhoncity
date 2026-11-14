@@ -158,5 +158,5 @@ export function createPlayer(scene, camera, grid, dom) {
     camera.lookAt(tgt);
   }
 
-  return { state: s, update, root: person.root, running: () => s.speed > 4, setRiding, riding: () => s.riding };
+  return { state: s, update, root: person.root, bike, running: () => s.speed > 4, setRiding, riding: () => s.riding };
 }

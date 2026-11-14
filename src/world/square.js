@@ -130,6 +130,7 @@ export function createSquare(scene, L) {
   const flag = new THREE.Mesh(flagGeo, new THREE.MeshStandardMaterial({ map: flagTexture(), side: THREE.DoubleSide, roughness: 0.8 }));
   flag.position.set(fx, poleH - 2.4, fz);
   flag.castShadow = true;
+  flag.userData.keep = true; // cờ bay: không gộp lưới
   g.add(flag);
 
   // ---- cột đèn pha cao đặt trên vòng đá ----
