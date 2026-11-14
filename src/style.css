@@ -136,3 +136,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   #bigmap-list { grid-template-columns: 1fr 1fr; }
   #map-btn small, #time-btn small { display: none; }
 }
+
+#ride-btn.on { background: var(--gold); color: #1d2b4a; border-color: var(--gold); }
+#ride-btn.on small { color: #1d2b4a; }
+@media (max-width: 760px) { #ride-btn small { display: none; } }

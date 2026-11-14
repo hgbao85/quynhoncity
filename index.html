@@ -4,6 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Quy Nhơn 3D · Bản mẫu</title>
+  <!-- thẻ chia sẻ: hiện ảnh, tiêu đề, mô tả khi gửi link qua Zalo, Facebook, Messenger, X -->
+  <meta name="description" content="Dạo khắp thành phố biển Quy Nhơn 3D ngay trên trình duyệt: tượng đài và quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng. Khám phá 5 địa điểm, sưu tầm 5 mảnh ghép." />
+  <meta name="theme-color" content="#1d2b4a" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Quy Nhơn 3D" />
+  <meta property="og:locale" content="vi_VN" />
+  <meta property="og:url" content="https://quynhoncity.vercel.app/" />
+  <meta property="og:title" content="Quy Nhơn 3D – dạo phố biển trên trình duyệt" />
+  <meta property="og:description" content="Đi bộ, chạy xe máy khắp Quy Nhơn: tượng đài, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng. Khám phá 5 địa điểm, sưu tầm 5 mảnh ghép. Chơi được trên điện thoại." />
+  <meta property="og:image" content="https://quynhoncity.vercel.app/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và phù điêu ở Quảng trường Quy Nhơn trong game" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Quy Nhơn 3D – dạo phố biển trên trình duyệt" />
+  <meta name="twitter:description" content="Khám phá Quy Nhơn 3D: tượng đài, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Ghềnh Ráng." />
+  <meta name="twitter:image" content="https://quynhoncity.vercel.app/og.jpg" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d2b4a'/%3E%3Cpath d='M8 44c10-6 18-6 28 0s18 6 20 4v8H8z' fill='%232a9aa8'/%3E%3Ccircle cx='44' cy='20' r='8' fill='%23f5c542'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,13 +67,14 @@
         <span>🧩</span>
         <div><small>Mảnh ghép</small><b id="pieces">0/5</b><div class="track"><i id="pieces-bar"></i></div></div>
       </div>
+      <button class="card icon-btn" id="ride-btn" title="Lên/xuống xe máy (phím F)"><span>🛵</span><small>Xe máy</small></button>
       <button class="card icon-btn" id="map-btn" title="Bản đồ và dịch chuyển nhanh (phím M)"><span>🗺️</span><small>Bản đồ</small></button>
       <button class="card icon-btn" id="time-btn" title="Tua nhanh 3 giờ"><span>⏩</span><small>+3 giờ</small></button>
       <button class="card icon-btn" id="quality-btn" title="Đổi mức đồ hoạ (Cao/Thấp)"><span>⚙</span><small><b id="quality-lbl">Cao</b><i id="fps">-- FPS</i></small></button>
     </div>
 
     <div id="joystick"><div class="knob"></div></div>
-    <div class="hint">WASD / mũi tên: đi · Shift: chạy · Kéo chuột: xoay · Cuộn: thu phóng</div>
+    <div class="hint">WASD / mũi tên: đi · Shift: chạy · F: xe máy · M: bản đồ · Kéo chuột: xoay · Cuộn: thu phóng</div>
 
     <div class="bottom-right">
       <button id="action" class="action" hidden>📖 Tìm hiểu</button>

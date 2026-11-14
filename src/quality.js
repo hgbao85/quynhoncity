@@ -7,11 +7,11 @@ const KEY = 'qn3d-quality';
 export const PRESETS = {
   high: {
     label: 'Cao', pixelRatio: 2, antialias: true, shadows: true, shadowMap: 2048, bloom: true,
-    load: 1250, unload: 1600, detail: 650, forestKeep: 1, treeKeep: 1, crowd: 50, terrainFar: true,
+    load: 1250, unload: 1600, detail: 650, forestKeep: 1, treeKeep: 1, crowd: 50, traffic: 45, terrainFar: true,
   },
   low: {
     label: 'Thấp', pixelRatio: 1, antialias: false, shadows: false, shadowMap: 1024, bloom: false,
-    load: 800, unload: 1050, detail: 320, forestKeep: 0.45, treeKeep: 0.6, crowd: 24, terrainFar: true,
+    load: 800, unload: 1050, detail: 320, forestKeep: 0.45, treeKeep: 0.6, crowd: 24, traffic: 24, terrainFar: true,
   },
 };
 

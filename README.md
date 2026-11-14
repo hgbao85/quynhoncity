@@ -99,6 +99,14 @@ Lệnh này chạy lần lượt:
 - Bản đồ toàn thành phố: đất, nước, công viên, đồi núi, đường chính, 8 địa điểm kèm khoảng cách và tiến độ nhiệm vụ.
 - Bấm vào địa điểm để dịch chuyển tới đó; game tải sẵn khu vực rồi đặt người chơi vào chỗ đi được. Người đi dạo cũng chuyển theo.
 
+**Xe máy** (nút 🛵 hoặc phím F)
+- Lên xe chạy ~40 km/h, giữ Shift ~55 km/h; không tốn MANA. Xe rẽ có giới hạn, nghiêng theo cua; người lái đội mũ bảo hiểm; camera tự xoay ra sau lưng khi chạy.
+- Chỗ hẹp quá thì không lên xe được.
+
+**Xe cộ trên đường** (`src/traffic.js`, hình xe trong `src/vehicles.js`)
+- Chủ yếu xe máy (có người lái đội mũ), ít ô tô, thỉnh thoảng xe buýt trên đường lớn. Xe đi bên phải, tới ngã ba ngã tư thì rẽ ngẫu nhiên, đường cụt thì quay đầu, dừng lại khi người chơi đứng chắn phía trước.
+- Chỉ có xe trong bán kính ~300 m quanh người chơi (45 xe ở mức Cao, 24 xe ở mức Thấp); mỗi loại xe vẽ bằng vài InstancedMesh nên rất nhẹ. Ban đêm đèn xe sáng.
+
 **Mức đồ hoạ** (nút ⚙, có hiện FPS)
 - **Cao** (mặc định trên máy tính): bóng đổ, hiệu ứng toả sáng ban đêm, tải bản đồ trong bán kính 1,25 km.
 - **Thấp** (mặc định trên điện thoại): tắt bóng đổ và toả sáng, độ phân giải 1×, tải bán kính 800 m, rừng thưa còn 45%, cây còn 60%, ít người đi dạo hơn.
@@ -123,7 +131,9 @@ Lệnh này chạy lần lượt:
 - Đồi phủ rừng (khoảng 23 nghìn tán cây). Nhà, đường, đèn, cây, người chơi, người đi dạo đều bám theo độ cao; đường lên dốc được chia nhỏ để không chìm vào sườn đồi; camera không chui vào sườn đồi.
 - Bản đồ nhỏ tô xanh đậm dần theo độ cao đồi.
 
-**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút bản đồ, nút tua nhanh +3 giờ, nút đồ hoạ. Trên điện thoại các nút xếp dọc bên phải để không che joystick.
+**Thẻ chia sẻ:** khi gửi link qua Zalo, Facebook, Messenger sẽ hiện ảnh xem trước `public/og.jpg` (1200×630, chụp trong game), tiêu đề và mô tả (thẻ Open Graph trong `index.html`).
+
+**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút xe máy, nút bản đồ, nút tua nhanh +3 giờ, nút đồ hoạ. Trên điện thoại các nút xếp dọc bên phải để không che joystick.
 
 ## Thay tượng bằng mô hình 3D thật
 

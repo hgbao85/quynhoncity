@@ -20,6 +20,7 @@ import { createQuest } from './quest.js';
 import { createMinimap } from './minimap.js';
 import { pickQuality, saveQuality, createFpsMeter } from './quality.js';
 import { createBigMap } from './bigmap.js';
+import { createTraffic } from './traffic.js';
 
 const $ = (id) => document.getElementById(id);
 // điện thoại/máy tính bảng: con trỏ thô, hoặc có cảm ứng mà màn hình nhỏ (một số trình duyệt Android
@@ -145,6 +146,13 @@ async function start() {
   if (params.has('debug')) window.game = { player, city, camera };
   const crowd = createCrowd(scene, city.grid, Q.crowd);
   const quest = createQuest(scene, data, ui);
+  const traffic = createTraffic(scene, data, Q.traffic);
+  if (params.has('debug')) window.game.traffic = traffic;
+  $('ride-btn').onclick = () => {
+    const was = player.riding();
+    if (player.setRiding(!was) === false) ui.toast('Chỗ này hẹp quá, ra chỗ rộng hơn để lên xe nhé.');
+    else ui.toast(was ? '🚶 Đã xuống xe' : '🛵 Lên xe! Đi chậm, đội mũ bảo hiểm, nhường người đi bộ nhé.', 3500);
+  };
   const minimap = createMinimap($('minimap'), data, city.tiles);
 
   // ---- bản đồ lớn và dịch chuyển nhanh ----
@@ -212,6 +220,7 @@ async function start() {
     sea.update(t, env, pos);
     city.tiles.update(pos, dt);
     crowd.update(dt, pos);
+    traffic.update(dt, pos);
     quest.update(t, pos, env.night, dt);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;
@@ -224,6 +233,8 @@ async function start() {
     terrainMesh.update(scene.fog.color, env.night);
     highlands.setNight(env.night);
     landmarks.setNight(env.night);
+    traffic.setNight(env.night);
+    document.body.dataset.night = env.night > 0.5 ? '1' : '';
     scene.environmentIntensity = 0.6 * (1 - env.night) + 0.08;
     bloom.enabled = Q.bloom && env.night > 0.05; // ban ngày tắt bloom để ảnh không bị mờ đục
     bloom.strength = env.night * 0.55;
