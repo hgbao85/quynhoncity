@@ -68,7 +68,8 @@ export function createQuest(scene, data, ui) {
     if (!p.piece && d1 && d2 && d3) {
       p.piece = true; save(all);
       ui.toast(`🧩 Bạn nhận được mảnh ghép "${q.piece}"! (${pieces()}/${QUESTS.length})`, 5000);
-      if (pieces() === QUESTS.length) setTimeout(() => ui.toast('🎉 Bạn đã khám phá đủ mọi địa điểm của Quy Nhơn!', 7000), 5200);
+      ui.sfx?.('piece');
+      if (pieces() === QUESTS.length) setTimeout(() => { ui.toast('🎉 Bạn đã khám phá đủ mọi địa điểm của Quy Nhơn! Tạo bưu thiếp để lưu lại nhé.', 7000); ui.onComplete?.(); }, 3000);
       render();
     }
   }
@@ -90,11 +91,11 @@ export function createQuest(scene, data, ui) {
     $('modal-body').querySelectorAll('.answers button').forEach((btn) => {
       btn.onclick = () => {
         if (+btn.dataset.k === Q.ok) {
-          btn.classList.add('right');
+          btn.classList.add('right'); ui.sfx?.('right');
           p.quiz = Math.max(p.quiz, i + 1); save(all); render();
           setTimeout(() => askQuestion(i + 1), 700);
         } else {
-          btn.classList.add('wrong'); btn.disabled = true;
+          btn.classList.add('wrong'); btn.disabled = true; ui.sfx?.('wrong');
           $('quiz-msg').textContent = 'Chưa đúng, thử lại nhé!';
         }
       };
@@ -102,9 +103,10 @@ export function createQuest(scene, data, ui) {
   }
   $('action').onclick = () => openStory();
 
-  function photoTaken(pos) {
+  function photoTaken(pos, thumb) {
     const q = current, p = all[q.id];
     const near = Math.hypot(pos.x - q.center[0], pos.z - q.center[1]) < q.photoRadius;
+    if (near && thumb) ui.onPhoto?.(q.id, thumb); // ảnh mới nhất tại địa điểm dùng cho album, bưu thiếp
     if (near && !p.photo) { p.photo = true; save(all); render(); ui.toast(`📸 Đã lưu ảnh lưu niệm tại ${q.place}!`); }
     else if (!p.photo) ui.toast(`📸 Đã chụp! Muốn hoàn thành nhiệm vụ, hãy chụp gần ${q.place}.`);
     else ui.toast('📸 Đã chụp ảnh.');
@@ -133,7 +135,7 @@ export function createQuest(scene, data, ui) {
         m.rotation.y = t * 2; m.position.y = groundHeight(d.pos[0], d.pos[1]) + d.y + 1.4 + Math.sin(t * 3 + i) * 0.2;
         if (Math.hypot(pos.x - d.pos[0], pos.z - d.pos[1]) < d.r) {
           p.found.push(d.id); save(all); m.visible = false;
-          ui.toast(`✨ ${d.title}: ${d.text}`, 5500);
+          ui.toast(`✨ ${d.title}: ${d.text}`, 5500); ui.sfx?.('found');
           render();
         }
       });

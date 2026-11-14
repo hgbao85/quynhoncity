@@ -88,6 +88,7 @@ Lệnh này chạy lần lượt:
 - Từ phố ra biển: đường → dải công viên trồng dày **phi lao xen dừa** → **lối đi dạo lát đá** có viền gạch đỏ, đèn trang trí hai bóng, ghế đá → bãi cát có các cụm **dù lá** và ghế nằm → **mép sóng** có bọt trắng vỗ vào bờ và cát ướt (shader).
 - Ven biển chủ yếu là dừa trên thảm cỏ, xen phi lao và bụi cây thấp (theo Street View).
 - Nhà mặt phố có **mái hiên bạt sọc** và **biển hiệu** ở tầng trệt (cà phê, tạp hóa, phở…), vỉa hè đường lớn có cây bóng mát.
+- **Số tầng theo loại đường mặt tiền** (quan sát Street View): nhà ống mặt đường lớn 3–5 tầng, đường tertiary 2–4, đường nhỏ 2–3, trong hẻm 1–2; khách sạn ven biển 6–22 tầng, cao ốc mặt đường chính 5–9 tầng, khối lớn khác (trường, chợ, kho) 2–4 tầng.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
 **Hành trình khám phá: 5 địa điểm, 5 mảnh ghép** (nội dung trong `src/quests-data.js`)
@@ -105,7 +106,16 @@ Lệnh này chạy lần lượt:
 
 **Xe cộ trên đường** (`src/traffic.js`, hình xe trong `src/vehicles.js`)
 - Chủ yếu xe máy (có người lái đội mũ), ít ô tô, thỉnh thoảng xe buýt trên đường lớn. Xe đi bên phải, tới ngã ba ngã tư thì rẽ ngẫu nhiên, đường cụt thì quay đầu, dừng lại khi người chơi đứng chắn phía trước.
+- Xe giữ khoảng cách với xe phía trước cùng làn. Khoảng 160 ngã tư có hai đường lớn cắt nhau có **đèn giao thông** (xanh 14 s, vàng 3 s, rồi đổi hướng); xe dừng trước vạch khi đèn đỏ.
 - Chỉ có xe trong bán kính ~300 m quanh người chơi (45 xe ở mức Cao, 24 xe ở mức Thấp); mỗi loại xe vẽ bằng vài InstancedMesh nên rất nhẹ. Ban đêm đèn xe sáng.
+
+**Âm thanh** (nút 🔊: bật hết → tắt nhạc → tắt tiếng; `src/audio.js`)
+- Toàn bộ tự tạo bằng Web Audio, không dùng file ghi âm: tiếng sóng to dần khi lại gần biển, tiếng phố theo số xe xung quanh, còi xe xa xa, tiếng máy xe máy cao dần theo tốc độ, nhạc nền ngũ cung tự sinh (gảy đàn và sáo).
+- Hiệu ứng khi tìm thấy chi tiết, trả lời đúng/sai, nhận mảnh ghép, chụp ảnh. Âm thanh bắt đầu sau lần chạm/bấm đầu tiên (quy định của trình duyệt).
+
+**Album và bưu thiếp** (bấm thẻ 🧩 Mảnh ghép; `src/album.js`)
+- Mỗi lần chụp ảnh gần một địa điểm, ảnh thu nhỏ được lưu vào album (trong trình duyệt).
+- Đủ 5 mảnh ghép: album tự mở, nhập tên rồi tạo **bưu thiếp 1200×630** ghép 5 tấm ảnh đã chụp, tên, ngày hoàn thành và đường dẫn game; tải về hoặc chia sẻ thẳng (trên điện thoại dùng bảng chia sẻ của máy).
 
 **Mức đồ hoạ** (nút ⚙, có hiện FPS)
 - **Cao** (mặc định trên máy tính): bóng đổ, hiệu ứng toả sáng ban đêm, tải bản đồ trong bán kính 1,25 km.
@@ -133,7 +143,7 @@ Lệnh này chạy lần lượt:
 
 **Thẻ chia sẻ:** khi gửi link qua Zalo, Facebook, Messenger sẽ hiện ảnh xem trước `public/og.jpg` (1200×630, chụp trong game), tiêu đề và mô tả (thẻ Open Graph trong `index.html`).
 
-**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút xe máy, nút bản đồ, nút tua nhanh +3 giờ, nút đồ hoạ. Trên điện thoại các nút xếp dọc bên phải để không che joystick.
+**Giao diện:** bản đồ nhỏ xoay theo camera, thẻ địa điểm, giờ, thời tiết, MANA (chạy thì tiêu hao), nút âm thanh, nút xe máy, nút bản đồ, nút tua nhanh +3 giờ, nút đồ hoạ. Trên điện thoại các nút xếp dọc bên phải để không che joystick.
 
 ## Thay tượng bằng mô hình 3D thật
 
@@ -201,6 +211,8 @@ npm run optimize-statue
 | `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 5 địa điểm; danh sách điểm dịch chuyển |
 | `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
+| `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
+| `src/album.js` | Album ảnh hành trình và bưu thiếp chia sẻ |
 
 ## Cần lưu ý trước khi ra mắt
 

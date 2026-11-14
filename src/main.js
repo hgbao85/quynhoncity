@@ -21,6 +21,8 @@ import { createMinimap } from './minimap.js';
 import { pickQuality, saveQuality, createFpsMeter } from './quality.js';
 import { createBigMap } from './bigmap.js';
 import { createTraffic } from './traffic.js';
+import { createAudio } from './audio.js';
+import { createAlbum } from './album.js';
 
 const $ = (id) => document.getElementById(id);
 // điện thoại/máy tính bảng: con trỏ thô, hoặc có cảm ứng mà màn hình nhỏ (một số trình duyệt Android
@@ -145,7 +147,23 @@ async function start() {
   }
   if (params.has('debug')) window.game = { player, city, camera };
   const crowd = createCrowd(scene, city.grid, Q.crowd);
+  // ---- âm thanh, album ----
+  const audio = createAudio();
+  ui.sfx = audio.sfx;
+  const SOUND_ICON = { all: '🔊', nomusic: '🔉', mute: '🔇' }, SOUND_LBL = { all: 'Âm thanh', nomusic: 'Tắt nhạc', mute: 'Tắt tiếng' };
+  const showSound = () => { $('sound-btn').querySelector('span').textContent = SOUND_ICON[audio.mode]; $('sound-btn').querySelector('small').textContent = SOUND_LBL[audio.mode]; };
+  showSound();
+  $('sound-btn').onclick = () => { audio.cycle(); showSound(); ui.toast({ all: '🔊 Bật âm thanh và nhạc nền', nomusic: '🔉 Tắt nhạc nền, giữ tiếng sóng và phố', mute: '🔇 Đã tắt tiếng' }[audio.mode], 2500); };
+  let album;
+  ui.onPhoto = (id, thumb) => album?.savePhoto(id, thumb);
+  ui.onComplete = () => album?.open();
   const quest = createQuest(scene, data, ui);
+  album = createAlbum({ getProgress: () => quest.progress(), ui });
+  // khoảng cách tới bờ biển (lấy mẫu đường bờ biển thưa) cho tiếng sóng
+  const coastPts = [];
+  for (const c of data.coastline) for (let i = 0; i < c.length; i += 2) coastPts.push(c[i]);
+  const seaDist = (x, z) => { let m = 1e9; for (const p of coastPts) { const d = Math.abs(p[0] - x) + Math.abs(p[1] - z); if (d < m) m = d; } return m * 0.8; };
+  let seaD = 1e9, seaTimer = 0;
   const traffic = createTraffic(scene, data, Q.traffic);
   if (params.has('debug')) window.game.traffic = traffic;
   $('ride-btn').onclick = () => {
@@ -190,7 +208,12 @@ async function start() {
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     });
     const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on')));
-    quest.photoTaken(player.state.pos);
+    // ảnh thu nhỏ cho album (16:9, 360×203)
+    const tw = 360, th = 203, tc = document.createElement('canvas'); tc.width = tw; tc.height = th;
+    const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
+    tc.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
+    audio.sfx('shutter');
+    quest.photoTaken(player.state.pos, tc.toDataURL('image/jpeg', 0.72));
   };
 
   $('loading').style.opacity = 0;
@@ -221,6 +244,8 @@ async function start() {
     city.tiles.update(pos, dt);
     crowd.update(dt, pos);
     traffic.update(dt, pos);
+    seaTimer -= dt; if (seaTimer <= 0) { seaTimer = 0.5; seaD = seaDist(pos.x, pos.z); }
+    audio.update(dt, { seaDist: seaD, cars: traffic.countNear(pos, 80), riding: player.riding(), speed: player.state.speed, night: env.night });
     quest.update(t, pos, env.night, dt);
     city.buildingMat.emissiveIntensity = env.night * 1.4;
     city.lampMat.emissiveIntensity = env.night * 3;

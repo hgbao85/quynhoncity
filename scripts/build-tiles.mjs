@@ -105,6 +105,41 @@ function putTum(pts, base, h) {
 }
 const floorsH = (f) => f * 3.4 + 0.5;
 
+// ---- loại đường mặt tiền của một lô (để ước lượng số tầng như phố thật) ----
+// 3: đường chính (primary/secondary/trunk), 2: đường cấp 3 (tertiary), 1: đường nội khu, 0: trong hẻm
+const ROAD_CLASS = { trunk: 3, primary: 3, primary_link: 3, secondary: 3, secondary_link: 3, tertiary: 2, tertiary_link: 2, residential: 1, unclassified: 1, living_street: 1 };
+const SEG_CELL = 60, segHash = new Map();
+for (const r of osm.roads) {
+  const c = ROAD_CLASS[r.type];
+  if (!c) continue;
+  const hw = roadWidth(r.type) / 2;
+  for (let i = 1; i < r.pts.length; i++) {
+    const a = r.pts[i - 1], b = r.pts[i];
+    const seg = { a, b, c, hw };
+    const i0 = Math.floor(Math.min(a[0], b[0]) / SEG_CELL), i1 = Math.floor(Math.max(a[0], b[0]) / SEG_CELL);
+    const j0 = Math.floor(Math.min(a[1], b[1]) / SEG_CELL), j1 = Math.floor(Math.max(a[1], b[1]) / SEG_CELL);
+    for (let ci = i0; ci <= i1; ci++) for (let cj = j0; cj <= j1; cj++) { const k = `${ci},${cj}`; if (!segHash.has(k)) segHash.set(k, []); segHash.get(k).push(seg); }
+  }
+}
+function frontage(pts) {
+  let best = 0;
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cz = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  const ci = Math.floor(cx / SEG_CELL), cj = Math.floor(cz / SEG_CELL);
+  for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) for (const g of segHash.get(`${i},${j}`) || []) {
+    if (g.c <= best) continue;
+    const dx = g.b[0] - g.a[0], dz = g.b[1] - g.a[1], L2 = dx * dx + dz * dz || 1;
+    for (const [x, z] of pts) {
+      const t = Math.max(0, Math.min(1, ((x - g.a[0]) * dx + (z - g.a[1]) * dz) / L2));
+      if (Math.hypot(g.a[0] + dx * t - x, g.a[1] + dz * t - z) < g.hw + 4.5) { best = g.c; break; }
+    }
+  }
+  return best;
+}
+// số tầng nhà ống theo loại đường mặt tiền (quan sát Street View Quy Nhơn: phố chính 3–5 tầng,
+// đường nhỏ 2–4, trong hẻm 1–3), cộng lệch ±1 giữa các căn liền kề
+const BASE_FLOORS = [1.6, 2.6, 3.4, 3.9];
+const rowFloors = (cls) => Math.max(1, Math.round(BASE_FLOORS[cls] + (R() - 0.5) * 2.2 + (cls >= 2 && R() < 0.1 ? 3 : 0)));
+
 // nhà OSM: giữ nguyên hình và độ cao
 for (const b of osmBuildings) {
   const pts = b.pts.slice();
@@ -130,9 +165,12 @@ for (const { pts, cx, cz } of foot) {
     continue;
   }
   if (obb.short > 24 || obb.long < 9) {
-    const big = area > 900;
-    const floors = big && coast < 220 ? (R() < 0.25 ? 12 + Math.floor(R() * 7) : 4 + Math.floor(R() * 6))
-      : big ? 4 + Math.floor(R() * 4) : 2 + Math.floor(R() * 4);
+    // khối lớn: khách sạn ven biển cao 8–22 tầng; cao ốc, chung cư mặt đường chính 5–9 tầng;
+    // còn lại (trường, chợ, kho, nhà máy) 2–4 tầng
+    const big = area > 900, cls = frontage(pts);
+    const floors = big && coast < 220 && cls >= 2 ? (R() < 0.45 ? 10 + Math.floor(R() * 13) : 6 + Math.floor(R() * 4))
+      : big && cls === 3 ? 5 + Math.floor(R() * 5)
+        : big ? 2 + Math.floor(R() * 3) : 2 + Math.floor(R() * 3);
     putLot(pts, floorsH(floors), pickColor());
     continue;
   }
@@ -140,13 +178,14 @@ for (const { pts, cx, cz } of foot) {
 }
 function rowHouses(pts, obb) {
   const { ux, uz, s0, s1 } = obb;
+  const cls = frontage(pts);
   let s = s0;
   while (s < s1 - 0.5) {
     let w = 4 + R() * 2;
     if (s1 - (s + w) < 3) w = s1 - s;
     const piece = clipSlab(pts, ux, uz, s + 0.06, s + w - 0.06);
     if (piece.length >= 3 && polyArea(piece) > 6) {
-      const floors = R() < 0.08 ? 6 + Math.floor(R() * 3) : 2 + Math.floor(R() * 4);
+      const floors = rowFloors(cls);
       const h = floorsH(floors);
       putLot(piece, h, pickColor(), shopCode(piece));
       if (R() < 0.55 && obb.short > 9) {
@@ -256,5 +295,8 @@ for (const [k, t] of tiles) {
 }
 const out = { ...world, terrain: terrainMeta, buildings: world.buildings.map((b) => ({ pts: b.pts, h: b.h, name: b.name })), tiles: { size: TILE, nx: TILES_X, nz: TILES_Z, list: index } };
 writeFileSync('public/data/world.json', JSON.stringify(out));
+const fl = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, '7+': 0 };
+for (const t of tiles.values()) for (const b of t.b) { const f = Math.round((b[0] / 10 - 0.5) / 3.4); fl[f >= 7 ? '7+' : Math.max(1, f)]++; }
+console.log('  số căn theo số tầng:', JSON.stringify(fl));
 console.log(`Footprint dùng ${used}/${foot.length} → ${lots} lô nhà, ${tiles.size} ô, ${(bytes / 1e6).toFixed(1)} MB dữ liệu ô; ` +
   `world.json ${(JSON.stringify(out).length / 1e6).toFixed(2)} MB; mất ${((Date.now() - t0) / 1000).toFixed(1)} s`);
