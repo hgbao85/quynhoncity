@@ -8,8 +8,11 @@ export function setupPwa(ui) {
   const installed = matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+  // hàm này chạy sau khi game dựng xong bản đồ (trang đã tải xong từ lâu) nên đăng ký ngay,
+  // không chờ sự kiện 'load'
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    const reg = () => navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if (document.readyState === 'complete') reg(); else addEventListener('load', reg);
   }
 
   let deferred = null;
