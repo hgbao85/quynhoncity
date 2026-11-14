@@ -22,7 +22,9 @@ import { pickQuality, saveQuality, createFpsMeter } from './quality.js';
 import { createBigMap } from './bigmap.js';
 
 const $ = (id) => document.getElementById(id);
-const isTouch = matchMedia('(pointer: coarse)').matches;
+// điện thoại/máy tính bảng: con trỏ thô, hoặc có cảm ứng mà màn hình nhỏ (một số trình duyệt Android
+// báo sai pointer khi bật chế độ máy tính)
+const isTouch = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900);
 if (isTouch) document.body.classList.add('touch');
 
 // ---------- renderer ----------
@@ -81,10 +83,22 @@ function vnTime() {
 $('time-btn').onclick = () => { hourOffset = (hourOffset + 3) % 24; ui.toast(hourOffset ? `⏩ Đã tua nhanh ${hourOffset} giờ` : '🕒 Trở về giờ thật'); };
 
 const weather = { temp: 27, code: 1, assumed: true };
-fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7628&longitude=109.221&current=temperature_2m,weather_code&timezone=Asia%2FHo_Chi_Minh')
-  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-  .then((j) => { weather.temp = Math.round(j.current.temperature_2m); weather.code = j.current.weather_code; weather.assumed = false; })
-  .catch(() => { /* giữ số giả định */ });
+// Thời tiết thật từ Open-Meteo: thử lại khi mạng chậm/lỗi (sau 3 s, 10 s, 30 s), rồi cập nhật mỗi 15 phút.
+// Nếu vẫn không lấy được thì giữ số giả định và hiện nhãn "giả định".
+async function loadWeather(attempt = 0) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7628&longitude=109.221&current=temperature_2m,weather_code&timezone=Asia%2FHo_Chi_Minh', { signal: ctl.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    weather.temp = Math.round(j.current.temperature_2m); weather.code = j.current.weather_code; weather.assumed = false;
+    setTimeout(() => loadWeather(0), 15 * 60e3);
+  } catch {
+    const wait = [3e3, 10e3, 30e3][attempt];
+    setTimeout(() => loadWeather(wait ? attempt + 1 : 0), wait || 15 * 60e3);
+  } finally { clearTimeout(timer); }
+}
+loadWeather();
 const weatherIcon = (code, night) =>
   code >= 95 ? '⛈️' : (code >= 51 && code <= 82) ? '🌧️' : code >= 45 && code <= 48 ? '🌫️' : code >= 2 ? (night ? '☁️' : '⛅') : night ? '🌙' : '☀️';
 
@@ -183,7 +197,7 @@ async function start() {
     const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.href;
   };
   $('quality-lbl').textContent = Q.label;
-  let lowWarned = false;
+  let lowWarned = false, slowTime = 0;
 
   const clock = new THREE.Clock();
   let hudTimer = 0;
@@ -230,8 +244,10 @@ async function start() {
       $('mana-bar').style.width = `${player.state.mana}%`;
       const fps = Math.round(fpsMeter.fps);
       $('fps').textContent = `${fps} FPS`;
-      // máy chậm ở mức Cao: gợi ý chuyển sang Thấp (một lần)
-      if (Q.id === 'high' && !lowWarned && t > 15 && fps < 24) { lowWarned = true; ui.toast('Máy hơi chậm — bấm nút ⚙ để chuyển sang đồ hoạ Thấp cho mượt hơn.', 7000); }
+      // máy chậm ở mức Cao: chỉ gợi ý chuyển sang Thấp khi FPS thấp kéo dài ~8 giây liền
+      // (bỏ qua lúc mới vào và những lúc khựng ngắn khi đang tải khu vực mới)
+      slowTime = Q.id === 'high' && t > 20 && fps < 24 ? slowTime + 0.25 : 0;
+      if (!lowWarned && slowTime >= 8) { lowWarned = true; ui.toast('Máy hơi chậm — bấm nút ⚙ để chuyển sang đồ hoạ Thấp cho mượt hơn.', 7000); }
     }
     minimap.draw(pos.x, pos.z, player.state.camYaw, player.state.facing, quest.markers());
   });
