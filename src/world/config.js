@@ -2,8 +2,8 @@
 // Gốc toạ độ: Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành. x hướng đông, z hướng nam (mét).
 export const ORIGIN = { lat: 13.7627775, lon: 109.2209658 };
 
-// Vùng bản đồ: toàn nội thành Quy Nhơn, từ Ghềnh Ráng (nam) tới bờ đầm Thị Nại và cảng (bắc)
-export const BBOX = { s: 13.7347, w: 109.1899, n: 13.7962, e: 109.2505 };
+// Vùng bản đồ: toàn nội thành Quy Nhơn, từ Ghềnh Ráng (nam) tới cầu Thị Nại và đầu bán đảo Phương Mai (bắc, đông)
+export const BBOX = { s: 13.7347, w: 109.1899, n: 13.8265, e: 109.2625 };
 
 const R = 6378137;
 const K = Math.cos((ORIGIN.lat * Math.PI) / 180);

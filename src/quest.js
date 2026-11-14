@@ -134,9 +134,9 @@ export function createQuest(scene, data, ui) {
     $('action').hidden = !(s0 && Math.hypot(pos.x - current.pillar[0], pos.z - current.pillar[1]) < 4);
     for (const s of state) {
       const p = all[s.q.id];
-      if (Math.hypot(pos.x - s.q.center[0], pos.z - s.q.center[1]) > 300) continue;
+      // xét từng chi tiết theo khoảng cách tới chính nó (cầu Thị Nại dài 2,8 km: chi tiết cách tâm hơn 1 km)
       s.q.details.forEach((d, i) => {
-        if (p.found.includes(d.id)) return;
+        if (p.found.includes(d.id) || Math.hypot(pos.x - d.pos[0], pos.z - d.pos[1]) > 300) return;
         const m = s.sparks[i];
         m.rotation.y = t * 2; m.position.y = groundHeight(d.pos[0], d.pos[1]) + d.y + 1.4 + Math.sin(t * 3 + i) * 0.2;
         if (Math.hypot(pos.x - d.pos[0], pos.z - d.pos[1]) < d.r) {

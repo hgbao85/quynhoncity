@@ -88,7 +88,10 @@ for (const e of raw.elements) {
   } else if (t.natural === 'coastline') {
     out.coastline.push(pts);
   } else if (t.highway && !t.area) {
-    out.roads.push({ pts, type: t.highway, name: t.name });
+    const r = { pts, type: t.highway, name: t.name };
+    // cầu: game dựng mặt cầu nâng cao và cho đi qua mặt nước (bridges.js)
+    if (t.bridge && t.bridge !== 'no') r.bridge = 1;
+    out.roads.push(r);
   } else {
     const kind =
       t.natural === 'beach' || t.natural === 'sand' ? 'beach'

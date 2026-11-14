@@ -1,15 +1,20 @@
 // Nội dung nhiệm vụ cho từng địa điểm. Mỗi địa điểm: cột sáng (mở câu chuyện + câu hỏi),
 // các chi tiết cần tìm (điểm sáng xanh), chụp ảnh gần công trình; xong cả ba thì nhận một mảnh ghép.
 // Vị trí dùng toạ độ local của công trình (xem landmark-sites.js): lx sang phải, lz về phía trước.
-// Nguồn: Wikipedia tiếng Việt (Tháp Đôi), VnExpress (Nhà thờ Chính tòa, tháp 42,7 m), báo Nhân Dân,
+// Nguồn (đã đối chiếu 11/2026): Wikipedia tiếng Việt (Tháp Đôi; Nhà thờ Chính tòa: tháp 47,2 m theo Lược sử giáo xứ,
+// khởi công 1938, khánh thành 1939, đồng hồ lắp 1992), Báo Văn Hóa (Tháp Đôi thế kỷ XII–XIII), SGGP 2008 (tượng đồng
+// Quang Trung 5 m, 13 tấn), Vietnam Airlines, Vinwonders (chùa Long Khánh: chuông đúc 1805), Google Maps (Chợ Lớn Mới
+// trên đường Tăng Bạt Hổ; Bảo tàng Tổng hợp Gia Lai, 26 Nguyễn Huệ), Báo Chính phủ (cầu Thị Nại), báo Nhân Dân,
 // Tuổi Trẻ, VTC (tượng đài), Mia.vn (đồi Thi Nhân, dốc Mộng Cầm; chùa Long Khánh: sắc phong 1805, chuông
-// đồng 1,7 m), kiến thức lịch sử phổ thông (Quang Trung, bãi tắm Hoàng Hậu: Nam Phương Hoàng hậu). CẦN KIỂM CHỨNG LẠI TRƯỚC KHI RA MẮT.
+// đồng 1,7 m), kiến thức lịch sử phổ thông (Quang Trung, bãi tắm Hoàng Hậu: Nam Phương Hoàng hậu). Các điểm chưa có nguồn rõ đã được viết lại theo lối "tương truyền" hoặc bỏ.
 import { LANDMARKS, siteToWorld } from './world/landmark-sites.js';
 import { toWorld } from './world/site.js';
 
 const site = (id) => LANDMARKS.find((l) => l.id === id);
 const at = (id, lx, lz) => siteToWorld(site(id), lx, lz);
 // góc máy đẹp cho ảnh lưu niệm: vị trí camera và điểm nhìn (toạ độ local, độ cao tính từ mặt đất)
+// góc máy theo toạ độ thế giới: [x, độ cao, z]
+const shotW = (cam, look) => ({ cam: [cam[0], cam[2], cam[1]], look: [look[0], look[2], look[1]] });
 const shotAt = (id, cam, look) => {
   const w = id ? (x, z) => at(id, x, z) : (x, z) => toWorld(x, z);
   return { cam: [...w(cam[0], cam[2]), cam[1]], look: [...w(look[0], look[2]), look[1]] };
@@ -31,7 +36,7 @@ export const QUESTS = [
       { q: 'Ông Nguyễn Sinh Sắc từng làm tri huyện ở huyện nào của Bình Định xưa?', a: ['Hoài Nhơn', 'Phù Cát', 'Bình Khê', 'An Nhơn'], ok: 2 },
     ],
     details: [
-      { id: 'plaque', pos: toWorld(0, 6), y: 1.0, r: 5, title: 'Tấm biển trên bệ tượng', text: 'Bệ tượng khắc tên hai cha con: Nguyễn Sinh Sắc và Nguyễn Tất Thành.' },
+      { id: 'plaque', pos: toWorld(0, 6), y: 1.0, r: 5, title: 'Tấm biển trên bệ tượng', text: 'Hai cha con đứng cạnh nhau trên bệ cao 4,7 m, cùng nhìn ra Biển Đông.' },
       { id: 'beach', pos: [224, 128], y: 0.1, r: 4, title: 'Bãi biển Quy Nhơn', text: 'Bãi biển cong hình vầng trăng chạy dọc trung tâm thành phố, ngay sát quảng trường.' },
       { id: 'plaza', pos: [140, 40], y: 0.1, r: 4, title: 'Quảng trường Trung tâm', text: 'Quảng trường rộng mở ra biển, là nơi tổ chức lễ hội và sự kiện lớn của thành phố.' },
     ],
@@ -41,7 +46,7 @@ export const QUESTS = [
     center: at('thapdoi', 0, 0), pillar: at('thapdoi', 0, 18), photoRadius: 45,
     shot: shotAt('thapdoi', [30, 6, 26], [0, 9, 0]),
     story: [
-      'Tháp Đôi, còn gọi là tháp Hưng Thạnh, là cụm hai ngôi tháp Chăm Pa nằm cạnh nhau giữa lòng thành phố Quy Nhơn.',
+      'Tháp Đôi, còn gọi là tháp Hưng Thạnh, là cụm hai ngôi tháp Chăm Pa nằm cạnh nhau, xây khoảng thế kỷ XII–XIII, nay là di tích quốc gia giữa lòng Quy Nhơn.',
       'Tháp phía bắc lớn hơn, cao hơn và ít hư hại hơn tháp phía nam. Thân tháp hình khối vuông, mái thu nhỏ dần, nay cả hai đều đã mất chóp.',
       'Chân tháp Bắc là đài sen bằng đá; bốn góc diềm mái có bốn tượng thần điểu Garuda bằng đá. Kiến trúc tháp mang nhiều nét ảnh hưởng của đền Khmer thời Angkor.',
     ],
@@ -51,7 +56,7 @@ export const QUESTS = [
       { q: 'Trong hai tháp, tháp nào cao và lớn hơn?', a: ['Tháp phía nam', 'Tháp phía bắc', 'Hai tháp cao bằng nhau', 'Tháp phía tây'], ok: 1 },
     ],
     details: [
-      { id: 'door', pos: at('thapdoi', 6, 8.5), y: 0.6, r: 4.5, title: 'Cửa chính tháp Bắc', text: 'Cửa chính của tháp Bắc mở ra phía đông, có bậc thềm đá.' },
+      { id: 'door', pos: at('thapdoi', 6, 8.5), y: 0.6, r: 4.5, title: 'Cửa tháp Bắc', text: 'Cửa tháp Bắc chỉ còn khung cửa bằng những khối đá lớn.' },
       { id: 'garuda', pos: at('thapdoi', -6.2, -6), y: 0.6, r: 4.5, title: 'Thần điểu Garuda', text: 'Bốn góc diềm mái tháp Bắc từng có bốn tượng Garuda bằng đá, tay giơ cao như đỡ lấy mái tháp.' },
     ],
   },
@@ -61,54 +66,54 @@ export const QUESTS = [
     shot: shotAt('cathedral', [-10, 4, 80], [0, 19, 28]),
     story: [
       'Nhà thờ Chính tòa Quy Nhơn nằm trên đường Trần Hưng Đạo, là nhà thờ chính của giáo phận Quy Nhơn, kính Đức Mẹ Lên Trời.',
-      'Nhà thờ có một tháp chuông nhọn cao 42,7 m nên người dân quen gọi là "Nhà thờ Nhọn".',
-      'Công trình mang dáng dấp kiến trúc Gothic: tháp chuông nhiều tầng thu nhỏ dần, có mặt đồng hồ và chóp nhọn vươn cao.',
+      'Nhà thờ khởi công năm 1938, khánh thành năm 1939; tháp chuông nhọn cao khoảng 47 m nên người dân quen gọi là "Nhà thờ Nhọn".',
+      'Công trình mang phong cách châu Âu: tháp chuông nhiều tầng thu nhỏ dần, có đồng hồ bốn mặt (lắp năm 1992) và trên đỉnh là cây thánh giá bằng đồng.',
     ],
     quiz: [
       { q: 'Vì sao người dân gọi đây là "Nhà thờ Nhọn"?', a: ['Vì mái nhà thờ rất dốc', 'Vì tháp chuông nhọn cao vút', 'Vì nằm trên mũi đất nhọn', 'Vì cổng có hình mũi tên'], ok: 1 },
-      { q: 'Tháp chuông của nhà thờ cao khoảng bao nhiêu?', a: ['22,5 m', '42,7 m', '65 m', '15 m'], ok: 1 },
+      { q: 'Tháp chuông của nhà thờ cao khoảng bao nhiêu?', a: ['Khoảng 15 m', 'Khoảng 25 m', 'Khoảng 47 m', 'Khoảng 100 m'], ok: 2 },
       { q: 'Nhà thờ Chính tòa Quy Nhơn nằm trên đường nào?', a: ['Trần Hưng Đạo', 'Xuân Diệu', 'An Dương Vương', 'Nguyễn Huệ'], ok: 0 },
     ],
     details: [
-      { id: 'clock', pos: at('cathedral', 0, 34), y: 0.4, r: 5, title: 'Đồng hồ trên tháp chuông', text: 'Tháp chuông có đồng hồ bốn mặt, phía trên là tầng đèn lồng và chóp nhọn màu cam đỏ.' },
-      { id: 'gate', pos: at('cathedral', 0, 64), y: 0.4, r: 5, title: 'Cổng nhà thờ', text: 'Cổng và hàng rào trụ đá mở ra đường Trần Hưng Đạo; sân trước rộng, lát đá.' },
+      { id: 'clock', pos: at('cathedral', 0, 34), y: 0.4, r: 5, title: 'Đồng hồ trên tháp chuông', text: 'Đồng hồ bốn mặt được lắp lên tháp chuông năm 1992.' },
+      { id: 'gate', pos: at('cathedral', 0, 64), y: 0.4, r: 5, title: 'Cổng nhà thờ', text: 'Cổng nhà thờ mở ra đường Trần Hưng Đạo, phía trong là khoảng sân rộng.' },
     ],
   },
   {
     id: 'market', title: 'Hương vị Bình Định', place: 'Chợ Lớn Quy Nhơn', piece: 'Phiên chợ Lớn',
     center: at('market', 0, 0), pillar: at('market', -12, 26), photoRadius: 50,
-    shot: shotAt('market', [-9, 6, 44], [0, 5, 0]),
+    shot: shotAt('market', [10, 15, 62], [2, 3, 2]),
     story: [
-      'Chợ Lớn nằm ở trung tâm thành phố, mặt trước quay ra đường Tăng Bạt Hổ. Quanh nhà lồng chợ là các sạp hàng mái bạt bán quần áo, tạp hoá, thực phẩm.',
+      'Chợ Lớn nằm trên đường Tăng Bạt Hổ, ở trung tâm Quy Nhơn; khu chợ mới được xây lại thay cho chợ Lớn cũ. Quanh nhà lồng chợ là các sạp hàng mái bạt bán quần áo, tạp hoá, thực phẩm.',
       'Đây là nơi người dân và du khách tìm mua hải sản tươi, cá khô, bánh tráng và nhiều đặc sản của đất Bình Định.',
       'Ẩm thực Bình Định nổi tiếng với bánh hỏi cháo lòng, bánh xèo tôm nhảy, nem chợ Huyện và tré.',
     ],
     quiz: [
-      { q: 'Mặt trước Chợ Lớn quay ra con đường nào?', a: ['Tăng Bạt Hổ', 'Lê Duẩn', 'Ngô Mây', 'Hàn Mặc Tử'], ok: 0 },
+      { q: 'Chợ Lớn nằm trên con đường nào?', a: ['Tăng Bạt Hổ', 'Lê Duẩn', 'Ngô Mây', 'Hàn Mặc Tử'], ok: 0 },
       { q: 'Món nào là đặc sản nổi tiếng của Bình Định?', a: ['Phở cuốn', 'Bánh hỏi cháo lòng', 'Bún bò Huế', 'Cao lầu'], ok: 1 },
       { q: '"Nem chợ Huyện" là đặc sản của vùng đất nào?', a: ['Quảng Nam', 'Bình Định', 'Khánh Hoà', 'Phú Yên'], ok: 1 },
     ],
     details: [
       { id: 'stalls', pos: at('market', 10, 27), y: 0.3, r: 4.5, title: 'Sạp hàng mái bạt', text: 'Những dãy sạp mái bạt nhiều màu bao quanh nhà lồng chợ, bày bán đủ thứ hàng.' },
-      { id: 'sign', pos: at('market', 0, 22), y: 0.3, r: 4.5, title: 'Biển chợ', text: 'Biển tên chợ ở mặt tiền nhà lồng, nhìn ra đường Tăng Bạt Hổ.' },
+      { id: 'sign', pos: at('market', 0, 22), y: 0.3, r: 4.5, title: 'Biển chợ', text: 'Biển tên chợ đặt ở mặt tiền nhà lồng chợ.' },
     ],
   },
   {
     id: 'longkhanh', title: 'Tiếng chuông cổ tự', place: 'Chùa Long Khánh', piece: 'Chuông chùa Long Khánh',
     center: at('longkhanh', 0, 0), pillar: at('longkhanh', 6, 30), photoRadius: 60,
-    shot: shotAt('longkhanh', [8, 6, -4], [-3, 5, -34]),
+    shot: shotAt('longkhanh', [5, 7, 4], [-2, 5, -30]),
     story: [
-      'Chùa Long Khánh nằm trên đường Trần Cao Vân, là một trong những ngôi chùa cổ và lớn nhất Quy Nhơn, có lịch sử hơn 200 năm.',
-      'Năm 1805, chùa được vua Gia Long sắc phong là "Sắc tứ Long Khánh tự". Chùa còn lưu giữ một quả chuông đồng cao khoảng 1,7 m, nặng hơn 700 kg, đúc cùng năm đó.',
-      'Chánh điện được bố trí theo hình chữ "khẩu" (口) với Thượng điện và Hạ điện; trước sân là cổng tam quan và lầu chuông.',
+      'Chùa Long Khánh nằm trên đường Trần Cao Vân, là một trong những ngôi chùa cổ và lớn nhất Quy Nhơn, do Thiền sư Tích Thọ khai sơn vào thế kỷ XVIII.',
+      'Chùa còn lưu giữ quả chuông đồng cao khoảng 1,7 m, nặng hơn 700 kg, đúc năm 1805 dưới triều vua Gia Long; minh văn trên chuông ghi lại lịch sử ngôi chùa.',
+      'Chánh điện được bố trí theo hình chữ "khẩu" (口) với Thượng điện và Hậu điện; trong khuôn viên có lầu chuông và tượng Phật A Di Đà cao 17 m trên đài sen.',
     ],
     quiz: [
-      { q: 'Vị vua nào đã sắc phong chùa là "Sắc tứ Long Khánh tự"?', a: ['Minh Mạng', 'Gia Long', 'Tự Đức', 'Quang Trung'], ok: 1 },
+      { q: 'Vị thiền sư nào khai sơn chùa Long Khánh?', a: ['Thiền sư Tích Thọ', 'Thiền sư Liễu Quán', 'Thiền sư Nguyên Thiều', 'Thiền sư Vạn Hạnh'], ok: 0 },
       { q: 'Quả chuông đồng cổ của chùa được đúc vào năm nào?', a: ['1805', '1945', '1702', '1975'], ok: 0 },
       { q: 'Chánh điện chùa Long Khánh được bố trí theo hình chữ gì?', a: ['Chữ Đinh (丁)', 'Chữ Khẩu (口)', 'Chữ Nhất (一)', 'Chữ Môn (門)'], ok: 1 },
     ],
     details: [
-      { id: 'gate', pos: at('longkhanh', 0, 50), y: 0.3, r: 5, title: 'Cổng tam quan', text: 'Cổng ba lối với biển tên "Long Khánh" chữ vàng trên nền đỏ.' },
+      { id: 'gate', pos: at('longkhanh', 0, 50), y: 0.3, r: 5, title: 'Cổng tam quan', text: 'Cổng bốn trụ, đỉnh mỗi trụ là một ngọn tháp nhỏ nhiều tầng; giữa cổng là biển tên và bánh xe pháp luân.' },
       { id: 'bell', pos: at('longkhanh', -12, 13), y: 0.3, r: 5, title: 'Lầu chuông', text: 'Lầu chuông hai tầng mái, chân xây đá, nơi treo quả chuông đồng cổ.' },
     ],
   },
@@ -117,8 +122,8 @@ export const QUESTS = [
     center: at('quangtrung', 0, 0), pillar: at('quangtrung', 0, 30), photoRadius: 45,
     shot: shotAt('quangtrung', [11, 4.5, 23], [0, 8.5, 0]),
     story: [
-      'Giữa vòng xoay Lê Hồng Phong – Trần Hưng Đạo là tượng đài vua Quang Trung cưỡi ngựa chiến, tay giơ cao thanh gươm.',
-      'Quang Trung – Nguyễn Huệ là người con của đất Tây Sơn, Bình Định. Cùng anh em nhà Tây Sơn, ông dựng cờ khởi nghĩa và lên ngôi hoàng đế năm 1788.',
+      'Giữa vòng xoay Lê Hồng Phong – Trần Hưng Đạo là tượng đồng vua Quang Trung cưỡi ngựa, tay cầm gươm, cao 5 m, nặng 13 tấn, khánh thành năm 2008.',
+      'Quang Trung – Nguyễn Huệ là người con của đất Tây Sơn, Bình Định (nay thuộc tỉnh Gia Lai). Cùng anh em nhà Tây Sơn, ông dựng cờ khởi nghĩa và lên ngôi hoàng đế năm 1788.',
       'Mùa xuân năm Kỷ Dậu 1789, ông chỉ huy đại phá quân Thanh ở Ngọc Hồi – Đống Đa, một trong những chiến công lừng lẫy nhất lịch sử Việt Nam.',
     ],
     quiz: [
@@ -128,7 +133,7 @@ export const QUESTS = [
     ],
     details: [
       { id: 'fountain', pos: at('quangtrung', 0, 13.5), y: 0.3, r: 4.5, title: 'Vòng phun nước', text: 'Quanh bệ tượng là vòng vòi phun nước, buổi tối được thắp sáng.' },
-      { id: 'sword', pos: at('quangtrung', 0, -14), y: 0.3, r: 4.5, title: 'Thanh gươm giơ cao', text: 'Nhà vua ngồi trên lưng ngựa chồm, tay phải giơ thanh gươm như đang ra trận.' },
+      { id: 'sword', pos: at('quangtrung', 0, -14), y: 0.3, r: 4.5, title: 'Thanh gươm', text: 'Nhà vua ngồi trên lưng ngựa chiến, tay cầm thanh gươm; bệ tượng chạm phù điêu.' },
     ],
   },
   {
@@ -146,7 +151,7 @@ export const QUESTS = [
       { q: 'Con dốc dẫn lên đồi Thi Nhân mang tên gì?', a: ['Dốc Mộng Cầm', 'Dốc Hoàng Cúc', 'Dốc Mai Đình', 'Dốc Thương Thương'], ok: 0 },
     ],
     details: [
-      { id: 'stele', pos: at('hanmactu', 0, 3), y: 0.6, r: 4, title: 'Bia mộ thi sĩ', text: 'Bia đá trắng trên nền ba bậc, có hình thánh giá trên đỉnh.' },
+      { id: 'stele', pos: at('hanmactu', 0, 3), y: 0.6, r: 4, title: 'Mộ thi sĩ', text: 'Mộ được dời về đồi Thi Nhân năm 1959; trước mộ dựng cây thánh giá.' },
       { id: 'view', pos: at('hanmactu', 0, 13), y: 0.3, r: 4, title: 'Nhìn ra biển', text: 'Từ đồi Thi Nhân có thể nhìn bao quát Ghềnh Ráng và biển Quy Nhơn.' },
     ],
   },
@@ -160,13 +165,52 @@ export const QUESTS = [
       'Nét đặc biệt của bãi là những viên đá tròn nhẵn nhiều màu, nằm chồng lên nhau như những quả trứng, được sóng biển mài giũa qua rất nhiều năm.',
     ],
     quiz: [
-      { q: 'Bãi tắm mang tên vị hoàng hậu nào?', a: ['Từ Dũ', 'Nam Phương', 'Lệ Thiên', 'Thánh Thiên'], ok: 1 },
+      { q: 'Theo tương truyền, bãi tắm gắn với vị hoàng hậu nào?', a: ['Từ Dũ', 'Nam Phương', 'Lệ Thiên', 'Thánh Thiên'], ok: 1 },
       { q: 'Đá ở bãi tắm Hoàng Hậu nổi tiếng với hình dáng gì?', a: ['Nhọn như mũi giáo', 'Phẳng như mặt bàn', 'Tròn nhẵn như quả trứng', 'Xếp thành cột lục giác'], ok: 2 },
       { q: 'Bãi tắm Hoàng Hậu nằm trong khu du lịch nào?', a: ['Kỳ Co – Eo Gió', 'Ghềnh Ráng – Tiên Sa', 'Hầm Hô', 'Cù Lao Xanh'], ok: 1 },
     ],
     details: [
       { id: 'pebbles', pos: at('hoanghau', 2, 3), y: 0.3, r: 5, title: 'Bãi đá trứng', text: 'Hàng nghìn viên đá tròn nhẵn đủ màu xám, nâu, trắng phủ kín mép nước.' },
       { id: 'egg', pos: at('hoanghau', -6, 1), y: 0.3, r: 4.5, title: 'Hòn đá chênh vênh', text: 'Một tảng đá tròn lớn đứng chênh vênh trên tảng đá bẹt, như quả trứng khổng lồ.' },
+    ],
+  },
+  {
+    id: 'museum', title: 'Kho báu Chăm Pa', place: 'Bảo tàng Tổng hợp', piece: 'Sư tử đá Chăm Pa',
+    center: at('museum', 0, 6), pillar: at('museum', -6, 26), photoRadius: 45,
+    shot: shotAt('museum', [14, 4, 40], [0, 4, 0]),
+    story: [
+      'Bảo tàng nằm ở số 26 Nguyễn Huệ, Quy Nhơn. Tiền thân là Bảo tàng Nghĩa Bình, thành lập năm 1980 và mở cửa đón khách từ đầu năm 1981; sau này mang tên Bảo tàng tổng hợp Bình Định, nay là Bảo tàng Tổng hợp Gia Lai.',
+      'Toà nhà vốn là một trung tâm văn hoá được xây năm 1969, mang dáng kiến trúc của thời kỳ đó với mái đua bê tông rộng che lối vào.',
+      'Bảo tàng lưu giữ nhiều hiện vật Chăm Pa quý; nhiều hiện vật đã được công nhận là bảo vật quốc gia, như phù điêu Garuda, tượng thần Brahma, nữ thần Sarasvati và đôi sư tử đá thành Đồ Bàn.',
+    ],
+    quiz: [
+      { q: 'Bảo tàng nằm trên con đường nào?', a: ['Nguyễn Huệ', 'Trần Hưng Đạo', 'Lê Lợi', 'Xuân Diệu'], ok: 0 },
+      { q: 'Đôi sư tử đá – bảo vật quốc gia ở bảo tàng – có nguồn gốc từ đâu?', a: ['Thành Đồ Bàn', 'Hoàng thành Thăng Long', 'Thánh địa Mỹ Sơn', 'Óc Eo'], ok: 0 },
+      { q: 'Nhiều bảo vật quốc gia ở đây thuộc nền văn hoá nào?', a: ['Chăm Pa', 'Đông Sơn', 'Óc Eo', 'Sa Huỳnh'], ok: 0 },
+    ],
+    details: [
+      { id: 'lions', pos: at('museum', 0, 17), y: 0.3, r: 5, title: 'Tượng đá trong sân', text: 'Sân trước bày nhiều tượng đá Chăm Pa: sư tử, đầu thuỷ quái makara, trụ đá và bia chạm hình thần.' },
+      { id: 'entrance', pos: at('museum', 0, 10), y: 0.3, r: 4.5, title: 'Mái đua lối vào', text: 'Mái bê tông vươn rộng trên những cột mảnh che lối vào, nét kiến trúc đặc trưng của những năm 1960.' },
+    ],
+  },
+  {
+    // cầu Thị Nại theo OSM (way 292021136): từ (806, -5441) tới (3561, -5966), dài ~2,8 km
+    id: 'thinai', title: 'Cầu vượt đầm', place: 'Cầu Thị Nại', piece: 'Cầu Thị Nại',
+    center: [2181, -5706], pillar: [767, -5433], photoRadius: 320,
+    shot: shotW([2010, 26, -5470], [2330, 12, -5760]),
+    story: [
+      'Cầu Thị Nại vượt qua đầm Thị Nại, nối Quy Nhơn với bán đảo Phương Mai và khu kinh tế Nhơn Hội.',
+      'Cầu khởi công ngày 3-11-2002 và thông xe ngày 12-12-2006. Phần cầu chính dài khoảng 2,5 km; tính cả đường dẫn, cả tuyến dài gần 7 km.',
+      'Khi hoàn thành, đây là cây cầu vượt biển dài nhất Việt Nam, cho tới khi cầu Tân Vũ – Lạch Huyện ở Hải Phòng thông xe năm 2017.',
+    ],
+    quiz: [
+      { q: 'Cầu Thị Nại bắc qua vùng nước nào?', a: ['Đầm Thị Nại', 'Vịnh Hạ Long', 'Sông Hàn', 'Đầm Ô Loan'], ok: 0 },
+      { q: 'Cầu Thị Nại được thông xe vào năm nào?', a: ['1996', '2006', '2016', '2020'], ok: 1 },
+      { q: 'Cầu nối Quy Nhơn với bán đảo nào?', a: ['Sơn Trà', 'Phương Mai', 'Cà Mau', 'Hòn Gốm'], ok: 1 },
+    ],
+    details: [
+      { id: 'top', pos: [2181, -5706], y: 0.3, r: 9, title: 'Đoạn cao nhất của cầu', text: 'Từ giữa cầu nhìn bao quát đầm Thị Nại, thành phố Quy Nhơn và dãy núi Phương Mai.' },
+      { id: 'east', pos: [3520, -5958], y: 0.3, r: 9, title: 'Đầu cầu Phương Mai', text: 'Đầu cầu phía đông dẫn vào bán đảo Phương Mai và khu kinh tế Nhơn Hội.' },
     ],
   },
 ];
@@ -182,6 +226,8 @@ export const PLACES = [
   { id: 'thapdoi', name: 'Tháp Đôi', pos: at('thapdoi', 0, 22), icon: '🛕' },
   { id: 'longkhanh', name: 'Chùa Long Khánh', pos: at('longkhanh', 0, 40), icon: '🔔' },
   { id: 'quangtrung', name: 'Tượng Quang Trung', pos: at('quangtrung', 0, 30), icon: '🐎', label: 'right' },
+  { id: 'museum', name: 'Bảo tàng Tổng hợp', pos: at('museum', -6, 30), icon: '🏛️' },
+  { id: 'thinai', name: 'Cầu Thị Nại', pos: [767, -5433], icon: '🌉', label: 'right' },
   { id: 'hoanghau', name: 'Bãi tắm Hoàng Hậu', pos: at('hoanghau', 4, -20), icon: '🪨', label: 'right' },
   { id: 'hanmactu', name: 'Mộ Hàn Mặc Tử', pos: at('hanmactu', -8, 9), icon: '✒️' },
 ];

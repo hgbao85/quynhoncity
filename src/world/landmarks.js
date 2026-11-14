@@ -2,7 +2,7 @@
 //   - Tháp Đôi: hai tháp Chăm gạch đỏ (tháp Bắc ~25 m lớn hơn, tháp Nam ~23 m), cửa quay về nam,
 //     thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng thu nhỏ đã mất chóp, chân đá
 //   - Nhà thờ Chính tòa (Nhà thờ Nhọn): tường trắng mái ngói đỏ, tháp chuông nhiều tầng mọc từ
-//     mặt đất giữa mặt tiền, cao 42,7 m với chóp nhọn cam đỏ, quay ra đường Trần Hưng Đạo (phía nam)
+//     mặt đất giữa mặt tiền, cao 47,2 m với chóp nhọn cam đỏ, quay ra đường Trần Hưng Đạo (phía nam)
 //   - Chợ Lớn: nhà lồng chợ hai tầng mái tôn, vòng quanh là sạp hàng mái bạt xanh, biển hiệu
 //   - Ga Quy Nhơn: nhà ga hai tầng sơn vàng, khối giữa có đầu hồi và đồng hồ (ước lượng, chưa có ảnh)
 //   - Chùa Long Khánh: cụm nhà mái ngói đỏ đầu đao cong, cổng tam quan, lầu chuông (theo Street View)
@@ -27,7 +27,7 @@ function baseHeight(l) {
 export function createLandmarks(scene, grid) {
   const glow = []; // vật liệu sáng ban đêm: [mat, cường độ]
   const all = new THREE.Group();
-  const builders = { thapdoi: thapDoi, cathedral, market, station, hanmactu: tomb, longkhanh: pagoda, quangtrung: quangTrung, hoanghau: queenBeach };
+  const builders = { thapdoi: thapDoi, cathedral, market, station, hanmactu: tomb, longkhanh: pagoda, quangtrung: quangTrung, hoanghau: queenBeach, museum };
   for (const l of LANDMARKS) {
     const g = builders[l.id](glow, l);
     // đặt theo độ cao thấp nhất trong khuôn viên để chân công trình không lơ lửng
@@ -165,7 +165,7 @@ function thapDoi() {
 //     → tầng chuông có cửa chớp → tầng đồng hồ (4 mặt) → tầng đèn lồng → chóp nhọn cam đỏ, thánh giá
 //   - hai cánh thấp hai bên mặt tiền: đầu hồi nhỏ, cửa sổ tròn, ba cửa sổ vòm ở dưới
 //   - tường trắng, gờ xám nhạt, mái ngói đỏ; thân nhà thờ dài ~58 m, có cánh ngang ở phía sau
-//   - tổng chiều cao 42,7 m (VnExpress)
+//   - tổng chiều cao 47,2 m (Lược sử giáo xứ chính tòa, dẫn theo Wikipedia; VnExpress ghi 42,7 m)
 function cathedral(glow) {
   const g = new THREE.Group();
   const white = new THREE.MeshStandardMaterial({ color: '#eeede8', roughness: 0.7 });
@@ -278,12 +278,12 @@ function cathedral(glow) {
     }
   }
   band(w6, w6, 31.45);
-  // chóp nhọn bốn mặt cao, thanh mảnh, màu cam đỏ; thánh giá vàng ở đỉnh (tổng cao 42,7 m)
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(w6 * 0.58, 10.3, 4), spireMat);
-  spire.rotation.y = Math.PI / 4; spire.position.set(0, 31.8 + 5.15, centerZ(w6)); spire.castShadow = true; g.add(spire);
+  // chóp nhọn bốn mặt cao, thanh mảnh, màu cam đỏ; thánh giá vàng ở đỉnh (tổng cao 47,2 m)
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(w6 * 0.58, 14.8, 4), spireMat);
+  spire.rotation.y = Math.PI / 4; spire.position.set(0, 31.8 + 7.4, centerZ(w6)); spire.castShadow = true; g.add(spire);
   const cross = new THREE.Group();
   cross.add(box(0.12, 1, 0.12, gold)); cross.add(box(0.55, 0.12, 0.12, gold, 0, 0.6));
-  cross.position.set(0, 42, centerZ(w6)); g.add(cross);
+  cross.position.set(0, 46.5, centerZ(w6)); g.add(cross);
 
   // ---- bậc thềm, sân trước lát đá, cổng và hàng rào ----
   for (let s = 0; s < 3; s++) g.add(box(W + 2 - s * 0.6, 0.18 * (3 - s), 1.2, step, 0, 0, fz + 2.8 + (2 - s) * 1.1));
@@ -529,10 +529,14 @@ function pagodaHall(w, d, wallH, wall, roofMat, ridge, wood, twoTier = true) {
 function pagoda(glow) {
   const g = new THREE.Group();
   const wall = new THREE.MeshStandardMaterial({ color: '#efd88c', roughness: 0.85 });
-  const tile = new THREE.MeshStandardMaterial({ color: '#b5502f', roughness: 0.8 });
+  const tile = new THREE.MeshStandardMaterial({ color: '#a24d30', roughness: 0.85 }); // ngói cũ nâu đỏ
   const ridge = new THREE.MeshStandardMaterial({ color: '#7d3a22', roughness: 0.7 });
   const red = new THREE.MeshStandardMaterial({ color: '#b3282d', roughness: 0.6 });
   const stone = new THREE.MeshStandardMaterial({ color: '#8c8576', roughness: 0.9 });
+  const rubble = new THREE.MeshStandardMaterial({ color: '#9a978f', roughness: 1, flatShading: true });
+  const ochre = new THREE.MeshStandardMaterial({ color: '#dcb86a', roughness: 0.75 });
+  const stepMat = new THREE.MeshStandardMaterial({ color: '#a8553f', roughness: 0.85 });
+  const dark = new THREE.MeshStandardMaterial({ color: '#2a2622', roughness: 0.9 });
   const paving = new THREE.MeshStandardMaterial({ color: '#c8c1b4', roughness: 0.9 });
   const gold = new THREE.MeshStandardMaterial({ color: '#e0b648', metalness: 0.4, roughness: 0.4 });
   const signMat = new THREE.MeshStandardMaterial({ map: pagodaSign(), emissiveMap: pagodaSign(), emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.6 });
@@ -541,28 +545,62 @@ function pagoda(glow) {
   // sân lát đá
   g.add(box(64, 0.08, 96, paving, 0, 0, 4));
   // chánh điện (sau cùng) và hai dãy nhà hai bên tạo thành hình chữ khẩu
-  const main = pagodaHall(24, 16, 6.5, wall, tile, ridge, red, true); main.position.set(0, 0, -30); g.add(main);
+  // chánh điện đặt trên nền cao 1,4 m lát gạch đỏ, bậc thềm rộng phía trước (Street View)
+  const main = pagodaHall(24, 16, 6.5, wall, tile, ridge, red, true); main.position.set(0, 1.4, -30); g.add(main);
+  g.add(box(28, 1.4, 20, stepMat, 0, 0, -30));
+  for (let k = 0; k < 6; k++) g.add(box(20, 1.4 - k * 0.233, 0.5, stepMat, 0, 0, -19.75 + k * 0.5 + 0.5));
   const back = pagodaHall(22, 12, 5.5, wall, tile, ridge, red, false); back.position.set(0, 0, -48); g.add(back);
   for (const sx of [-1, 1]) { const side = pagodaHall(10, 26, 4.8, wall, tile, ridge, red, false); side.rotation.y = sx * Math.PI / 2; side.position.set(sx * 19, 0, -38); g.add(side); }
   // lầu chuông: chân đá, tầng trên tường vàng, hai tầng mái
   const bell = new THREE.Group();
-  const bb = box(6, 3.4, 6, stone); bb.userData.solid = true; bell.add(bb);
+  const bb = box(6, 3.4, 6, rubble); bb.userData.solid = true; bell.add(bb);
+  // cửa vòm ở chân đá, cửa chấn song tối màu ở tầng trên
+  const arch = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.4), dark); arch.position.set(0, 1.2, 3.01); bell.add(arch);
+  const archTop = new THREE.Mesh(new THREE.CircleGeometry(0.8, 16, 0, Math.PI), dark); archTop.position.set(0, 2.4, 3.01); bell.add(archTop);
   bell.add(box(5, 3.2, 5, wall, 0, 3.4));
+  for (const [x, z, ry] of [[0, 2.51, 0], [0, -2.51, Math.PI], [2.51, 0, Math.PI / 2], [-2.51, 0, -Math.PI / 2]]) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2), dark); w.position.set(x, 5, z); w.rotation.y = ry; bell.add(w);
+  }
   const br1 = vnRoof(7.4, 7.4, 1.4, tile, ridge); br1.position.y = 3.4; bell.add(br1);
   const br2 = vnRoof(6, 6, 2, tile, ridge); br2.position.y = 6.6; bell.add(br2);
   bell.position.set(-12, 0, 8); g.add(bell);
-  // cổng tam quan: ba lối, biển tên chữ vàng nền đỏ, mái ngói
+  // cổng (Street View): bốn trụ vàng đất đỉnh là tháp nhỏ nhiều tầng, xà giữa cao có biển tên và
+  // bánh xe pháp luân, hai lối bên thấp hơn; cửa sắt sơn đỏ ở hai lối bên, lối giữa mở
   const gate = new THREE.Group();
-  for (const x of [-6.5, -2.4, 2.4, 6.5]) { const p = box(1.2, 5.2, 1.2, red, x, 0, 0); p.userData.solid = Math.abs(x) > 3; gate.add(p); }
-  gate.add(box(14.5, 1.3, 1.6, red, 0, 5.2, 0));
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.1), signMat); sign.position.set(0, 5.85, 0.82); gate.add(sign);
-  const gr = vnRoof(3.2, 15.5, 1.6, tile, ridge); gr.position.y = 6.5; gate.add(gr);
+  const finial = (x, h) => {
+    const f = new THREE.Group();
+    for (let k = 0; k < 4; k++) {
+      const w = 1.5 - k * 0.28;
+      f.add(box(w, 0.45, w, ochre, 0, k * 0.62, 0));
+      const r = new THREE.Mesh(new THREE.ConeGeometry((w + 0.4) * 0.72, 0.3, 4), tile); r.rotation.y = Math.PI / 4; r.position.y = k * 0.62 + 0.6; f.add(r);
+    }
+    f.add(cyl(0.05, 0.12, 0.7, 6, gold, 0, 2.7, 0));
+    f.position.set(x, h, 0); gate.add(f);
+  };
+  for (const x of [-6.6, -2.6, 2.6, 6.6]) {
+    const inner = Math.abs(x) < 3, h = inner ? 6.2 : 4.8;
+    const p = box(1.3, h, 1.3, ochre, x, 0, 0); p.userData.solid = true; gate.add(p);
+    gate.add(box(1.6, 0.35, 1.6, ochre, x, h, 0));
+    finial(x, h + 0.35);
+  }
+  gate.add(box(4, 1.1, 1, ochre, 0, 5.1, 0)); // xà giữa
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.85), signMat); sign.position.set(0, 5.65, 0.52); gate.add(sign);
+  const wheel = new THREE.Group();
+  wheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.09, 6, 24), gold));
+  for (let k = 0; k < 8; k++) { const sp = box(0.06, 1.5, 0.06, gold, 0, -0.75, 0); sp.rotation.z = (k / 8) * Math.PI; wheel.add(sp); }
+  wheel.position.set(0, 7, 0); gate.add(wheel);
+  for (const sx of [-1, 1]) {
+    gate.add(box(3.4, 0.8, 0.9, ochre, sx * 4.6, 3.9, 0)); // xà lối bên
+    for (let k = 0; k < 9; k++) gate.add(box(0.07, 3.6, 0.07, red, sx * 4.6 - 1.5 + k * 0.375, 0, 0)); // cửa sắt đỏ
+    const bar = box(3.2, 0.12, 0.08, red, sx * 4.6, 3.3, 0); gate.add(bar);
+    const doorBlock = box(3.4, 3.6, 0.2, red, sx * 4.6, 0, 0); doorBlock.visible = false; doorBlock.userData.solid = true; gate.add(doorBlock);
+  }
   gate.position.set(0, 0, 46); g.add(gate);
   // sư tử đá vàng hai bên bậc chánh điện
   for (const sx of [-1, 1]) {
     const lion = new THREE.Group();
     lion.add(box(1, 0.6, 1, stone)); lion.add(box(0.7, 0.9, 0.9, gold, 0, 0.6)); const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), gold); head.position.set(0, 1.85, 0.2); lion.add(head);
-    lion.position.set(sx * 6, 0, -19); g.add(lion);
+    lion.position.set(sx * 11.5, 0, -15.5); g.add(lion);
   }
   // cây cổ thụ trong sân và đèn lồng đỏ dọc lối vào
   const trunk = new THREE.MeshStandardMaterial({ color: '#6e5a45', roughness: 1 }), leaf = new THREE.MeshStandardMaterial({ color: '#3b6f30', roughness: 1, flatShading: true });
@@ -590,31 +628,37 @@ function pagodaSign() {
 // Hệ local: +z = hướng ngựa nhìn.
 function quangTrung(glow) {
   const g = new THREE.Group();
-  const bronze = new THREE.MeshStandardMaterial({ color: '#5b4a36', roughness: 0.45, metalness: 0.7 });
+  const bronze = new THREE.MeshStandardMaterial({ color: '#76603f', roughness: 0.4, metalness: 0.75 });
   const granite = new THREE.MeshStandardMaterial({ color: '#8f8e8a', roughness: 0.6 });
+  // bệ đá màu vàng nhạt chạm phù điêu (Street View): vân khắc vẽ bằng canvas, quấn quanh thân trụ
+  const relief = new THREE.MeshStandardMaterial({ color: '#ffffff', map: reliefTexture(), roughness: 0.8 });
+  const sand = new THREE.MeshStandardMaterial({ color: '#d8c7a2', roughness: 0.8 });
+  const hedge = new THREE.MeshStandardMaterial({ color: '#3f7a35', roughness: 1, flatShading: true });
   const dark = new THREE.MeshStandardMaterial({ color: '#4c4d50', roughness: 0.8 });
-  const yellow = new THREE.MeshStandardMaterial({ color: '#d8c38a', roughness: 0.9 });
   const flowers = new THREE.MeshStandardMaterial({ color: '#c8323a', roughness: 1, flatShading: true });
   const water = new THREE.MeshStandardMaterial({ color: '#d9ecf5', transparent: true, opacity: 0.55, emissive: '#bfe3ff', emissiveIntensity: 0, roughness: 0.1 });
   const plaque = new THREE.MeshStandardMaterial({ color: '#8d6a3a', metalness: 0.7, roughness: 0.4 });
   glow.push([water, 1.2]);
   const disc = (r0, r1, h, mat, y = 0, seg = 64) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, h, seg), mat); m.position.y = y + h / 2; m.receiveShadow = true; g.add(m); return m; };
-  disc(33, 33, 0.18, yellow); // viền vàng
-  disc(27, 27, 0.22, dark); // sân đá sẫm
-  // bồn hoa đỏ vòng ngoài (cung đứt đoạn)
-  for (let k = 0; k < 28; k++) { const a = (k / 28) * Math.PI * 2; if (k % 7 === 0) continue; const b = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 0), flowers); b.scale.set(1.6, 0.5, 1.6); b.position.set(Math.cos(a) * 22, 0.4, Math.sin(a) * 22); g.add(b); }
-  // bậc cấp và bể phun nước
-  disc(12, 11.6, 0.6, granite, 0.2);
-  const pool = disc(10, 10, 0.5, new THREE.MeshStandardMaterial({ color: '#2f5c6e', roughness: 0.2, metalness: 0.3 }), 0.8);
-  void pool;
-  for (let k = 0; k < 32; k++) { const a = (k / 32) * Math.PI * 2; const j = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.12, 1.6, 6), water); j.position.set(Math.cos(a) * 8.6, 2.1, Math.sin(a) * 8.6); g.add(j); }
-  // bệ trụ tròn hai tầng, biển đồng phía trước
-  const ped = disc(4.6, 4.2, 6.5, granite, 1.3); ped.userData.solid = true;
-  disc(4.9, 4.9, 0.5, granite, 1.3);
-  disc(4.5, 4.5, 0.4, granite, 7.8);
-  const pl = box(2.4, 1.6, 0.1, plaque, 0, 4, 4.32); g.add(pl);
+  // sân đá sẫm bóng; mép ngoài là bồn hoa đỏ viền hàng cây xanh cắt tỉa thấp
+  disc(33, 33, 0.22, dark);
+  const ring = (r0, r1, h, mat, y = 0) => { const m = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 72, 1), mat); m.rotation.x = -Math.PI / 2; m.position.y = y + h; g.add(m); return m; };
+  ring(29.5, 31.6, 0.55, flowers);
+  const hedgeRing = new THREE.Mesh(new THREE.TorusGeometry(32.2, 0.55, 6, 96), hedge); hedgeRing.rotation.x = Math.PI / 2; hedgeRing.position.y = 0.6; hedgeRing.scale.z = 1.3; g.add(hedgeRing);
+  // bể phun nước vòng quanh chân bệ: thành bể đá, mặt nước, vòi phun
+  disc(10.2, 10.2, 0.7, granite, 0.2);
+  disc(9.7, 9.7, 0.62, new THREE.MeshStandardMaterial({ color: '#2f5c6e', roughness: 0.2, metalness: 0.3 }), 0.3);
+  for (let k = 0; k < 32; k++) { const a = (k / 32) * Math.PI * 2; const j = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.12, 1.6, 6), water); j.position.set(Math.cos(a) * 8.4, 1.75, Math.sin(a) * 8.4); g.add(j); }
+  // bồn hoa đỏ sát chân bệ (giữa bể)
+  disc(6.6, 6.6, 0.9, sand, 0.3);
+  ring(4.8, 6.4, 1.2, flowers, 0.3);
+  // bệ trụ tròn đá vàng nhạt chạm phù điêu, gờ trên và dưới
+  const ped = disc(4.4, 4.3, 5.2, relief, 1.2); ped.userData.solid = true;
+  disc(4.7, 4.7, 0.45, sand, 1.15);
+  disc(4.55, 4.55, 0.4, sand, 6.4);
+  const pl = box(2, 0.9, 0.08, plaque, 0, 1.9, 4.42); g.add(pl);
   // tượng ngựa chồm và người cưỡi (khối giản lược)
-  const st = new THREE.Group(); st.position.y = 8.2; g.add(st);
+  const st = new THREE.Group(); st.position.y = 6.8; st.scale.setScalar(1.3); g.add(st); // tượng cao ~5 m, gần bằng bệ
   const horse = new THREE.Group(); horse.rotation.x = -0.55; horse.position.set(0, 1.4, -0.6); st.add(horse);
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.85, 2.2, 6, 12), bronze); body.rotation.x = Math.PI / 2; horse.add(body);
   const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.45, 1.3, 4, 10), bronze); neck.position.set(0, 1, 1.6); neck.rotation.x = 0.55; horse.add(neck);
@@ -759,5 +803,116 @@ function queenSign() {
   x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle';
   x.font = 'bold 50px "Be Vietnam Pro", Arial, sans-serif'; x.fillText('BÃI TẮM HOÀNG HẬU', 320, 52);
   x.font = '600 24px "Be Vietnam Pro", Arial, sans-serif'; x.fillStyle = '#f2e6c8'; x.fillText('Ghềnh Ráng Tiên Sa · Quy Nhơn', 320, 96);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+// vân phù điêu quanh bệ tượng Quang Trung: các nhóm người, ngựa, cờ khắc nổi trên nền đá vàng nhạt
+function reliefTexture() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#d9c8a4'; x.fillRect(0, 0, 1024, 256);
+  let seed = 3; const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let k = 0; k < 2400; k++) { x.fillStyle = `rgba(${120 + r() * 60},${100 + r() * 50},${70 + r() * 40},0.08)`; x.fillRect(r() * 1024, r() * 256, 2 + r() * 6, 2 + r() * 6); }
+  // các hình khắc: bóng tối lệch xuống phải, viền sáng lệch lên trái
+  const figure = (cx, base, h) => {
+    const shape = (dx, dy, col) => {
+      x.fillStyle = col;
+      x.beginPath(); x.ellipse(cx + dx, base - h * 0.88 + dy, h * 0.09, h * 0.1, 0, 0, 7); x.fill(); // đầu
+      x.fillRect(cx - h * 0.12 + dx, base - h * 0.78 + dy, h * 0.24, h * 0.45); // thân
+      x.fillRect(cx - h * 0.11 + dx, base - h * 0.33 + dy, h * 0.09, h * 0.33); x.fillRect(cx + h * 0.02 + dx, base - h * 0.33 + dy, h * 0.09, h * 0.33); // chân
+      x.save(); x.translate(cx + h * 0.12 + dx, base - h * 0.72 + dy); x.rotate(-0.9 + r() * 0.6); x.fillRect(0, 0, h * 0.06, h * 0.42); x.restore(); // tay cầm giáo
+    };
+    shape(3, 3, 'rgba(90,72,48,0.55)'); shape(-1, -1, 'rgba(245,232,205,0.7)'); shape(0, 0, '#c9b58e');
+  };
+  const horse = (cx, base, h) => {
+    for (const [dx, dy, col] of [[3, 3, 'rgba(90,72,48,0.55)'], [-1, -1, 'rgba(245,232,205,0.7)'], [0, 0, '#c9b58e']]) {
+      x.fillStyle = col;
+      x.beginPath(); x.ellipse(cx + dx, base - h * 0.55 + dy, h * 0.45, h * 0.18, 0, 0, 7); x.fill();
+      x.fillRect(cx + h * 0.32 + dx, base - h * 0.95 + dy, h * 0.12, h * 0.4);
+      for (const lx of [-0.35, -0.2, 0.2, 0.32]) x.fillRect(cx + h * lx + dx, base - h * 0.45 + dy, h * 0.07, h * 0.45);
+    }
+  };
+  for (let k = 0; k < 9; k++) { const cx = 40 + k * 112 + r() * 20; if (k % 3 === 1) horse(cx, 222, 150); else { figure(cx - 22, 222, 140); figure(cx + 22, 222, 128); } }
+  x.fillStyle = 'rgba(120,98,66,0.6)'; x.fillRect(0, 0, 1024, 10); x.fillRect(0, 246, 1024, 10);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(2, 1);
+  return t;
+}
+
+// ======================= Bảo tàng Tổng hợp (26 Nguyễn Huệ) =======================
+// Theo ảnh (Google Maps, 2019): nhà hai tầng sơn màu kem kiểu những năm 1960, tầng trệt có mái đua bê tông
+// rộng che lối vào trên các cột mảnh, tầng trên lùi vào với dãy cửa sổ, mái dốc thấp; sân trước bày tượng
+// đá Chăm Pa trên bệ: sư tử, đầu thuỷ quái makara, trụ đá đỉnh nhọn, bia đá. Hệ local: +z ra đường Nguyễn Huệ.
+function museum(glow) {
+  const g = new THREE.Group();
+  const cream = new THREE.MeshStandardMaterial({ color: '#ece2c8', roughness: 0.85 });
+  const trim = new THREE.MeshStandardMaterial({ color: '#d9cdb0', roughness: 0.85 });
+  const glass = new THREE.MeshStandardMaterial({ color: '#2d3a44', roughness: 0.25, metalness: 0.4, emissive: '#ffd9a0', emissiveIntensity: 0 });
+  const winMat = new THREE.MeshStandardMaterial({ color: '#5d7488', roughness: 0.4, metalness: 0.2 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: '#9b9a94', roughness: 0.9 });
+  const paving = new THREE.MeshStandardMaterial({ color: '#c9c2b2', roughness: 0.95 });
+  const sandstone = new THREE.MeshStandardMaterial({ color: '#a8876a', roughness: 0.95, flatShading: true });
+  const base = new THREE.MeshStandardMaterial({ color: '#b9bbbd', roughness: 0.8 });
+  const signMat = new THREE.MeshStandardMaterial({ map: museumSign(), roughness: 0.7 });
+  glow.push([glass, 0.9]);
+
+  g.add(box(46, 0.1, 44, paving, 0, 0, 4)); // sân lát đá
+  // tầng trệt và bậc thềm
+  const ground = box(34, 4.2, 16, cream, 0, 0, -4); ground.userData.solid = true; g.add(ground);
+  for (let k = 0; k < 3; k++) g.add(box(14 - k * 0.6, 0.6 - k * 0.2, 1.2, trim, 0, 0, 4.6 + k * 0.6));
+  // mặt trước tầng trệt: cửa kính lớn, cửa sổ hai bên
+  g.add(box(9, 3, 0.1, glass, 0, 0.4, 4.05));
+  for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) g.add(box(2, 1.6, 0.1, winMat, sx * (7.5 + k * 3.2), 1.4, 4.05));
+  // mái đua bê tông rộng trên các cột mảnh
+  g.add(box(26, 0.5, 9, trim, 0, 3.7, 8.4));
+  for (const x of [-11, -4, 4, 11]) g.add(cyl(0.22, 0.22, 3.7, 10, cream, x, 0, 12.4));
+  // tầng trên lùi vào: dãy cửa sổ, mái dốc thấp có gờ đua
+  const upper = box(22, 4, 11, cream, 0, 4.2, -6); g.add(upper);
+  for (let k = 0; k < 4; k++) g.add(box(2.4, 1.9, 0.1, winMat, 3.5 + k * 3, 5.4, -0.45));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.3), signMat); sign.position.set(-4.5, 6.4, -0.44); g.add(sign);
+  g.add(box(24, 0.35, 13, trim, 0, 8.2, -6));
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 4), roofMat);
+  roof.rotation.y = Math.PI / 4; roof.scale.set(16.5, 1.6, 9); roof.position.set(0, 9.35, -6); roof.castShadow = true; g.add(roof);
+  // tượng đá Chăm Pa trên bệ ở sân trước
+  const plinth = (x, z, w = 1.6, h = 0.9) => g.add(box(w, h, w, base, x, 0, z));
+  const lion = (x, z, ry) => {
+    plinth(x, z, 1.5, 1);
+    const l = new THREE.Group();
+    l.add(box(0.9, 0.9, 1.1, sandstone, 0, 0, 0));
+    const head = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 1), sandstone); head.position.set(0, 1.25, 0.25); l.add(head);
+    for (const sx of [-0.3, 0.3]) l.add(box(0.25, 0.7, 0.3, sandstone, sx, 0, 0.5));
+    l.position.set(x, 1, z); l.rotation.y = ry; g.add(l);
+  };
+  lion(-8, 16, 0); lion(8, 16, 0);
+  // trụ đá đỉnh nhọn (kalasa) và bia đá chạm hình thần
+  plinth(-15, 19, 2.2, 0.6);
+  const pts = [[0, 0], [0.9, 0], [0.9, 0.5], [0.7, 0.6], [0.8, 1.2], [0.6, 1.4], [0.75, 2], [0.45, 2.6], [0.2, 3.1], [0, 3.3]].map(([a, b]) => new THREE.Vector2(a, b));
+  const kalasa = new THREE.Mesh(new THREE.LatheGeometry(pts, 8), sandstone); kalasa.position.set(-15, 0.6, 19); kalasa.castShadow = true; g.add(kalasa);
+  plinth(15, 19, 2, 0.6);
+  const stele = box(1.6, 2.4, 0.5, sandstone, 15, 0.6, 19); g.add(stele);
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.85, 0.9, 4), sandstone); top.rotation.y = Math.PI / 4; top.scale.z = 0.4; top.position.set(15, 3.45, 19); g.add(top);
+  // đầu makara
+  plinth(0, 22, 1.8, 0.7);
+  const mk = new THREE.Group();
+  mk.add(box(1.4, 1.2, 1.2, sandstone));
+  for (const sx of [-0.45, 0.45]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), sandstone); eye.position.set(sx, 0.95, 0.6); mk.add(eye); }
+  const snout = box(0.9, 0.5, 0.7, sandstone, 0, 0.2, 0.8); mk.add(snout);
+  mk.position.set(0, 0.7, 22); g.add(mk);
+  // cây xanh trong sân
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#8a6a48', roughness: 0.9 });
+  const leaf = new THREE.MeshStandardMaterial({ color: '#3f7a35', roughness: 1, flatShading: true });
+  for (const [x, z, s] of [[-20, 12, 1.1], [20, 10, 1], [-19, 24, 0.9]]) {
+    g.add(cyl(0.3 * s, 0.4 * s, 3.5 * s, 7, trunkMat, x, 0, z));
+    const c = new THREE.Mesh(new THREE.IcosahedronGeometry(3 * s, 1), leaf); c.position.set(x, 4.6 * s, z); c.castShadow = true; g.add(c);
+  }
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return g;
+}
+
+function museumSign() {
+  const c = document.createElement('canvas'); c.width = 640; c.height = 92;
+  const x = c.getContext('2d');
+  x.fillStyle = '#ece2c8'; x.fillRect(0, 0, 640, 92);
+  x.fillStyle = '#6a5a44'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = '600 54px "Be Vietnam Pro", Arial, sans-serif'; x.fillText('BẢO TÀNG', 320, 48);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }

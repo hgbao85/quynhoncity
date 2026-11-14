@@ -1,6 +1,6 @@
 # Quy Nhơn 3D · Bản mẫu
 
-Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo khắp **nội thành Quy Nhơn** (khoảng 6,6 × 6,8 km, từ Ghềnh Ráng tới cảng và bờ đầm Thị Nại), với điểm nhấn là Quảng trường Trung tâm, Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và bãi biển.
+Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo khắp **nội thành Quy Nhơn** (khoảng 7,8 × 10,2 km, từ Ghềnh Ráng tới cầu Thị Nại và đầu bán đảo Phương Mai), với điểm nhấn là Quảng trường Trung tâm, Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và bãi biển.
 
 **▶ Chơi ngay: [quynhoncity.vercel.app](https://quynhoncity.vercel.app)** (máy tính và điện thoại; điện thoại tự dùng đồ hoạ mức Thấp)
 
@@ -45,7 +45,7 @@ npm run build-data
 Lệnh này chạy lần lượt:
 1. `fetch-osm`: tải đường, vùng, bờ biển, nhà OSM, dựng đa giác đất liền → `.cache/osm.json`.
 2. `fetch-buildings`: tải footprint nhà Microsoft (~24 MB) → `.cache/footprints.json`.
-3. `fetch-terrain`: tải độ cao địa hình (AWS Terrain Tiles, dữ liệu SRTM ~30 m) → `public/data/terrain.bin` (0,7 MB): lưới 15 m cho vùng bản đồ, lưới 75 m cho phông nền ~30 km.
+3. `fetch-terrain`: tải độ cao địa hình (AWS Terrain Tiles, dữ liệu SRTM ~30 m) → `public/data/terrain.bin` (1,05 MB): lưới 15 m cho vùng bản đồ, lưới 75 m cho phông nền ~30 km.
 4. `build-tiles`: trồng rừng trên đồi, cắt nhà ống, ước lượng số tầng, gắn mái hiên cửa hàng, trồng cây, đặt đèn, chia thành ô 400 m → `public/data/world.json` và `public/data/tiles/*.json` (khoảng 8 MB).
 
 **Cách game tải bản đồ lớn:**
@@ -93,15 +93,15 @@ Lệnh này chạy lần lượt:
 - **Số tầng theo loại đường mặt tiền** (quan sát Street View): nhà ống mặt đường lớn 3–5 tầng, đường tertiary 2–4, đường nhỏ 2–3, trong hẻm 1–2; khách sạn ven biển 6–22 tầng, cao ốc mặt đường chính 5–9 tầng, khối lớn khác (trường, chợ, kho) 2–4 tầng.
 - Dãy nhà sâu (hai dãy nhà ống quay lưng vào nhau) được tách đôi rồi cắt thành từng căn. Mặt phố ven biển chủ yếu 4–9 tầng, thỉnh thoảng có khách sạn 12–18 tầng.
 
-**Hành trình khám phá: 8 địa điểm, 8 mảnh ghép** (nội dung trong `src/quests-data.js`)
-- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Mộ Hàn Mặc Tử, Bãi tắm Hoàng Hậu.
+**Hành trình khám phá: 10 địa điểm, 10 mảnh ghép** (nội dung trong `src/quests-data.js`)
+- Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Bảo tàng Tổng hợp, Cầu Thị Nại, Mộ Hàn Mặc Tử, Bãi tắm Hoàng Hậu.
 - Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
 - Ảnh lưu niệm (cho album, bưu thiếp) luôn chụp từ góc máy đẹp đặt sẵn của từng địa điểm (`shot` trong `src/quests-data.js`), giữ nguyên giờ, thời tiết lúc bấm chụp. Trên máy tính, ảnh PNG tải về vẫn là đúng góc người chơi đang nhìn; trên điện thoại không tải PNG.
 - Người đi dạo vẽ gộp: mỗi bộ phận cơ thể là một InstancedMesh, cả đám đông chỉ tốn 12 lần vẽ.
 - Bảng nhiệm vụ tự hiện địa điểm gần người chơi nhất. Tiến độ lưu trong trình duyệt (tiến độ bản cũ ở tượng đài được giữ lại).
 
 **Bản đồ lớn và dịch chuyển nhanh** (nút 🗺️, bấm vào bản đồ nhỏ, hoặc phím M)
-- Bản đồ toàn thành phố: đất, nước, công viên, đồi núi, đường chính, 8 địa điểm kèm khoảng cách và tiến độ nhiệm vụ.
+- Bản đồ toàn thành phố: đất, nước, công viên, đồi núi, đường chính, các địa điểm kèm khoảng cách và tiến độ nhiệm vụ.
 - Bấm vào địa điểm để dịch chuyển tới đó; game tải sẵn khu vực rồi đặt người chơi vào chỗ đi được. Người đi dạo cũng chuyển theo.
 
 **Xe máy** (nút 🛵 hoặc phím F)
@@ -144,10 +144,12 @@ Lệnh này chạy lần lượt:
 
 **Công trình nổi bật** (dựng tay theo ảnh vệ tinh, Street View và số liệu báo chí, `src/world/landmarks.js`)
 - **Tháp Đôi (Tháp Hưng Thạnh):** hai tháp Chăm gạch đỏ đứng cạnh nhau theo hướng bắc – nam; tháp Bắc lớn hơn (~21 m), cửa chính có bậc thềm quay về phía đông; tháp Nam thấp và bè (~16 m) với khối mái cụt. Tỉ lệ chỉnh theo ảnh chụp; thân vuông có trụ áp tường và cửa giả vòm nhọn, mái nhiều tầng thu nhỏ dần đã mất chóp, chân đá; khuôn viên thảm cỏ.
-- **Nhà thờ Chính tòa (Nhà thờ Nhọn):** dựng theo ảnh Street View chụp thẳng mặt tiền: tường trắng, mái ngói đỏ, thân dài ~58 m có cánh ngang. Tháp chuông cao 42,7 m mọc từ mặt đất giữa mặt tiền, thu nhỏ dần qua các tầng: cổng vòm có khung nhô, tranh ghép lớn và băng rôn, huy hiệu tròn, thánh giá nổi, tầng chuông có cửa chớp, đồng hồ bốn mặt, đèn lồng, chóp nhọn cam đỏ thanh mảnh. Hai cánh thấp hai bên có cửa sổ tròn và ba cửa sổ vòm. Sân trước lát đá, bụi cây cắt tỉa, cổng và hàng rào trụ đá ra đường Trần Hưng Đạo. Tranh ghép chỉ vẽ giản lược, không sao chép tác phẩm gốc.
+- **Nhà thờ Chính tòa (Nhà thờ Nhọn):** dựng theo ảnh Street View chụp thẳng mặt tiền: tường trắng, mái ngói đỏ, thân dài ~58 m có cánh ngang. Tháp chuông cao 47,2 m (theo lược sử giáo xứ) mọc từ mặt đất giữa mặt tiền, thu nhỏ dần qua các tầng: cổng vòm có khung nhô, tranh ghép lớn và băng rôn, huy hiệu tròn, thánh giá nổi, tầng chuông có cửa chớp, đồng hồ bốn mặt, đèn lồng, chóp nhọn cam đỏ thanh mảnh. Hai cánh thấp hai bên có cửa sổ tròn và ba cửa sổ vòm. Sân trước lát đá, bụi cây cắt tỉa, cổng và hàng rào trụ đá ra đường Trần Hưng Đạo. Tranh ghép chỉ vẽ giản lược, không sao chép tác phẩm gốc.
 - **Chợ Lớn:** nhà lồng chợ hai tầng mái tôn, biển tên, vòng quanh là sạp hàng mái bạt nhiều màu.
-- **Chùa Long Khánh:** chánh điện mái cong hai lớp đầu đao, hậu điện và hai dãy nhà bên (kiểu chữ Khẩu), lầu chuông, cổng tam quan có biển "LONG KHÁNH", sư tử đá, cây cổ thụ, đèn lồng đỏ.
-- **Tượng đài Quang Trung:** bùng binh tròn có vòng hoa, hồ nước 32 vòi phun, bệ tròn cao 6,5 m gắn bia đồng, tượng vua Quang Trung cưỡi ngựa chồm, tay giơ kiếm.
+- **Chùa Long Khánh** (chỉnh theo Street View): chánh điện mái cong hai lớp đầu đao đặt trên nền cao lát gạch đỏ có bậc thềm rộng, hậu điện và hai dãy nhà bên (kiểu chữ Khẩu); lầu chuông chân xây đá có cửa vòm, tầng trên tường vàng cửa chấn song; cổng bốn trụ vàng đất đỉnh là tháp nhỏ nhiều tầng, xà giữa có biển tên và bánh xe pháp luân, cửa sắt đỏ hai bên; sư tử đá, cây cổ thụ, đèn lồng.
+- **Tượng đài Quang Trung** (chỉnh theo Street View): bệ trụ đá vàng nhạt chạm phù điêu, bồn hoa đỏ sát chân bệ, vòng bể 32 vòi phun, sân đá sẫm, viền ngoài hoa đỏ và hàng cây xanh; tượng đồng vua Quang Trung cưỡi ngựa chồm, tay giơ gươm (tượng thật cao 5 m).
+- **Bảo tàng Tổng hợp** (26 Nguyễn Huệ, trước là Bảo tàng Bình Định; theo ảnh): nhà hai tầng màu kem kiểu những năm 1960, mái đua bê tông rộng trên cột mảnh che lối vào, tầng trên lùi vào có dãy cửa sổ và chữ "BẢO TÀNG", sân trước bày tượng đá Chăm Pa (sư tử, đầu makara, trụ đá, bia đá).
+- **Cầu Thị Nại** (`src/world/bridges.js`, `src/world/bridgemesh.js`): lấy đường tim cầu từ OSM, dài ~2,8 km; mặt cầu dốc lên 7 m trong 250 m đầu, đoạn giữa vồng cao thêm 9 m; dầm bê tông, lan can, vạch giữa đường, trụ đôi mỗi 44 m, cột đèn so le sáng ban đêm. Người chơi, xe máy, xe cộ đều chạy trên mặt cầu. Mọi cây cầu OSM khác (46 cầu) cũng được dựng mặt cầu theo cùng cách và đi qua được trên mặt nước.
 - **Bãi tắm Hoàng Hậu (Ghềnh Ráng):** vịnh nhỏ dưới chân đồi (vị trí theo OSM), dải đá cuội tròn nhẵn nhiều màu sát mép nước, các tảng granite trên bờ và dưới nước, "hòn trứng" đứng chênh vênh trên tảng đá bẹt, bậc đá có lan can xuống bãi, chòi nghỉ mái ngói, biển tên, hàng dừa nghiêng. Địa hình dốc nên từng vật được đặt theo độ cao thật tại chỗ.
 - **Ga Quy Nhơn:** nhà ga hai tầng sơn vàng, khối giữa có đầu hồi, đồng hồ và biển "GA QUY NHƠN", sân ga và đường ray phía sau.
 - **Mộ Hàn Mặc Tử (đồi Thi Nhân):** nền đá ba bậc, bia đá trắng có thánh giá, đèn trụ xanh, sân lát đá, bồn hoa, bậc thang xuống phía biển.
@@ -203,6 +205,7 @@ npm run optimize-statue
 | File | Vai trò |
 |---|---|
 | `src/world/config.js` | Vùng bản đồ, gốc toạ độ, kích thước ô (dùng chung cho game và script) |
+| `src/world/bridges.js`, `src/world/bridgemesh.js` | Mặt cầu nâng cao (độ cao, va chạm) và hình khối các cây cầu |
 | `scripts/fetch-osm.mjs`, `scripts/lib/coast.mjs` | Tải dữ liệu OSM, dựng đa giác đất liền từ đường bờ biển |
 | `scripts/fetch-buildings.mjs` | Tải footprint nhà Microsoft cho cả vùng |
 | `scripts/build-tiles.mjs` | Tạo dữ liệu game: cắt nhà ống, chiều cao, cửa hàng, cây, đèn, chia ô |
@@ -226,7 +229,7 @@ npm run optimize-statue
 | `src/world/statue-model.js` | Nạp mô hình tượng `.glb`, tự canh tỉ lệ và đặt lên bệ |
 | `src/character.js` | Người dựng từ khối cơ bản, có động tác đi và chạy |
 | `src/player.js`, `src/npc.js` | Người chơi, camera, joystick; người đi dạo |
-| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 8 địa điểm; danh sách điểm dịch chuyển |
+| `src/quests-data.js`, `src/quest.js` | Nội dung và cơ chế nhiệm vụ 10 địa điểm; danh sách điểm dịch chuyển |
 | `src/minimap.js`, `src/bigmap.js` | Bản đồ nhỏ; bản đồ lớn và dịch chuyển nhanh |
 | `src/quality.js` | Mức đồ hoạ Cao/Thấp, đo FPS |
 | `src/audio.js` | Âm thanh tự tạo: sóng, phố, máy xe, nhạc nền, hiệu ứng |
@@ -246,15 +249,16 @@ Game dùng Vercel Web Analytics (không cookie, không thu thông tin cá nhân)
 
 - **Địa hình độ phân giải ~30 m:** đủ cho đồi núi nhìn từ xa, nhưng đi bộ trên sườn đồi sẽ thấy mặt đất góc cạnh. Dữ liệu là độ cao bề mặt nên đỉnh đồi có thể lệch vài mét do tán cây.
 - **Cảnh nặng hơn:** khoảng 1,5 triệu tam giác ở điểm xuất phát (trước khi lọc phần ngoài khung nhìn). Cần đo trên điện thoại thật; nếu chậm có thể giảm mật độ rừng, cây hoặc độ chi tiết địa hình xa.
-- **Thông tin chùa Long Khánh và tượng đài Quang Trung** (năm sắc phong, quả chuông, câu hỏi đố) cần kiểm chứng lại trước khi ra mắt; hình dáng hai công trình dựng theo ảnh tham khảo, chưa đo chính xác.
-- **Cầu Thị Nại** chưa có: đầu cầu phía Quy Nhơn nằm sát mép bắc bản đồ, cần mở rộng vùng bản đồ.
-- **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm Thị Nại đã xây nhà): script tự bỏ vùng nước có trên 15 nhà bên trong.
+- **Nội dung đã đối chiếu nguồn (11/2026):** sửa chiều cao nhà thờ (47,2 m), bỏ chi tiết "Gia Long sắc phong năm 1805" (chỉ một nguồn yếu; năm 1805 là năm đúc chuông), "Hạ điện" → "Hậu điện", thêm năm khánh thành tượng Quang Trung (2008) và nhà thờ (1939). Nguồn ghi ở đầu `src/quests-data.js`.
+- **Hướng các cửa tháp Đôi:** các nguồn mô tả khác nhau (hướng đông hay hướng nam), mô hình đang để cửa chính tháp Bắc quay về phía đông.
+- **Kỳ Co, Eo Gió** chưa có: cách trung tâm 20–25 km; muốn thêm phải mở rộng bản đồ khoảng 3,5 lần (địa hình tải lúc mở game tăng từ 1 MB lên khoảng 2,5 MB).
+- **Một số vùng nước OSM đã lỗi thời** (khu lấn đầm đã xây nhà): script bỏ vùng nước có mật độ nhà trên 0,5 căn/ha. Đầm Thị Nại rộng có nhà chòi, ao nuôi rải rác (139 nhà trên ~4.000 ha) vẫn được giữ là mặt nước.
 
 - **Tượng đài vẫn là mô hình khối giản lược.** Tỉ lệ và dáng đứng đã theo ảnh, nhưng mặt, nếp áo và hình chạm phù điêu là vẽ phỏng. Muốn giống hẳn cần mô hình 3D dựng từ ảnh chụp (Blender hoặc photogrammetry).
 - **Hướng tượng (60°) và kích thước sân** được suy ra từ bản đồ OSM, chưa đo thực địa.
 - **Công trình nổi bật là mô hình khối giản lược.** Tháp Đôi, nhà thờ, chợ, mộ dựng theo ảnh Street View; **Ga Quy Nhơn chưa có ảnh Street View** nên hình dáng, màu vàng và hướng mặt tiền là ước lượng theo kiểu nhà ga Việt Nam, cần chụp ảnh thực địa để chỉnh.
 - **Bản quyền dữ liệu nhà (Microsoft, ODbL):** giữ dòng ghi nguồn trên màn hình.
 - **Tên Highlands Coffee là thương hiệu đã đăng ký.** Bản mẫu chỉ vẽ chữ đơn giản, không chép logo gốc. Trước khi phát hành công khai hay dùng thương mại cần xin phép chủ thương hiệu, hoặc đổi sang tên chung.
-- **Câu chuyện và câu hỏi** trong `src/quests-data.js` cần kiểm chứng lại với nguồn chính thống (đã ghi nguồn tham khảo ở đầu file).
+- **Câu chuyện và câu hỏi** trong `src/quests-data.js` đã đối chiếu với báo chí và trang chính thống (nguồn ở đầu file); nên nhờ người am hiểu lịch sử địa phương đọc lại lần cuối.
 - **Bản quyền OpenStreetMap (ODbL):** phải giữ dòng ghi nguồn "© OpenStreetMap" trên màn hình.
 - **Nhà ống tự sinh là ngẫu nhiên,** không đúng từng căn ngoài đời.

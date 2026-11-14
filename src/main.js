@@ -14,6 +14,8 @@ import { createTerrain } from './world/terrainmesh.js';
 import { setTerrain } from './world/terrain.js';
 import { createHighlands } from './world/highlands.js';
 import { createLandmarks } from './world/landmarks.js';
+import { setBridges } from './world/bridges.js';
+import { createBridges } from './world/bridgemesh.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
 import { groundHeight } from './world/site.js';
@@ -149,6 +151,7 @@ async function start() {
   ]);
   let terrain = null;
   if (tbin && data.terrain) { terrain = { meta: data.terrain, data: new Int16Array(tbin) }; setTerrain(terrain.meta, terrain.data); }
+  setBridges(data.roads); // cần độ cao địa hình để tính hai đầu cầu
   await new Promise((r) => setTimeout(r, 30)); // cho màn hình chờ kịp hiện
   const city = buildCity(data, terrain, Q);
   scene.add(city.group);
@@ -158,6 +161,7 @@ async function start() {
   const terrainMesh = createTerrain(scene);
   const highlands = createHighlands(scene, city.grid);
   const landmarks = createLandmarks(scene, city.grid);
+  const bridges = createBridges(scene);
   const sky = createSky(scene, renderer);
   const wx = createWeather(scene, Q.id === 'low' ? 1400 : 3000);
   const wxTest = testWeatherCode();
@@ -339,6 +343,7 @@ async function start() {
     terrainMesh.update(scene.fog.color, env.night);
     highlands.setNight(env.night);
     landmarks.setNight(env.night);
+    bridges.setNight(env.night);
     traffic.setNight(env.night);
     const nightFlag = env.night > 0.5 ? '1' : '';
     if (document.body.dataset.night !== nightFlag) document.body.dataset.night = nightFlag;

@@ -7,6 +7,9 @@
 import * as THREE from 'three';
 import { roadWidth } from './world/geo.js';
 import { heightAt } from './world/terrain.js';
+import { deckHeight } from './world/bridges.js';
+// độ cao mặt đường: trên cầu là mặt cầu
+const roadY = (x, z) => { const g = heightAt(x, z), d = deckHeight(x, z); return d !== null && d > g ? d : g; };
 import { scooterParts, riderParts, carParts, busParts, BODY_COLORS, SHIRTS, HELMETS } from './vehicles.js';
 
 const DRIVE = new Set(['primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'residential', 'unclassified', 'living_street', 'trunk']);
@@ -83,7 +86,7 @@ export function createTraffic(scene, world, count = 40) {
         const yaw = L.bearing + (g === 0 ? 0 : Math.PI / 2);
         const fx = Math.sin(yaw), fz = Math.cos(yaw);
         const x = L.x + fx * 9 - fz * 7, z = L.z + fz * 9 + fx * 7;
-        M0.compose(V0.set(x, heightAt(x, z), z), Q0.setFromAxisAngle(Y0, yaw), S0);
+        M0.compose(V0.set(x, roadY(x, z), z), Q0.setFromAxisAngle(Y0, yaw), S0);
         poleMesh.setMatrixAt(i * 2 + g, M0); boxMesh.setMatrixAt(i * 2 + g, M0); bulbMesh.setMatrixAt(i * 2 + g, M0);
       }
     });
@@ -253,7 +256,7 @@ export function createTraffic(scene, world, count = 40) {
       if (v.s < 0 || v.s > r.len) { v.s = THREE.MathUtils.clamp(v.s, 0, r.len); nextRoad(v); }
       else maybeTurnMid(v, prevS);
       at(v);
-      v.y = heightAt(v.x, v.z) + 0.07;
+      v.y = roadY(v.x, v.z) + 0.07;
     }
     // cập nhật ma trận
     for (const P of Object.values(pools)) for (const { im } of P.meshes) im.instanceMatrix.needsUpdate = true;

@@ -20,6 +20,12 @@ export function buildWorldGrid(world) {
       grid.fillSegment(r.pts[i], r.pts[i + 1], foot ? hw : hw + 1.5, ROAD, (v) => v === FREE || (v === OPEN && !foot));
     }
   }
+  // cầu: đi được cả trên mặt nước (mặt cầu cao bao nhiêu do bridges.js tính); không lấn ra ngoài lan can
+  for (const r of world.roads) {
+    if (!r.bridge) continue;
+    const hw = roadWidth(r.type) / 2 + 0.5;
+    for (let i = 0; i + 1 < r.pts.length; i++) grid.fillSegment(r.pts[i], r.pts[i + 1], hw, ROAD, (v) => v !== BUILDING);
+  }
   // khu tượng đài: không xây nhà, không trồng cây; bệ tượng và phù điêu chắn đường
   const rectW = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => toWorld(a, b));
   grid.fillPoly(offsetPolygon(PLAZA_LOCAL, 3).map(([a, b]) => toWorld(a, b)), KEEP);

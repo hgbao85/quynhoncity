@@ -85,13 +85,17 @@ export function createAlbum({ getProgress, ui }) {
     // mỗi khung ảnh có viền trắng và dòng tên cao ~34 px bên dưới: chừa đủ khoảng cách giữa hai hàng.
     // ảnh đầu (tượng đài) lớn bên trái, các ảnh còn lại xếp lưới 3 cột × 2 hàng bên phải
     // số cột tự tính theo số địa điểm (2 hàng); ảnh lớn thu hẹp lại khi cần 4 cột
-    const small = QUESTS.length - 1, cols = Math.max(2, Math.ceil(small / 2));
-    const big = cols > 3 ? [40, 170, 390, 219] : [40, 158, 450, 253];
-    const rx0 = big[0] + big[2] + 40, rw = 1160 - rx0, gap = 28;
-    const sw = Math.floor((rw - 16 - (cols - 1) * gap) / cols), sh = Math.round((sw * 9) / 16);
-    const rowH = sh + 34 + 30, ry0 = big[1] + Math.max(0, (big[3] + 34 - (rowH * 2 - 30)) / 2);
+    // ảnh nhỏ xếp 2 hàng (tối đa 8 ảnh) hoặc 3 hàng; kích thước tự tính để vừa khung bưu thiếp
+    const small = QUESTS.length - 1, rows = small > 8 ? 3 : 2, cols = Math.max(2, Math.ceil(small / rows));
+    const big = cols > 3 || rows > 2 ? [40, 170, 390, 219] : [40, 158, 450, 253];
+    const rx0 = big[0] + big[2] + 40, rw = 1160 - rx0, gap = 28, gapY = rows > 2 ? 14 : 30, top = 158, bottom = 586;
+    const swW = (rw - 16 - (cols - 1) * gap) / cols, shH = (bottom - top - rows * 34 - (rows - 1) * gapY) / rows;
+    const sh = Math.floor(Math.min((swW * 9) / 16, shH)), sw = Math.floor((sh * 16) / 9);
+    const rowH = sh + 34 + gapY, usedW = cols * (sw + 16) + (cols - 1) * (gap - 16 + 16) - 16;
+    const rx = rx0 + 8 + Math.max(0, (rw - 16 - usedW) / 2);
+    const ry0 = rows > 2 ? top : big[1] + Math.max(0, (big[3] + 34 - (rowH * 2 - gapY)) / 2);
     const slots = [big];
-    for (let k = 0; k < small; k++) slots.push([rx0 + 8 + (k % cols) * (sw + 16 + gap - 16), ry0 + Math.floor(k / cols) * rowH, sw, sh]);
+    for (let k = 0; k < small; k++) slots.push([rx + (k % cols) * (sw + gap), ry0 + Math.floor(k / cols) * rowH, sw, sh]);
     QUESTS.forEach((q, i) => {
       const [sx, sy, sw, sh] = slots[i], im = imgs[i];
       x.save();

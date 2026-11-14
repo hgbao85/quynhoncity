@@ -34,8 +34,13 @@ const areas = osm.areas.filter((a) => {
   const [x0, z0, x1, z1] = bbox(a.pts);
   let n = 0;
   for (const f of foot) if (f.cx > x0 && f.cx < x1 && f.cz > z0 && f.cz < z1 && pointInPoly(f.cx, f.cz, a.pts)) n++;
-  if (n > 15) console.log(`  bỏ vùng nước "${a.name || '?'}" vì có ${n} nhà bên trong`);
-  return n <= 15;
+  // so theo mật độ: vùng nước rộng (đầm Thị Nại) có nhà chòi, ao nuôi rải rác nhưng vẫn là mặt nước
+  let ar = 0;
+  for (let i = 0, j = a.pts.length - 1; i < a.pts.length; j = i++) ar += a.pts[j][0] * a.pts[i][1] - a.pts[i][0] * a.pts[j][1];
+  const ha = Math.abs(ar) / 2 / 1e4, dens = n / Math.max(ha, 0.01);
+  const drop = n > 15 && dens > 0.5;
+  if (n > 15) console.log(`  ${drop ? 'bỏ' : 'giữ'} vùng nước "${a.name || '?'}": ${n} nhà trên ${ha.toFixed(0)} ha`);
+  return !drop;
 });
 const osmBuildings = osm.buildings.filter((b) => { const cx = b.pts.reduce((s, p) => s + p[0], 0) / b.pts.length, cz = b.pts.reduce((s, p) => s + p[1], 0) / b.pts.length; return !inLandmarkZone(cx, cz); });
 const world = { origin: osm.origin, bounds: BOUNDS, land: osm.land, areas, roads: osm.roads, buildings: osmBuildings, coastline: osm.coastline };
@@ -200,7 +205,9 @@ function rowHouses(pts, obb) {
 }
 
 // ---- đường: chia đoạn dài ≤ 50 m, gán theo trung điểm ----
+// (cầu không vẽ ở đây: bridgemesh.js dựng mặt cầu nâng cao)
 for (const r of osm.roads) {
+  if (r.bridge) continue;
   const ti = roadTypeIndex(r.type);
   for (let i = 0; i + 1 < r.pts.length; i++) {
     const [ax, az] = r.pts[i], [bx, bz] = r.pts[i + 1];
@@ -218,7 +225,7 @@ for (const r of osm.roads) {
 const MAJOR = new Set(['primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link']);
 const put = (list, x, z, r) => { if (inBounds(x, z)) T(x, z)[list].push(dm(x), dm(z), Math.round(r * 1000)); };
 for (const r of osm.roads) {
-  if (!MAJOR.has(r.type)) continue;
+  if (!MAJOR.has(r.type) || r.bridge) continue;
   const hw = roadWidth(r.type) / 2;
   let acc = 0;
   for (let i = 0; i + 1 < r.pts.length; i++) {

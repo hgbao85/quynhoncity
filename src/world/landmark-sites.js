@@ -42,6 +42,12 @@ export const LANDMARKS = [
     zone: [[-626, 2208], [-560, 2208], [-560, 2292], [-626, 2292]],
   },
   {
+    // Bảo tàng Tổng hợp (trước là Bảo tàng Bình Định), 26 Nguyễn Huệ: theo footprint OSM và ảnh;
+    // mặt trước nhìn ra đường Nguyễn Huệ
+    id: 'museum', name: 'Bảo tàng Tổng hợp Gia Lai', x: 1345, z: -868, yaw: 0.33,
+    zone: [[1308, -906], [1378, -906], [1378, -833], [1308, -833]],
+  },
+  {
     id: 'hanmactu', name: 'Mộ Hàn Mặc Tử (đồi Thi Nhân)', x: -805, z: 2086, yaw: 0.6,
     zone: [[-830, 2060], [-780, 2060], [-780, 2112], [-830, 2112]],
   },

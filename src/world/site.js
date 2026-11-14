@@ -9,6 +9,7 @@
 // Hệ toạ độ "local": gốc tại tâm tượng, +z là mặt trước (hướng ra biển), +x là bên phải
 // của người đứng trước tượng nhìn vào (phía bắc ngoài đời, nơi tượng người cha đứng).
 import { pointInPoly } from './geo.js';
+import { deckHeight } from './bridges.js';
 import { heightAt } from './terrain.js';
 
 export const YAW = (62 * Math.PI) / 180;
@@ -106,7 +107,10 @@ function siteHeight(x, z) {
 }
 
 // Độ cao mặt đất cho người chơi và người đi dạo: khu tượng đài + địa hình đồi núi
-export function groundHeight(x, z) { return siteHeight(x, z) + heightAt(x, z); }
+export function groundHeight(x, z) {
+  const g = siteHeight(x, z) + heightAt(x, z), d = deckHeight(x, z);
+  return d !== null && d > g ? d : g; // trên cầu: mặt cầu
+}
 
 // Có bị chặn bởi bệ tượng hoặc phù điêu không (dùng cho va chạm chính xác hơn lưới 2 m)
 export function blocked(x, z) {
