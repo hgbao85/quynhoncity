@@ -1,6 +1,8 @@
 // Bản đồ nhỏ hình tròn, xoay theo hướng camera, người chơi ở giữa.
 // Thành phố lớn nên không vẽ sẵn cả bản đồ: chỉ vẽ một mảng 1 km quanh người chơi (1 px = 1 m),
 // vẽ lại khi người chơi đi xa tâm mảng hoặc khi có ô nhà mới được tải.
+// Lớp nền (biển, đất, công viên, đồi) chỉ vẽ khi dời tâm mảng; khi có ô nhà mới chỉ vẽ lại nhà và đường.
+// Khung tròn trên màn hình vẽ tối đa ~30 lần/giây và bỏ qua khi người chơi đứng yên.
 import { heightAt } from './world/terrain.js';
 const COL = { sea: '#7fb7d9', land: '#efe9dd', park: '#b5d99c', beach: '#f3e2b0', plaza: '#dcd6cc', water: '#7fb7d9', road: '#ffffff', major: '#f6c873', building: '#c9b9a6' };
 const PATCH = 1024, REDRAW = 280;
@@ -15,6 +17,9 @@ export function createMinimap(canvas, data, tiles) {
   const off = document.createElement('canvas');
   off.width = off.height = PATCH;
   const g = off.getContext('2d');
+  const base = document.createElement('canvas');
+  base.width = base.height = PATCH;
+  const gb = base.getContext('2d');
   // tính sẵn hộp bao để bỏ qua nhanh các đối tượng ngoài mảng
   const land = data.land.map((pts) => ({ pts, box: boxOf(pts) }));
   const areas = data.areas.map((a) => ({ pts: a.pts, kind: a.kind, box: boxOf(a.pts) }));
@@ -22,22 +27,27 @@ export function createMinimap(canvas, data, tiles) {
     .map((r) => ({ pts: r.pts, major: /primary|secondary|tertiary/.test(r.type), box: boxOf(r.pts) }));
   const blds = data.buildings.map((b) => ({ pts: b.pts, box: boxOf(b.pts) }));
 
-  let cx = NaN, cz = NaN, drawnVersion = -1, lastDraw = 0;
-  function redraw(px, pz) {
-    cx = Math.round(px); cz = Math.round(pz);
+  let cx = NaN, cz = NaN, drawnVersion = -1, lastDraw = 0, lastFrame = 0, dirty = true, last = '';
+  function redraw(px, pz, recentre) {
+    if (recentre) { cx = Math.round(px); cz = Math.round(pz); }
     const x0 = cx - PATCH / 2, z0 = cz - PATCH / 2, x1 = x0 + PATCH, z1 = z0 + PATCH;
     const hit = ([a, b, c, d]) => !(c < x0 || a > x1 || d < z0 || b > z1);
-    const path = (pts) => { g.beginPath(); pts.forEach(([x, z], i) => (i ? g.lineTo(x - x0, z - z0) : g.moveTo(x - x0, z - z0))); };
-    g.fillStyle = COL.sea; g.fillRect(0, 0, PATCH, PATCH);
-    for (const l of land) if (hit(l.box)) { path(l.pts); g.closePath(); g.fillStyle = COL.land; g.fill(); }
-    for (const a of areas) if (hit(a.box)) { path(a.pts); g.closePath(); g.fillStyle = COL[a.kind] || COL.park; g.fill(); }
-    // đồi núi: tô xanh đậm dần theo độ cao (mẫu mỗi 8 m)
-    for (let px = 0; px < PATCH; px += 8) for (let pz = 0; pz < PATCH; pz += 8) {
-      const h = heightAt(x0 + px + 4, z0 + pz + 4);
-      if (h < 1) continue;
-      g.fillStyle = `rgba(70,110,60,${Math.min(0.85, 0.3 + h / 250)})`;
-      g.fillRect(px, pz, 8, 8);
+    const pathOn = (c) => (pts) => { c.beginPath(); pts.forEach(([x, z], i) => (i ? c.lineTo(x - x0, z - z0) : c.moveTo(x - x0, z - z0))); };
+    if (recentre) {
+      const bp = pathOn(gb);
+      gb.fillStyle = COL.sea; gb.fillRect(0, 0, PATCH, PATCH);
+      for (const l of land) if (hit(l.box)) { bp(l.pts); gb.closePath(); gb.fillStyle = COL.land; gb.fill(); }
+      for (const a of areas) if (hit(a.box)) { bp(a.pts); gb.closePath(); gb.fillStyle = COL[a.kind] || COL.park; gb.fill(); }
+      // đồi núi: tô xanh đậm dần theo độ cao (mẫu mỗi 8 m)
+      for (let px = 0; px < PATCH; px += 8) for (let pz = 0; pz < PATCH; pz += 8) {
+        const h = heightAt(x0 + px + 4, z0 + pz + 4);
+        if (h < 1) continue;
+        gb.fillStyle = `rgba(70,110,60,${Math.min(0.85, 0.3 + h / 250)})`;
+        gb.fillRect(px, pz, 8, 8);
+      }
     }
+    const path = pathOn(g);
+    g.drawImage(base, 0, 0);
     g.fillStyle = COL.building;
     tiles.forEachLot(x0, z0, x1, z1, (pts) => { path(pts); g.closePath(); g.fill(); });
     for (const b of blds) if (hit(b.box)) { path(b.pts); g.closePath(); g.fill(); }
@@ -47,15 +57,20 @@ export function createMinimap(canvas, data, tiles) {
       path(r.pts); g.strokeStyle = major ? COL.major : COL.road; g.lineWidth = major ? 11 : 6; g.stroke();
     }
     drawnVersion = tiles.version;
+    dirty = true;
   }
 
   const ctx = canvas.getContext('2d');
   const W = canvas.width, VIEW = 320; // mét hiển thị theo đường kính
   function draw(px, pz, camYaw, facing, markers) {
     const now = performance.now();
-    if (!(Math.abs(px - cx) < REDRAW && Math.abs(pz - cz) < REDRAW) || (tiles.version !== drawnVersion && now - lastDraw > 1500)) {
-      redraw(px, pz); lastDraw = now;
-    }
+    if (!(Math.abs(px - cx) < REDRAW && Math.abs(pz - cz) < REDRAW)) { redraw(px, pz, true); lastDraw = now; }
+    else if (tiles.version !== drawnVersion && now - lastDraw > 2500) { redraw(px, pz, false); lastDraw = now; }
+    if (now - lastFrame < 33) return;
+    // không đổi gì (đứng yên, không xoay camera, điểm đánh dấu như cũ) thì giữ nguyên hình cũ
+    const key = `${px.toFixed(1)},${pz.toFixed(1)},${camYaw.toFixed(3)},${facing.toFixed(2)},${markers.map((m) => m.pos[0] + m.pos[1]).join()}`;
+    if (key === last && !dirty) return;
+    last = key; dirty = false; lastFrame = now;
     const k = W / VIEW;
     ctx.save();
     ctx.clearRect(0, 0, W, W);

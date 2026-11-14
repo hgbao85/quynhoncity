@@ -9,11 +9,17 @@ import { toWorld } from './world/site.js';
 
 const site = (id) => LANDMARKS.find((l) => l.id === id);
 const at = (id, lx, lz) => siteToWorld(site(id), lx, lz);
+// góc máy đẹp cho ảnh lưu niệm: vị trí camera và điểm nhìn (toạ độ local, độ cao tính từ mặt đất)
+const shotAt = (id, cam, look) => {
+  const w = id ? (x, z) => at(id, x, z) : (x, z) => toWorld(x, z);
+  return { cam: [...w(cam[0], cam[2]), cam[1]], look: [...w(look[0], look[2]), look[1]] };
+};
 
 export const QUESTS = [
   {
     id: 'monument', title: 'Tượng đài bên biển', place: 'Quảng trường Nguyễn Tất Thành', piece: 'Tượng đài bên biển',
     center: [0, 0], pillar: toWorld(-9, 17), photoRadius: 60,
+    shot: shotAt(null, [9, 6, 30], [0, 7.5, -2]),
     story: [
       'Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành khánh thành ngày 18-5-2017 tại Quảng trường Nguyễn Tất Thành, hướng ra biển. Tượng đồng cao 10,8 m trên bệ cao 4,7 m; phía sau là bức phù điêu đá xanh hình cánh cung dài 76 m.',
       'Ông Nguyễn Sinh Sắc là thân phụ của Chủ tịch Hồ Chí Minh; Nguyễn Tất Thành là tên của Bác thời trẻ.',
@@ -33,6 +39,7 @@ export const QUESTS = [
   {
     id: 'thapdoi', title: 'Dấu tích Chăm Pa', place: 'Tháp Đôi', piece: 'Tháp Đôi gạch đỏ',
     center: at('thapdoi', 0, 0), pillar: at('thapdoi', 0, 18), photoRadius: 45,
+    shot: shotAt('thapdoi', [30, 6, 26], [0, 9, 0]),
     story: [
       'Tháp Đôi, còn gọi là tháp Hưng Thạnh, là cụm hai ngôi tháp Chăm Pa nằm cạnh nhau giữa lòng thành phố Quy Nhơn.',
       'Tháp phía bắc lớn hơn, cao hơn và ít hư hại hơn tháp phía nam. Thân tháp hình khối vuông, mái thu nhỏ dần, nay cả hai đều đã mất chóp.',
@@ -51,6 +58,7 @@ export const QUESTS = [
   {
     id: 'cathedral', title: 'Ngọn tháp nhọn', place: 'Nhà thờ Chính tòa Quy Nhơn', piece: 'Nhà thờ Nhọn',
     center: at('cathedral', 0, 20), pillar: at('cathedral', 6, 44), photoRadius: 70,
+    shot: shotAt('cathedral', [-10, 4, 80], [0, 19, 28]),
     story: [
       'Nhà thờ Chính tòa Quy Nhơn nằm trên đường Trần Hưng Đạo, là nhà thờ chính của giáo phận Quy Nhơn, kính Đức Mẹ Lên Trời.',
       'Nhà thờ có một tháp chuông nhọn cao 42,7 m nên người dân quen gọi là "Nhà thờ Nhọn".',
@@ -69,6 +77,7 @@ export const QUESTS = [
   {
     id: 'market', title: 'Hương vị Bình Định', place: 'Chợ Lớn Quy Nhơn', piece: 'Phiên chợ Lớn',
     center: at('market', 0, 0), pillar: at('market', -12, 26), photoRadius: 50,
+    shot: shotAt('market', [-9, 6, 44], [0, 5, 0]),
     story: [
       'Chợ Lớn nằm ở trung tâm thành phố, mặt trước quay ra đường Tăng Bạt Hổ. Quanh nhà lồng chợ là các sạp hàng mái bạt bán quần áo, tạp hoá, thực phẩm.',
       'Đây là nơi người dân và du khách tìm mua hải sản tươi, cá khô, bánh tráng và nhiều đặc sản của đất Bình Định.',
@@ -87,6 +96,7 @@ export const QUESTS = [
   {
     id: 'longkhanh', title: 'Tiếng chuông cổ tự', place: 'Chùa Long Khánh', piece: 'Chuông chùa Long Khánh',
     center: at('longkhanh', 0, 0), pillar: at('longkhanh', 6, 30), photoRadius: 60,
+    shot: shotAt('longkhanh', [8, 6, -4], [-3, 5, -34]),
     story: [
       'Chùa Long Khánh nằm trên đường Trần Cao Vân, là một trong những ngôi chùa cổ và lớn nhất Quy Nhơn, có lịch sử hơn 200 năm.',
       'Năm 1805, chùa được vua Gia Long sắc phong là "Sắc tứ Long Khánh tự". Chùa còn lưu giữ một quả chuông đồng cao khoảng 1,7 m, nặng hơn 700 kg, đúc cùng năm đó.',
@@ -105,6 +115,7 @@ export const QUESTS = [
   {
     id: 'quangtrung', title: 'Người anh hùng áo vải', place: 'Tượng đài Quang Trung', piece: 'Vó ngựa Tây Sơn',
     center: at('quangtrung', 0, 0), pillar: at('quangtrung', 0, 30), photoRadius: 45,
+    shot: shotAt('quangtrung', [11, 4.5, 23], [0, 8.5, 0]),
     story: [
       'Giữa vòng xoay Lê Hồng Phong – Trần Hưng Đạo là tượng đài vua Quang Trung cưỡi ngựa chiến, tay giơ cao thanh gươm.',
       'Quang Trung – Nguyễn Huệ là người con của đất Tây Sơn, Bình Định. Cùng anh em nhà Tây Sơn, ông dựng cờ khởi nghĩa và lên ngôi hoàng đế năm 1788.',
@@ -123,6 +134,7 @@ export const QUESTS = [
   {
     id: 'hanmactu', title: 'Đồi Thi Nhân', place: 'Mộ Hàn Mặc Tử', piece: 'Đồi Thi Nhân',
     center: at('hanmactu', 0, 0), pillar: at('hanmactu', -8, 6), photoRadius: 35,
+    shot: shotAt('hanmactu', [7, 3.5, 13], [0, 1.6, 0]),
     story: [
       'Nhà thơ Hàn Mặc Tử (tên thật Nguyễn Trọng Trí, 1912–1940) là một gương mặt tiêu biểu của phong trào Thơ mới, tác giả bài thơ nổi tiếng "Đây thôn Vĩ Dạ".',
       'Mộ của ông nằm trên đồi Thi Nhân thuộc khu du lịch Ghềnh Ráng – Tiên Sa, nhìn ra biển Quy Nhơn. Ngôi mộ thiết kế giản dị, mang biểu tượng Công giáo vì nhà thơ theo đạo.',

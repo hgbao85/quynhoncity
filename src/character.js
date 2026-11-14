@@ -9,7 +9,9 @@ const geo = {
   leg: new THREE.CapsuleGeometry(0.085, 0.72, 3, 6).translate(0, -0.42, 0),
   shoe: new THREE.BoxGeometry(0.13, 0.08, 0.26).translate(0, -0.86, 0.04),
   pack: new THREE.BoxGeometry(0.34, 0.42, 0.18),
+  sleeve: new THREE.CapsuleGeometry(0.075, 0.16, 3, 6).translate(0, -0.1, 0),
 };
+export const PART_GEO = geo;
 
 const matCache = new Map();
 const mat = (c, opts = {}) => {
@@ -33,18 +35,22 @@ export function createPerson({
   const head = new THREE.Mesh(geo.head, M(skin)); head.position.y = 0.78; hips.add(head);
   const hr = new THREE.Mesh(geo.hair, M(hair)); hr.position.y = 0.8; hr.rotation.x = -0.25; hips.add(hr);
 
-  const mk = (g, c, x, y) => { const p = new THREE.Group(); p.position.set(x, y, 0); const m = new THREE.Mesh(g, M(c)); p.add(m); hips.add(p); return p; };
-  const armL = mk(geo.arm, skin, -0.27, 0.6), armR = mk(geo.arm, skin, 0.27, 0.6);
+  // meshes: từng bộ phận theo tên (đám đông dùng để vẽ gộp bằng InstancedMesh)
+  const meshes = { torso, head, hair: hr };
+  const mk = (g, c, x, y, name) => { const p = new THREE.Group(); p.position.set(x, y, 0); const m = new THREE.Mesh(g, M(c)); p.add(m); hips.add(p); meshes[name] = m; return p; };
+  const armL = mk(geo.arm, skin, -0.27, 0.6, 'armL'), armR = mk(geo.arm, skin, 0.27, 0.6, 'armR');
   // tay áo
-  for (const a of [armL, armR]) { const s = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.16, 3, 6).translate(0, -0.1, 0), M(shirt)); a.add(s); }
-  const legL = mk(geo.leg, pants, -0.1, 0.02), legR = mk(geo.leg, pants, 0.1, 0.02);
-  legL.add(new THREE.Mesh(geo.shoe, M(shoes))); legR.add(new THREE.Mesh(geo.shoe, M(shoes)));
-  if (backpack) { const b = new THREE.Mesh(geo.pack, M(backpack)); b.position.set(0, 0.4, -0.25); hips.add(b); }
+  armL.add(meshes.sleeveL = new THREE.Mesh(geo.sleeve, M(shirt)));
+  armR.add(meshes.sleeveR = new THREE.Mesh(geo.sleeve, M(shirt)));
+  const legL = mk(geo.leg, pants, -0.1, 0.02, 'legL'), legR = mk(geo.leg, pants, 0.1, 0.02, 'legR');
+  legL.add(meshes.shoeL = new THREE.Mesh(geo.shoe, M(shoes))); legR.add(meshes.shoeR = new THREE.Mesh(geo.shoe, M(shoes)));
+  if (backpack) { const b = new THREE.Mesh(geo.pack, M(backpack)); b.position.set(0, 0.4, -0.25); hips.add(b); meshes.pack = b; }
+  const colors = { torso: shirt, head: skin, hair, armL: skin, armR: skin, sleeveL: shirt, sleeveR: shirt, legL: pants, legR: pants, shoeL: shoes, shoeR: shoes, pack: backpack };
 
   if (shadow) root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 
   // phase: góc chu kỳ bước; amp: 0 đứng yên, ~0.6 đi, ~1 chạy
-  function animate(phase, amp, dt = 0.016) {
+  function animate(phase, amp) {
     const s = Math.sin(phase) * amp;
     legL.rotation.x = s * 0.75; legR.rotation.x = -s * 0.75;
     armL.rotation.x = -s * 0.8; armR.rotation.x = s * 0.8;
@@ -52,10 +58,9 @@ export function createPerson({
     hips.position.y = 0.92 + Math.abs(Math.cos(phase)) * 0.05 * amp;
     torso.rotation.x = hips.rotation.x = 0;
     body.rotation.x = amp > 0.8 ? 0.12 : amp * 0.05;
-    void dt;
   }
   animate(0, 0);
-  return { root, animate, parts: { hips, armL, armR, legL, legR, head } };
+  return { root, animate, parts: { hips, armL, armR, legL, legR, head }, meshes, colors };
 }
 
 export const SHIRTS = ['#2f7f86', '#c0392b', '#f1c40f', '#ecf0f1', '#8e44ad', '#2980b9', '#e67e22', '#27ae60', '#f5b7b1', '#34495e', '#d35400', '#ffffff'];

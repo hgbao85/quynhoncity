@@ -16,6 +16,7 @@ import { createHighlands } from './world/highlands.js';
 import { createLandmarks } from './world/landmarks.js';
 import { createPlayer } from './player.js';
 import { createCrowd } from './npc.js';
+import { groundHeight } from './world/site.js';
 import { createQuest } from './quest.js';
 import { createMinimap } from './minimap.js';
 import { pickQuality, saveQuality, createFpsMeter } from './quality.js';
@@ -50,7 +51,8 @@ const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.3, 12
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 
 const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.3, 0.6, 0.9);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
@@ -151,7 +153,7 @@ async function start() {
   for (let r = 1; r < 120 && !city.grid.walkable(s.x, s.z); r += 1) {
     const a = r * 2.4; s.set(sx + Math.cos(a) * r, 0, sz + Math.sin(a) * r);
   }
-  if (params.has('debug')) window.game = { player, city, camera };
+  if (params.has('debug')) window.game = { player, city, camera, renderer };
   const crowd = createCrowd(scene, city.grid, Q.crowd);
   // ---- âm thanh, album ----
   setupPwa(ui);
@@ -207,17 +209,37 @@ async function start() {
     },
   });
 
+  // Ảnh lưu niệm cho album/bưu thiếp: 16:9, 640×360, cắt giữa khung hình. Khi đứng gần một địa điểm,
+  // ảnh được chụp từ góc máy đẹp đặt sẵn của địa điểm đó (quests-data.js: shot), không phải góc camera
+  // đang theo người chơi (hay bị sát tường hoặc bị người chơi che).
+  const shotCam = new THREE.PerspectiveCamera(50, 1, 0.5, 6000);
+  function souvenir(shot) {
+    const tw = 640, th = 360;
+    const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
+    if (shot) {
+      // góc nhìn dọc của vùng cắt 16:9 là 50°; mở rộng cho cả khung hình rồi cắt lấy phần giữa
+      shotCam.aspect = canvas.width / canvas.height;
+      shotCam.fov = (2 * Math.atan(Math.tan((25 * Math.PI) / 180) * (canvas.height / sh)) * 180) / Math.PI;
+      shotCam.updateProjectionMatrix();
+      const [cx, cz, ch] = shot.cam, [lx, lz, lh] = shot.look;
+      shotCam.position.set(cx, groundHeight(cx, cz) + ch, cz);
+      shotCam.lookAt(lx, groundHeight(lx, lz) + lh, lz);
+      shotCam.updateMatrixWorld();
+      renderPass.camera = shotCam;
+    }
+    composer.render();
+    const c = document.createElement('canvas'); c.width = tw; c.height = th;
+    c.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
+    if (shot) renderPass.camera = camera;
+    return c;
+  }
+  if (window.game) window.game.souvenir = (shot) => { quest.setMarkersVisible(false); const c = souvenir(shot); quest.setMarkersVisible(true); return c.toDataURL('image/jpeg', 0.85); };
+
   $('photo').onclick = () => {
     // ảnh sạch: ẩn cột sáng, điểm sáng nhiệm vụ trong khoảnh khắc chụp (bảng thông tin là HTML nên không lọt vào ảnh)
     quest.setMarkersVisible(false);
-    composer.render();
-    const thumbCanvas = document.createElement('canvas');
-    {
-      // ảnh lưu niệm cho album/bưu thiếp: 16:9, 640×360, cắt giữa khung hình
-      const tw = 640, th = 360; thumbCanvas.width = tw; thumbCanvas.height = th;
-      const sr = Math.min(canvas.width / tw, canvas.height / th), sw = tw * sr, sh = th * sr;
-      thumbCanvas.getContext('2d').drawImage(canvas, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh, 0, 0, tw, th);
-    }
+    const thumbCanvas = souvenir(quest.shotNear(player.state.pos));
+    composer.render(); // ảnh người chơi tự chụp: đúng góc đang nhìn
     // máy tính: tải ảnh PNG về; điện thoại: chỉ lưu vào album (tránh hiện hộp tải xuống mỗi lần chụp)
     if (!isTouch) canvas.toBlob((blob) => {
       if (!blob) return;

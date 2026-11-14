@@ -103,6 +103,9 @@ export function createQuest(scene, data, ui) {
   }
   $('action').onclick = () => openStory();
 
+  // góc máy đẹp của địa điểm đang làm, nếu người chơi đứng đủ gần
+  const shotNear = (pos) => (current && Math.hypot(pos.x - current.center[0], pos.z - current.center[1]) < current.photoRadius ? current.shot : null);
+
   function photoTaken(pos, thumb) {
     const q = current, p = all[q.id];
     const near = Math.hypot(pos.x - q.center[0], pos.z - q.center[1]) < q.photoRadius;
@@ -157,5 +160,5 @@ export function createQuest(scene, data, ui) {
     }
   }
   render();
-  return { update, photoTaken, markers, progress, setMarkersVisible };
+  return { update, photoTaken, shotNear, markers, progress, setMarkersVisible };
 }

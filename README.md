@@ -96,6 +96,8 @@ Lệnh này chạy lần lượt:
 **Hành trình khám phá: 7 địa điểm, 7 mảnh ghép** (nội dung trong `src/quests-data.js`)
 - Tượng đài & Quảng trường, Tháp Đôi, Nhà thờ Nhọn, Chợ Lớn, Chùa Long Khánh, Tượng đài Quang Trung, Mộ Hàn Mặc Tử.
 - Mỗi nơi: cột sáng vàng mở câu chuyện và 3 câu hỏi; tìm các chi tiết (điểm sáng xanh); chụp ảnh lưu niệm gần công trình. Xong cả ba thì nhận 1 mảnh ghép.
+- Ảnh lưu niệm (cho album, bưu thiếp) luôn chụp từ góc máy đẹp đặt sẵn của từng địa điểm (`shot` trong `src/quests-data.js`), giữ nguyên giờ, thời tiết lúc bấm chụp. Trên máy tính, ảnh PNG tải về vẫn là đúng góc người chơi đang nhìn; trên điện thoại không tải PNG.
+- Người đi dạo vẽ gộp: mỗi bộ phận cơ thể là một InstancedMesh, cả đám đông chỉ tốn 12 lần vẽ.
 - Bảng nhiệm vụ tự hiện địa điểm gần người chơi nhất. Tiến độ lưu trong trình duyệt (tiến độ bản cũ ở tượng đài được giữ lại).
 
 **Bản đồ lớn và dịch chuyển nhanh** (nút 🗺️, bấm vào bản đồ nhỏ, hoặc phím M)
