@@ -160,3 +160,46 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .howto { padding-left: 20px; line-height: 1.8; }
 @media (max-width: 760px) { #fs-btn small, #install-btn small { display: none; } }
 @media (display-mode: fullscreen), (display-mode: standalone) { #fs-btn, #install-btn { display: none !important; } }
+
+/* bảng nhiệm vụ thu gọn: chỉ tên địa điểm và 3 ô đánh dấu (bấm để mở rộng) */
+#quest-card { pointer-events: auto; cursor: pointer; }
+#quest-card h3::after { content: ' ▾'; color: var(--muted); font-size: .9em; }
+#quest-card.collapsed h3::after { content: ' ▸'; }
+#quest-card.collapsed { width: auto; max-width: min(230px, 60vw); }
+#quest-card.collapsed h3 { margin-bottom: 6px; }
+#quest-card.collapsed ul { display: flex; gap: 6px; }
+#quest-card.collapsed li { padding: 4px; background: none; }
+#quest-card.collapsed li .t { display: none; }
+
+/* điện thoại xoay ngang (màn hình thấp): thu nhỏ thẻ, hàng nút chỉ còn biểu tượng,
+   bảng nhiệm vụ chuyển sang bên phải phía trên nút chụp ảnh để không đè joystick */
+@media (max-height: 500px) and (pointer: coarse), (max-height: 500px) and (max-width: 1000px) {
+  #minimap { width: 92px; height: 92px; }
+  .top-left { top: 8px; left: 8px; gap: 8px; }
+  .cards { gap: 5px; }
+  .card.place, .card.clock, .card.mana { padding: 4px 10px; }
+  .card.place { display: none; }
+  .clock b#time, .clock .temp b { font-size: 15px; }
+  .clock #sky-icon { font-size: 20px; }
+  .track { min-width: 60px; }
+  .top-right { top: 8px; right: 8px; gap: 5px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100vw - 340px); }
+  .top-right .icon-btn { width: 46px; padding: 6px 2px; }
+  .top-right .icon-btn small { display: none; }
+  #quality-btn small { display: block; }
+  .card.piece { min-width: 0; padding: 4px 10px; gap: 6px; }
+  .card.piece .track { display: none; }
+  .piece > span { font-size: 18px; } .piece b { font-size: 15px; }
+  .card.quest { top: auto; left: auto; right: 8px; bottom: 96px; width: min(240px, 34vw); padding: 6px 10px; }
+  .quest h3 { font-size: 12px; margin-bottom: 4px; }
+  .quest li { font-size: 12px; padding: 3px 6px; }
+  .bottom-right { right: 12px; bottom: 16px; }
+  .round { width: 58px; height: 58px; font-size: 24px; }
+  #joystick { width: 116px; height: 116px; bottom: max(16px, env(safe-area-inset-bottom)); }
+  #toast { top: 60px; font-size: 13px; max-width: 50vw; }
+  .credit { font-size: 9px; }
+}
+@media (max-height: 500px) and (max-width: 760px) {
+  /* màn hình ngang nhỏ: hàng nút xuống nhiều dòng, nên đưa bảng nhiệm vụ xuống đáy, cạnh joystick */
+  .card.quest { right: auto; left: 150px; bottom: 10px; width: 210px; }
+  .credit { display: none; }
+}

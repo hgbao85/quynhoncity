@@ -61,7 +61,7 @@ export function createQuest(scene, data, ui) {
       [`Tìm chi tiết đặc trưng (${p.found.length}/${q.details.length})`, d2],
       [`Chụp ảnh lưu niệm (${p.photo ? 1 : 0}/1)`, d3],
     ];
-    $('tasks').innerHTML = tasks.map(([t, ok]) => `<li class="${ok ? 'done' : ''}"><span class="box">${ok ? '✓' : ''}</span>${t}</li>`).join('');
+    $('tasks').innerHTML = tasks.map(([t, ok]) => `<li class="${ok ? 'done' : ''}"><span class="box">${ok ? '✓' : ''}</span><span class="t">${t}</span></li>`).join('');
     $('pieces').textContent = `${pieces()}/${QUESTS.length}`;
     $('pieces-bar').style.width = `${(pieces() / QUESTS.length) * 100}%`;
     if (!p.piece && d1 && d2 && d3) {

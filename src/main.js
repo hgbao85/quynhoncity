@@ -72,6 +72,19 @@ const ui = {
   openModal() { $('modal').hidden = false; },
 };
 $('modal-close').onclick = () => { $('modal').hidden = true; };
+// Bảng nhiệm vụ: bấm để thu gọn (chỉ còn tên và 3 ô đánh dấu) hoặc mở rộng. Điện thoại mặc định thu gọn.
+{
+  const card = $('quest-card');
+  let saved = null;
+  try { saved = localStorage.getItem('qn3d-quest-collapsed'); } catch { /* không có bộ nhớ */ }
+  card.classList.toggle('collapsed', saved === null ? isTouch : saved === '1');
+  const toggle = () => {
+    const c = card.classList.toggle('collapsed');
+    try { localStorage.setItem('qn3d-quest-collapsed', c ? '1' : '0'); } catch { /* bỏ qua */ }
+  };
+  card.addEventListener('click', toggle);
+  card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+}
 // Esc đóng bảng và bản đồ lớn
 addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('modal').hidden = true; $('bigmap').hidden = true; } });
 $('modal').addEventListener('pointerdown', (e) => { if (e.target.id === 'modal') $('modal').hidden = true; });
@@ -92,20 +105,34 @@ function vnTime() {
 $('time-btn').onclick = () => { hourOffset = (hourOffset + 3) % 24; ui.toast(hourOffset ? `⏩ Đã tua nhanh ${hourOffset} giờ` : '🕒 Trở về giờ thật'); };
 
 const weather = { temp: 27, code: 1, assumed: true };
-// Thời tiết thật từ Open-Meteo: thử lại khi mạng chậm/lỗi (sau 3 s, 10 s, 30 s), rồi cập nhật mỗi 15 phút.
+// Thời tiết thật: hỏi máy chủ của game trước (/api/weather, chuyển tiếp Open-Meteo), không được thì gọi thẳng
+// Open-Meteo. Có máy không gọi thẳng được Open-Meteo (mạng hoặc trình chặn quảng cáo chặn), nhưng gọi
+// được máy chủ của game. Thử lại khi lỗi (sau 3 s, 10 s, 30 s), rồi cập nhật mỗi 15 phút.
 // Nếu vẫn không lấy được thì giữ số giả định và hiện nhãn "giả định".
-async function loadWeather(attempt = 0) {
+const getJson = async (url) => {
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7628&longitude=109.221&current=temperature_2m,weather_code&timezone=Asia%2FHo_Chi_Minh', { signal: ctl.signal, cache: 'no-store' });
+    const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
     if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    weather.temp = Math.round(j.current.temperature_2m); weather.code = j.current.weather_code; weather.assumed = false;
+    return await r.json();
+  } finally { clearTimeout(timer); }
+};
+async function loadWeather(attempt = 0) {
+  try {
+    let temp, code;
+    try {
+      ({ temp, code } = await getJson('/api/weather'));
+      if (typeof temp !== 'number') throw new Error('no data');
+    } catch {
+      const j = await getJson('https://api.open-meteo.com/v1/forecast?latitude=13.7628&longitude=109.221&current=temperature_2m,weather_code&timezone=Asia%2FHo_Chi_Minh');
+      temp = j.current.temperature_2m; code = j.current.weather_code;
+    }
+    weather.temp = Math.round(temp); weather.code = code; weather.assumed = false;
     setTimeout(() => loadWeather(0), 15 * 60e3);
   } catch {
     const wait = [3e3, 10e3, 30e3][attempt];
     setTimeout(() => loadWeather(wait ? attempt + 1 : 0), wait || 15 * 60e3);
-  } finally { clearTimeout(timer); }
+  }
 }
 loadWeather();
 const weatherIcon = (code, night) =>

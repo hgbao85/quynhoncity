@@ -233,6 +233,7 @@ npm run optimize-statue
 | `src/world/weather.js` | Mây, mưa, sương mù, dông theo thời tiết thật |
 | `src/pwa.js`, `public/sw.js`, `public/manifest.webmanifest` | Cài như ứng dụng, toàn màn hình, lưu sẵn dữ liệu |
 | `vite.config.js` | Gắn mã phiên bản build vào `dist/sw.js` |
+| `api/weather.js` | Hàm Vercel chuyển tiếp thời tiết Open-Meteo (cho máy không gọi thẳng được), lưu đệm 10 phút |
 
 ## Cần lưu ý trước khi ra mắt
 
