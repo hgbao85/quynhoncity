@@ -2,6 +2,15 @@
 
 Game 3D chạy trên trình duyệt (máy tính và điện thoại): dạo khắp **nội thành Quy Nhơn** (khoảng 6,6 × 6,8 km, từ Ghềnh Ráng tới cảng và bờ đầm Thị Nại), với điểm nhấn là Quảng trường Trung tâm, Tượng đài Nguyễn Sinh Sắc – Nguyễn Tất Thành và bãi biển.
 
+**▶ Chơi ngay: [quynhoncity.vercel.app](https://quynhoncity.vercel.app)** (máy tính và điện thoại; điện thoại tự dùng đồ hoạ mức Thấp)
+
+## Đưa lên mạng (Vercel)
+
+Mỗi lần push lên `main`, Vercel tự build (`npm run build`) và đăng bản mới. File `vercel.json` đặt thời gian lưu đệm cho trình duyệt:
+- `/assets/*` (JS, CSS có mã băm trong tên): lưu 1 năm.
+- `/data/*` (bản đồ, địa hình, các ô nhà): lưu 1 giờ, sau đó vẫn dùng bản cũ ngay rồi tải bản mới ở nền (tối đa 7 ngày). Sau khi tạo lại dữ liệu, người chơi có thể thấy bản cũ ở lần vào đầu tiên.
+- `/models/*` (mô hình tượng): lưu 1 ngày.
+
 ## Chạy thử
 
 ```bash
